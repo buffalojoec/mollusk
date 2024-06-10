@@ -1,0 +1,11 @@
+[package]
+name = "mollusk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bincode = { workspace = true }
+solana-bpf-loader-program = { workspace = true }
+solana-program-runtime = { workspace = true }
+solana-system-program = { workspace = true }
+solana-sdk = { workspace = true }
