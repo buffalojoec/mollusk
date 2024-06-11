@@ -1,0 +1,11 @@
+[package]
+name = "mollusk-bencher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mollusk = { path = "../harness" }
+num-format = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+solana-sdk = { workspace = true }
