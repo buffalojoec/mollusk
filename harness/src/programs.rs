@@ -121,7 +121,7 @@ pub fn add_program_to_cache(
 
 fn load_program_elf(program_name: &str) -> Vec<u8> {
     let program_file = find_file(&format!("{program_name}.so"))
-        .expect("Program file data not available for {program_name} ({program_id})");
+        .expect("Program file data not available for {program_name}");
     read_file(program_file)
 }
 
