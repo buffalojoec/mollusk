@@ -19,7 +19,7 @@ use {
         system_program,
         transaction_context::{InstructionAccount, TransactionContext},
     },
-    std::sync::Arc,
+    std::{collections::HashMap, sync::Arc},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -34,6 +34,7 @@ pub struct InstructionResult {
     pub compute_units_consumed: u64,
     pub execution_time: u64,
     pub result: ProgramResult,
+    pub resulting_accounts: HashMap<Pubkey, AccountSharedData>,
 }
 
 pub struct Mollusk {
@@ -156,6 +157,8 @@ impl Mollusk {
             &mut timings,
         );
 
+        let execution_time = timings.details.execute_us;
+
         let result = match invoke_result {
             Ok(()) => ProgramResult::Success,
             Err(err) => {
@@ -167,12 +170,20 @@ impl Mollusk {
             }
         };
 
-        let execution_time = timings.details.execute_us;
+        let resulting_accounts = transaction_context
+            .deconstruct_without_keys()
+            .unwrap()
+            .into_iter()
+            .skip(program_accounts_len)
+            .zip(instruction.accounts.iter().map(|meta| meta.pubkey))
+            .map(|(account, key)| (key, account))
+            .collect::<HashMap<_, _>>();
 
         InstructionResult {
             compute_units_consumed,
             execution_time,
             result,
+            resulting_accounts,
         }
     }
 }
