@@ -5,7 +5,7 @@ use {
     num_format::{Locale, ToFormattedString},
     serde::{Deserialize, Serialize},
     solana_sdk::{account::AccountSharedData, instruction::Instruction, pubkey::Pubkey},
-    std::path::PathBuf,
+    std::path::{Path, PathBuf},
 };
 
 pub type Bench = (String, Instruction, Vec<(Pubkey, AccountSharedData)>);
@@ -59,7 +59,6 @@ impl MolluskComputeUnitBencher {
     }
 
     pub fn execute(&mut self) {
-        let out_dir = std::mem::take(&mut self.out_dir);
         let bench_results = std::mem::take(&mut self.benches)
             .into_iter()
             .map(|(name, instruction, accounts)| {
@@ -76,7 +75,11 @@ impl MolluskComputeUnitBencher {
                         ProgramResult::Success => (),
                         _ => {
                             if self.must_pass {
-                                panic!("Program execution failed, but `must_pass` was set. Error: {:?}", result.result);
+                                panic!(
+                                    "Program execution failed, but `must_pass` was set. Error: \
+                                     {:?}",
+                                    result.result
+                                );
                             }
                         }
                     }
@@ -94,7 +97,7 @@ impl MolluskComputeUnitBencher {
                 )
             })
             .collect::<Vec<_>>();
-        write_results(out_dir, bench_results);
+        write_results(&self.out_dir, bench_results);
     }
 }
 
@@ -168,12 +171,12 @@ impl MolluskComputeUnitBenchResult {
     }
 }
 
-fn write_results(out_dir: PathBuf, results: Vec<MolluskComputeUnitBenchResult>) {
-    write_to_json(&out_dir, &results);
-    write_to_markdown(&out_dir, &results);
+fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBenchResult>) {
+    write_to_json(out_dir, &results);
+    write_to_markdown(out_dir, &results);
 }
 
-fn write_to_json(out_dir: &PathBuf, results: &[MolluskComputeUnitBenchResult]) {
+fn write_to_json(out_dir: &Path, results: &[MolluskComputeUnitBenchResult]) {
     let json_results = serde_json::to_string(&results).unwrap();
     let path = out_dir.join("compute_units.json");
     if let Some(parent) = path.parent() {
@@ -182,7 +185,7 @@ fn write_to_json(out_dir: &PathBuf, results: &[MolluskComputeUnitBenchResult]) {
     std::fs::write(path, json_results).unwrap();
 }
 
-fn write_to_markdown(out_dir: &PathBuf, results: &[MolluskComputeUnitBenchResult]) {
+fn write_to_markdown(out_dir: &Path, results: &[MolluskComputeUnitBenchResult]) {
     let mut md_table = String::new();
     md_table.push_str("| Name | Median | Mark Delta |\n");
     md_table.push_str("|------|--------|------------|\n");
