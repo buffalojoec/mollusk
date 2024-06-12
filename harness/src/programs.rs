@@ -71,7 +71,7 @@ pub fn program_account(program_id: &Pubkey, rent: &Rent) -> AccountSharedData {
     })
 }
 
-pub fn build_program_cache() -> LoadedProgramsForTxBatch {
+pub(crate) fn build_program_cache() -> LoadedProgramsForTxBatch {
     let mut cache = LoadedProgramsForTxBatch::default();
 
     AGAVE_BUILTINS.iter().for_each(
@@ -90,7 +90,7 @@ pub fn build_program_cache() -> LoadedProgramsForTxBatch {
     cache
 }
 
-pub fn add_program_to_cache(
+pub(crate) fn add_program_to_cache(
     cache: &mut LoadedProgramsForTxBatch,
     program_id: &Pubkey,
     program_name: &'static str,

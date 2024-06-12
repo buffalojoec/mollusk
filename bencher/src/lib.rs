@@ -76,7 +76,7 @@ impl MolluskComputeUnitBencher {
                         ProgramResult::Success => (),
                         _ => {
                             if self.must_pass {
-                                panic!("Program execution failed, but `must_pass` was set.");
+                                panic!("Program execution failed, but `must_pass` was set. Error: {:?}", result.result);
                             }
                         }
                     }

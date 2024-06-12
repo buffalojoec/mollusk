@@ -1,6 +1,6 @@
 //! Solana program runtime test harness for programs.
 
-mod programs;
+pub mod programs;
 
 use {
     solana_program_runtime::{
