@@ -1,5 +1,5 @@
 use {
-    mollusk::{Mollusk, ProgramResult},
+    mollusk::{result::ProgramResult, Mollusk},
     solana_sdk::{instruction::Instruction, program_error::ProgramError, pubkey::Pubkey},
 };
 
@@ -17,7 +17,7 @@ fn test_set_return_data() {
 
     let result = mollusk.process_instruction(&instruction, vec![]);
 
-    assert_eq!(result.result, ProgramResult::Success);
+    assert_eq!(result.program_result, ProgramResult::Success);
     assert_eq!(result.compute_units_consumed, 143);
 }
 
@@ -34,7 +34,7 @@ fn test_fail_empty_input() {
     let result = mollusk.process_instruction(&instruction, vec![]);
 
     assert_eq!(
-        result.result,
+        result.program_result,
         ProgramResult::Failure(ProgramError::InvalidInstructionData)
     );
     assert_eq!(result.compute_units_consumed, 55);

@@ -1,5 +1,5 @@
 use {
-    mollusk::{Mollusk, ProgramResult},
+    mollusk::{result::ProgramResult, Mollusk},
     solana_sdk::{
         account::AccountSharedData, instruction::InstructionError, pubkey::Pubkey,
         system_instruction, system_program,
@@ -32,7 +32,7 @@ fn test_transfer() {
 
     let result = mollusk.process_instruction(&instruction, accounts);
 
-    assert_eq!(result.result, ProgramResult::Success);
+    assert_eq!(result.program_result, ProgramResult::Success);
     assert_eq!(result.compute_units_consumed, DEFAULT_COMPUTE_UNITS);
 }
 
@@ -62,7 +62,7 @@ fn test_transfer_bad_owner() {
     let result = mollusk.process_instruction(&instruction, accounts);
 
     assert_eq!(
-        result.result,
+        result.program_result,
         ProgramResult::UnknownError(InstructionError::ExternalAccountLamportSpend)
     );
     assert_eq!(result.compute_units_consumed, DEFAULT_COMPUTE_UNITS);

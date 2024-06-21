@@ -3,7 +3,7 @@
 mod result;
 
 use {
-    mollusk::{Mollusk, ProgramResult},
+    mollusk::{result::ProgramResult, Mollusk},
     result::{write_results, MolluskComputeUnitBenchResult},
     solana_sdk::{account::AccountSharedData, instruction::Instruction, pubkey::Pubkey},
     std::path::PathBuf,
@@ -63,14 +63,14 @@ impl MolluskComputeUnitBencher {
                         .mollusk
                         .process_instruction(&instruction, accounts.clone());
 
-                    match result.result {
+                    match result.program_result {
                         ProgramResult::Success => (),
                         _ => {
                             if self.must_pass {
                                 panic!(
                                     "Program execution failed, but `must_pass` was set. Error: \
                                      {:?}",
-                                    result.result
+                                    result.program_result
                                 );
                             }
                         }
