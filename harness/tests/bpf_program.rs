@@ -5,6 +5,8 @@ use {
 
 #[test]
 fn test_set_return_data() {
+    std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+
     let program_id = Pubkey::new_unique();
 
     let input = vec![1];
@@ -21,6 +23,8 @@ fn test_set_return_data() {
 
 #[test]
 fn test_fail_empty_input() {
+    std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+
     let program_id = Pubkey::new_unique();
 
     let instruction = Instruction::new_with_bytes(program_id, &[], vec![]);
