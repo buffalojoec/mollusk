@@ -33,7 +33,7 @@ pub mod result;
 pub mod sysvar;
 
 use {
-    crate::result::InstructionResult,
+    crate::result::{InstructionCheck, InstructionResult},
     solana_program_runtime::{
         compute_budget::ComputeBudget, invoke_context::InvokeContext,
         loaded_programs::LoadedProgramsForTxBatch, sysvar_cache::SysvarCache,
@@ -192,10 +192,11 @@ impl Mollusk {
     /// fail.
     pub fn process_and_validate_instruction(
         &self,
-        _instruction: &Instruction,
-        _accounts: Vec<(Pubkey, AccountSharedData)>,
-        /* TODO... */
+        instruction: &Instruction,
+        accounts: Vec<(Pubkey, AccountSharedData)>,
+        checks: &[InstructionCheck],
     ) {
-        todo!()
+        let result = self.process_instruction(instruction, accounts);
+        result.run_checks(checks);
     }
 }
