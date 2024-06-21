@@ -10,14 +10,43 @@ fn test_markdown() {
 
     let program_id = Pubkey::new_unique();
 
-    let bench = String::from("bench");
     let instruction = Instruction::new_with_bytes(program_id, &[1], vec![]);
     let accounts = vec![];
 
     let mollusk = Mollusk::new(&program_id, "test_program");
 
     MolluskComputeUnitBencher::new(mollusk)
-        .bench((bench, instruction, accounts))
+        .bench((
+            String::from("bench0"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((
+            String::from("bench1"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((
+            String::from("bench2"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((
+            String::from("bench3"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((
+            String::from("bench4"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((
+            String::from("bench5"),
+            instruction.clone(),
+            accounts.clone(),
+        ))
+        .bench((String::from("bench6"), instruction, accounts))
         .iterations(100)
         .must_pass(true)
         .out_dir("../target/benches")
