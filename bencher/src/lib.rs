@@ -63,10 +63,8 @@ impl MolluskComputeUnitBencher {
         let bench_results = std::mem::take(&mut self.benches)
             .into_iter()
             .map(|(name, instruction, accounts)| {
-                let account_keys = accounts.len();
-                let instruction_data_size = instruction.data.len();
-
                 let mut results = vec![];
+
                 for _ in 0..self.iterations {
                     let result = self
                         .mollusk
@@ -88,14 +86,7 @@ impl MolluskComputeUnitBencher {
                     results.push(result);
                 }
 
-                MolluskComputeUnitBenchResult::new(
-                    name,
-                    account_keys,
-                    instruction_data_size,
-                    self.iterations,
-                    self.benchmark,
-                    results,
-                )
+                MolluskComputeUnitBenchResult::new(name, self.iterations, self.benchmark, results)
             })
             .collect::<Vec<_>>();
         write_results(&self.out_dir, bench_results);
