@@ -1,5 +1,8 @@
 use {
-    mollusk::{result::ProgramResult, Mollusk},
+    mollusk::{
+        result::{InstructionCheck, ProgramResult},
+        Mollusk,
+    },
     solana_sdk::{instruction::Instruction, program_error::ProgramError, pubkey::Pubkey},
 };
 
@@ -9,16 +12,15 @@ fn test_set_return_data() {
 
     let program_id = Pubkey::new_unique();
 
-    let input = vec![1];
-
-    let instruction = Instruction::new_with_bytes(program_id, &input, vec![]);
+    let instruction = Instruction::new_with_bytes(program_id, &[1], vec![]);
+    let checks = vec![
+        InstructionCheck::program_result(ProgramResult::Success),
+        InstructionCheck::compute_units_consumed(143),
+    ];
 
     let mollusk = Mollusk::new(&program_id, "test_program");
 
-    let result = mollusk.process_instruction(&instruction, vec![]);
-
-    assert_eq!(result.program_result, ProgramResult::Success);
-    assert_eq!(result.compute_units_consumed, 143);
+    mollusk.process_and_validate_instruction(&instruction, vec![], &checks);
 }
 
 #[test]
@@ -28,14 +30,14 @@ fn test_fail_empty_input() {
     let program_id = Pubkey::new_unique();
 
     let instruction = Instruction::new_with_bytes(program_id, &[], vec![]);
+    let checks = vec![
+        InstructionCheck::program_result(ProgramResult::Failure(
+            ProgramError::InvalidInstructionData,
+        )),
+        InstructionCheck::compute_units_consumed(55),
+    ];
 
     let mollusk = Mollusk::new(&program_id, "test_program");
 
-    let result = mollusk.process_instruction(&instruction, vec![]);
-
-    assert_eq!(
-        result.program_result,
-        ProgramResult::Failure(ProgramError::InvalidInstructionData)
-    );
-    assert_eq!(result.compute_units_consumed, 55);
+    mollusk.process_and_validate_instruction(&instruction, vec![], &checks);
 }

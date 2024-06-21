@@ -1,5 +1,8 @@
 use {
-    mollusk::{result::ProgramResult, Mollusk},
+    mollusk::{
+        result::{CheckAccount, InstructionCheck, ProgramResult},
+        Mollusk,
+    },
     solana_sdk::{
         account::AccountSharedData, instruction::InstructionError, pubkey::Pubkey,
         system_instruction, system_program,
@@ -15,6 +18,7 @@ fn test_transfer() {
     let base_lamports = 100_000_000u64;
     let transfer_amount = 42_000u64;
 
+    let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
     let accounts = vec![
         (
             sender,
@@ -25,15 +29,18 @@ fn test_transfer() {
             AccountSharedData::new(base_lamports, 0, &system_program::id()),
         ),
     ];
+    let checks = vec![
+        InstructionCheck::program_result(ProgramResult::Success),
+        InstructionCheck::compute_units_consumed(DEFAULT_COMPUTE_UNITS),
+        InstructionCheck::account(
+            CheckAccount::new(&sender).lamports(base_lamports - transfer_amount),
+        ),
+        InstructionCheck::account(
+            CheckAccount::new(&recipient).lamports(base_lamports + transfer_amount),
+        ),
+    ];
 
-    let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
-
-    let mollusk = Mollusk::default();
-
-    let result = mollusk.process_instruction(&instruction, accounts);
-
-    assert_eq!(result.program_result, ProgramResult::Success);
-    assert_eq!(result.compute_units_consumed, DEFAULT_COMPUTE_UNITS);
+    Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);
 }
 
 #[test]
@@ -44,26 +51,23 @@ fn test_transfer_bad_owner() {
     let base_lamports = 100_000_000u64;
     let transfer_amount = 42_000u64;
 
+    let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
     let accounts = vec![
         (
             sender,
-            AccountSharedData::new(base_lamports, 0, &Pubkey::new_unique()),
+            AccountSharedData::new(base_lamports, 0, &Pubkey::new_unique()), // <-- Bad owner.
         ),
         (
             recipient,
             AccountSharedData::new(base_lamports, 0, &system_program::id()),
         ),
     ];
+    let checks = vec![
+        InstructionCheck::program_result(ProgramResult::UnknownError(
+            InstructionError::ExternalAccountLamportSpend,
+        )),
+        InstructionCheck::compute_units_consumed(DEFAULT_COMPUTE_UNITS),
+    ];
 
-    let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
-
-    let mollusk = Mollusk::default();
-
-    let result = mollusk.process_instruction(&instruction, accounts);
-
-    assert_eq!(
-        result.program_result,
-        ProgramResult::UnknownError(InstructionError::ExternalAccountLamportSpend)
-    );
-    assert_eq!(result.compute_units_consumed, DEFAULT_COMPUTE_UNITS);
+    Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);
 }
