@@ -28,6 +28,7 @@ impl MolluskComputeUnitBenchResult {
 pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBenchResult>) {
     let path = out_dir.join("compute_units.md");
 
+    let mut no_changes = true;
     let previous = parse_last_md_table(&path);
 
     let mut md_table = md_header();
@@ -38,8 +39,19 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
                 .iter()
                 .find(|prev_result| prev_result.name == result.name)
         }) {
-            Some(prev) => (result.mean as i64 - prev.mean as i64).to_formatted_string(&Locale::en),
-            None => "N/A".to_string(),
+            Some(prev) => {
+                let delta = result.mean as i64 - prev.mean as i64;
+                if delta == 0 {
+                    "--".to_string()
+                } else {
+                    no_changes = false;
+                    delta.to_formatted_string(&Locale::en)
+                }
+            }
+            None => {
+                no_changes = false;
+                "- new -".to_string()
+            }
         };
 
         md_table.push_str(&format!(
@@ -48,9 +60,11 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
         ));
     }
 
-    md_table.push('\n');
-
-    prepend_to_md_file(&path, &md_table);
+    // Only create a new table if there were changes.
+    if !no_changes {
+        md_table.push('\n');
+        prepend_to_md_file(&path, &md_table);
+    }
 }
 
 fn md_header() -> String {
