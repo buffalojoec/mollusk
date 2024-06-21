@@ -45,7 +45,11 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
                     "--".to_string()
                 } else {
                     no_changes = false;
-                    delta.to_formatted_string(&Locale::en)
+                    if delta > 0 {
+                        format!("+{}", delta.to_formatted_string(&Locale::en))
+                    } else {
+                        delta.to_formatted_string(&Locale::en)
+                    }
                 }
             }
             None => {
