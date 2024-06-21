@@ -13,7 +13,6 @@ pub type Bench = (String, Instruction, Vec<(Pubkey, AccountSharedData)>);
 
 pub struct MolluskComputeUnitBencher {
     benches: Vec<Bench>,
-    benchmark: Option<u64>,
     iterations: u64,
     mollusk: Mollusk,
     must_pass: bool,
@@ -26,7 +25,6 @@ impl MolluskComputeUnitBencher {
         out_dir.push("benches");
         Self {
             benches: Vec::new(),
-            benchmark: None,
             iterations: 25, // Default to 25 iterations.
             mollusk,
             must_pass: false,
@@ -36,11 +34,6 @@ impl MolluskComputeUnitBencher {
 
     pub fn bench(mut self, bench: Bench) -> Self {
         self.benches.push(bench);
-        self
-    }
-
-    pub fn benchmark(mut self, benchmark: u64) -> Self {
-        self.benchmark = Some(benchmark);
         self
     }
 
@@ -86,7 +79,7 @@ impl MolluskComputeUnitBencher {
                     results.push(result);
                 }
 
-                MolluskComputeUnitBenchResult::new(name, self.iterations, self.benchmark, results)
+                MolluskComputeUnitBenchResult::new(name, results)
             })
             .collect::<Vec<_>>();
         write_results(&self.out_dir, bench_results);
