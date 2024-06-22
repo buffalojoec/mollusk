@@ -207,7 +207,7 @@ fn test_close_account() {
             ],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(597),
+                Check::compute_units(598),
             ],
         );
     }
@@ -222,7 +222,7 @@ fn test_close_account() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2557),
+            Check::compute_units(2558),
             Check::account(&key)
                 .data(&[])
                 .lamports(0)

@@ -7,6 +7,7 @@ use {
 #[test]
 fn test_markdown() {
     std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+    solana_logger::setup_with("");
 
     let program_id = Pubkey::new_unique();
 

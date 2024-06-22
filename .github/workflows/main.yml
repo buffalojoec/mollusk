@@ -1,0 +1,72 @@
+name: Main
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NIGHTLY_TOOLCHAIN: nightly-2023-10-05
+  SOLANA_VERSION: 1.18.14
+
+jobs:
+  rust_fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.rustup/toolchains/${{ env.NIGHTLY_TOOLCHAIN }}
+          key: ${{ runner.os }}-rust-toolchain-${{ env.NIGHTLY_TOOLCHAIN }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          components: rustfmt
+      - name: Run format
+        run: cargo +${{ env.NIGHTLY_TOOLCHAIN }} fmt --all -- --check
+
+  rust_clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.rustup/toolchains/${{ env.NIGHTLY_TOOLCHAIN }}
+          key: ${{ runner.os }}-rust-toolchain-${{ env.NIGHTLY_TOOLCHAIN }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+          components: clippy
+      - name: Run clippy
+        run: cargo +${{ env.NIGHTLY_TOOLCHAIN }} clippy --all -- --deny=warnings
+
+  cargo_build_test:
+    name: Cargo Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/solana/install/active_release/bin/solana
+          key: ${{ runner.os }}-solana-${{ env.SOLANA_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - uses: metaplex-foundation/actions/install-solana@v1
+        with:
+          version: ${{ env.SOLANA_VERSION }}
+      - name: Build test program
+        run: cargo build-sbf --manifest-path test-program/Cargo.toml
+      - name: Test
+        run: cargo test
