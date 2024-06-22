@@ -1,6 +1,6 @@
 use {
     chrono::{DateTime, Utc},
-    mollusk::InstructionResult,
+    mollusk::result::InstructionResult,
     num_format::{Locale, ToFormattedString},
     std::path::Path,
 };

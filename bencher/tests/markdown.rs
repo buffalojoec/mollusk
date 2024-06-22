@@ -10,7 +10,7 @@ fn test_markdown() {
 
     let program_id = Pubkey::new_unique();
 
-    let instruction = Instruction::new_with_bytes(program_id, &[1], vec![]);
+    let instruction = Instruction::new_with_bytes(program_id, &[0], vec![]);
     let accounts = vec![];
 
     let mollusk = Mollusk::new(&program_id, "test_program");
