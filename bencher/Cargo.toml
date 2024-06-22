@@ -9,3 +9,6 @@ mollusk = { path = "../harness" }
 num-format = { workspace = true }
 serde_json = { workspace = true }
 solana-sdk = { workspace = true }
+
+[dev-dependencies]
+solana-logger = { workspace = true }

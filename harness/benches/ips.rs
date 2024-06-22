@@ -1,11 +1,13 @@
 //! Benches Mollusk invocation (instructions per second)
-use criterion::{criterion_group, criterion_main, Criterion, Throughput};
-use mollusk::{result::Check, Mollusk};
-use solana_sdk::{
-    account::AccountSharedData, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, system_instruction,
-    system_program,
+use {
+    criterion::{criterion_group, criterion_main, Criterion, Throughput},
+    mollusk::{result::Check, Mollusk},
+    solana_sdk::{
+        account::AccountSharedData, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
+        system_instruction, system_program,
+    },
+    solana_system_program::system_processor::DEFAULT_COMPUTE_UNITS,
 };
-use solana_system_program::system_processor::DEFAULT_COMPUTE_UNITS;
 
 fn transfer_checked_unchecked(c: &mut Criterion) {
     let sender = Pubkey::new_unique();
