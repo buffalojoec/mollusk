@@ -1,8 +1,5 @@
 use {
-    mollusk::{
-        result::{InstructionCheck, ProgramResult},
-        Mollusk,
-    },
+    mollusk::{result::Check, Mollusk},
     solana_sdk::{instruction::Instruction, program_error::ProgramError, pubkey::Pubkey},
 };
 
@@ -13,10 +10,7 @@ fn test_set_return_data() {
     let program_id = Pubkey::new_unique();
 
     let instruction = Instruction::new_with_bytes(program_id, &[1], vec![]);
-    let checks = vec![
-        InstructionCheck::program_result(ProgramResult::Success),
-        InstructionCheck::compute_units_consumed(143),
-    ];
+    let checks = vec![Check::success(), Check::compute_units(143)];
 
     let mollusk = Mollusk::new(&program_id, "test_program");
 
@@ -31,10 +25,8 @@ fn test_fail_empty_input() {
 
     let instruction = Instruction::new_with_bytes(program_id, &[], vec![]);
     let checks = vec![
-        InstructionCheck::program_result(ProgramResult::Failure(
-            ProgramError::InvalidInstructionData,
-        )),
-        InstructionCheck::compute_units_consumed(55),
+        Check::err(ProgramError::InvalidInstructionData),
+        Check::compute_units(55),
     ];
 
     let mollusk = Mollusk::new(&program_id, "test_program");

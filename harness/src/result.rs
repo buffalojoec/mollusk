@@ -52,10 +52,10 @@ pub struct InstructionResult {
 
 impl InstructionResult {
     /// Perform checks on the instruction result, panicking if any checks fail.
-    pub(crate) fn run_checks(&self, checks: &[InstructionCheck]) {
+    pub(crate) fn run_checks(&self, checks: &[Check]) {
         for check in checks {
             match &check.check {
-                Check::ComputeUnitsConsumed(units) => {
+                CheckType::ComputeUnitsConsumed(units) => {
                     let check_units = *units;
                     let actual_units = self.compute_units_consumed;
                     assert_eq!(
@@ -64,7 +64,7 @@ impl InstructionResult {
                         check_units, actual_units
                     );
                 }
-                Check::ExecutionTime(time) => {
+                CheckType::ExecutionTime(time) => {
                     let check_time = *time;
                     let actual_time = self.execution_time;
                     assert_eq!(
@@ -73,7 +73,7 @@ impl InstructionResult {
                         check_time, actual_time
                     );
                 }
-                Check::ProgramResult(result) => {
+                CheckType::ProgramResult(result) => {
                     let check_result = result;
                     let actual_result = &self.program_result;
                     assert_eq!(
@@ -82,7 +82,7 @@ impl InstructionResult {
                         check_result, actual_result
                     );
                 }
-                Check::ResultingAccount(account) => {
+                CheckType::ResultingAccount(account) => {
                     let pubkey = account.pubkey;
                     let resulting_account = self
                         .resulting_accounts
@@ -118,7 +118,7 @@ impl InstructionResult {
                     }
                     if let Some(check_state) = &account.check_state {
                         match check_state {
-                            CheckState::Closed => {
+                            AccountStateCheck::Closed => {
                                 assert_eq!(
                                     &AccountSharedData::default(),
                                     resulting_account,
@@ -133,58 +133,71 @@ impl InstructionResult {
     }
 }
 
-enum Check {
+enum CheckType {
+    /// Check the number of compute units consumed by the instruction.
     ComputeUnitsConsumed(u64),
+    /// Check the time taken to execute the instruction.
     ExecutionTime(u64),
+    /// Check the result code of the program's execution.
     ProgramResult(ProgramResult),
-    ResultingAccount(CheckAccount),
+    /// Check a resulting account after executing the instruction.
+    ResultingAccount(AccountCheck),
 }
 
-pub struct InstructionCheck {
-    check: Check,
+pub struct Check {
+    check: CheckType,
 }
 
-impl InstructionCheck {
-    fn new(check: Check) -> Self {
+impl Check {
+    fn new(check: CheckType) -> Self {
         Self { check }
     }
 
     /// Check the number of compute units consumed by the instruction.
-    pub fn compute_units_consumed(units: u64) -> Self {
-        Self::new(Check::ComputeUnitsConsumed(units))
+    pub fn compute_units(units: u64) -> Self {
+        Check::new(CheckType::ComputeUnitsConsumed(units))
     }
 
     /// Check the time taken to execute the instruction.
-    pub fn execution_time(time: u64) -> Self {
-        Self::new(Check::ExecutionTime(time))
+    pub fn time(time: u64) -> Self {
+        Check::new(CheckType::ExecutionTime(time))
     }
 
-    /// Check the result code of the program's execution.
-    pub fn program_result(result: ProgramResult) -> Self {
-        Self::new(Check::ProgramResult(result))
+    /// Assert that the program executed successfully.
+    pub fn success() -> Self {
+        Check::new(CheckType::ProgramResult(ProgramResult::Success))
+    }
+
+    /// Assert that the program returned an error.
+    pub fn err(error: ProgramError) -> Self {
+        Check::new(CheckType::ProgramResult(ProgramResult::Failure(error)))
+    }
+
+    /// Assert that the instruction returned an error.
+    pub fn instruction_err(error: InstructionError) -> Self {
+        Check::new(CheckType::ProgramResult(ProgramResult::UnknownError(error)))
     }
 
     /// Check a resulting account after executing the instruction.
-    pub fn account(account: CheckAccount) -> Self {
-        Self::new(Check::ResultingAccount(account))
+    pub fn account(pubkey: &Pubkey) -> AccountCheckBuilder {
+        AccountCheckBuilder::new(pubkey)
     }
 }
 
-enum CheckState {
+enum AccountStateCheck {
     Closed,
 }
 
-pub struct CheckAccount {
+struct AccountCheck {
     pubkey: Pubkey,
     check_data: Option<Vec<u8>>,
     check_lamports: Option<u64>,
     check_owner: Option<Pubkey>,
-    check_state: Option<CheckState>,
+    check_state: Option<AccountStateCheck>,
 }
 
-impl CheckAccount {
-    /// Create a new check for a resulting account.
-    pub fn new(pubkey: &Pubkey) -> Self {
+impl AccountCheck {
+    fn new(pubkey: &Pubkey) -> Self {
         Self {
             pubkey: *pubkey,
             check_data: None,
@@ -193,28 +206,40 @@ impl CheckAccount {
             check_state: None,
         }
     }
+}
 
-    /// Check that a resulting account was closed.
+pub struct AccountCheckBuilder {
+    check: AccountCheck,
+}
+
+impl AccountCheckBuilder {
+    fn new(pubkey: &Pubkey) -> Self {
+        Self {
+            check: AccountCheck::new(pubkey),
+        }
+    }
+
     pub fn closed(mut self) -> Self {
-        self.check_state = Some(CheckState::Closed);
+        self.check.check_state = Some(AccountStateCheck::Closed);
         self
     }
 
-    /// Check a resulting account's data.
     pub fn data(mut self, data: Vec<u8>) -> Self {
-        self.check_data = Some(data);
+        self.check.check_data = Some(data);
         self
     }
 
-    /// Check a resulting account's lamports.
     pub fn lamports(mut self, lamports: u64) -> Self {
-        self.check_lamports = Some(lamports);
+        self.check.check_lamports = Some(lamports);
         self
     }
 
-    /// Check a resulting account's owner.
     pub fn owner(mut self, owner: Pubkey) -> Self {
-        self.check_owner = Some(owner);
+        self.check.check_owner = Some(owner);
         self
+    }
+
+    pub fn build(self) -> Check {
+        Check::new(CheckType::ResultingAccount(self.check))
     }
 }

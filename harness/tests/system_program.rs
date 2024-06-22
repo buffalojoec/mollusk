@@ -1,8 +1,5 @@
 use {
-    mollusk::{
-        result::{CheckAccount, InstructionCheck, ProgramResult},
-        Mollusk,
-    },
+    mollusk::{result::Check, Mollusk},
     solana_sdk::{
         account::AccountSharedData, instruction::InstructionError, pubkey::Pubkey,
         system_instruction, system_program,
@@ -30,14 +27,14 @@ fn test_transfer() {
         ),
     ];
     let checks = vec![
-        InstructionCheck::program_result(ProgramResult::Success),
-        InstructionCheck::compute_units_consumed(DEFAULT_COMPUTE_UNITS),
-        InstructionCheck::account(
-            CheckAccount::new(&sender).lamports(base_lamports - transfer_amount),
-        ),
-        InstructionCheck::account(
-            CheckAccount::new(&recipient).lamports(base_lamports + transfer_amount),
-        ),
+        Check::success(),
+        Check::compute_units(DEFAULT_COMPUTE_UNITS),
+        Check::account(&sender)
+            .lamports(base_lamports - transfer_amount)
+            .build(),
+        Check::account(&recipient)
+            .lamports(base_lamports + transfer_amount)
+            .build(),
     ];
 
     Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);
@@ -63,10 +60,8 @@ fn test_transfer_bad_owner() {
         ),
     ];
     let checks = vec![
-        InstructionCheck::program_result(ProgramResult::UnknownError(
-            InstructionError::ExternalAccountLamportSpend,
-        )),
-        InstructionCheck::compute_units_consumed(DEFAULT_COMPUTE_UNITS),
+        Check::instruction_err(InstructionError::ExternalAccountLamportSpend),
+        Check::compute_units(DEFAULT_COMPUTE_UNITS),
     ];
 
     Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);

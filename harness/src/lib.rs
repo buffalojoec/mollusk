@@ -33,7 +33,7 @@ pub mod result;
 pub mod sysvar;
 
 use {
-    crate::result::{InstructionCheck, InstructionResult},
+    crate::result::{Check, InstructionResult},
     solana_program_runtime::{
         compute_budget::ComputeBudget, invoke_context::InvokeContext,
         loaded_programs::LoadedProgramsForTxBatch, sysvar_cache::SysvarCache,
@@ -194,7 +194,7 @@ impl Mollusk {
         &self,
         instruction: &Instruction,
         accounts: Vec<(Pubkey, AccountSharedData)>,
-        checks: &[InstructionCheck],
+        checks: &[Check],
     ) {
         let result = self.process_instruction(instruction, accounts);
         result.run_checks(checks);
