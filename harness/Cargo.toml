@@ -10,3 +10,11 @@ solana-program-runtime = { workspace = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-logger = "2.0.0"
+
+
+[[bench]]
+name = "ips"
+harness = false
+
+[dev-dependencies]
+criterion = "0.5.1"
