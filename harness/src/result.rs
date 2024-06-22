@@ -51,6 +51,14 @@ pub struct InstructionResult {
 }
 
 impl InstructionResult {
+    /// Get an account from the resulting accounts by its pubkey.
+    pub fn get_account(&self, pubkey: &Pubkey) -> Option<&AccountSharedData> {
+        self.resulting_accounts
+            .iter()
+            .find(|(k, _)| k == pubkey)
+            .map(|(_, a)| a)
+    }
+
     /// Perform checks on the instruction result, panicking if any checks fail.
     pub(crate) fn run_checks(&self, checks: &[Check]) {
         for check in checks {
@@ -92,7 +100,7 @@ impl InstructionResult {
                         .unwrap_or_else(|| {
                             panic!("Account not found in resulting accounts: {}", pubkey)
                         });
-                    if let Some(check_data) = &account.check_data {
+                    if let Some(check_data) = account.check_data {
                         let actual_data = resulting_account.data();
                         assert_eq!(
                             check_data, actual_data,
@@ -133,7 +141,7 @@ impl InstructionResult {
     }
 }
 
-enum CheckType {
+enum CheckType<'a> {
     /// Check the number of compute units consumed by the instruction.
     ComputeUnitsConsumed(u64),
     /// Check the time taken to execute the instruction.
@@ -141,15 +149,15 @@ enum CheckType {
     /// Check the result code of the program's execution.
     ProgramResult(ProgramResult),
     /// Check a resulting account after executing the instruction.
-    ResultingAccount(AccountCheck),
+    ResultingAccount(AccountCheck<'a>),
 }
 
-pub struct Check {
-    check: CheckType,
+pub struct Check<'a> {
+    check: CheckType<'a>,
 }
 
-impl Check {
-    fn new(check: CheckType) -> Self {
+impl<'a> Check<'a> {
+    fn new(check: CheckType<'a>) -> Self {
         Self { check }
     }
 
@@ -188,15 +196,15 @@ enum AccountStateCheck {
     Closed,
 }
 
-struct AccountCheck {
+struct AccountCheck<'a> {
     pubkey: Pubkey,
-    check_data: Option<Vec<u8>>,
+    check_data: Option<&'a [u8]>,
     check_lamports: Option<u64>,
     check_owner: Option<Pubkey>,
     check_state: Option<AccountStateCheck>,
 }
 
-impl AccountCheck {
+impl AccountCheck<'_> {
     fn new(pubkey: &Pubkey) -> Self {
         Self {
             pubkey: *pubkey,
@@ -208,11 +216,11 @@ impl AccountCheck {
     }
 }
 
-pub struct AccountCheckBuilder {
-    check: AccountCheck,
+pub struct AccountCheckBuilder<'a> {
+    check: AccountCheck<'a>,
 }
 
-impl AccountCheckBuilder {
+impl<'a> AccountCheckBuilder<'a> {
     fn new(pubkey: &Pubkey) -> Self {
         Self {
             check: AccountCheck::new(pubkey),
@@ -224,7 +232,7 @@ impl AccountCheckBuilder {
         self
     }
 
-    pub fn data(mut self, data: Vec<u8>) -> Self {
+    pub fn data(mut self, data: &'a [u8]) -> Self {
         self.check.check_data = Some(data);
         self
     }
@@ -239,7 +247,7 @@ impl AccountCheckBuilder {
         self
     }
 
-    pub fn build(self) -> Check {
+    pub fn build(self) -> Check<'a> {
         Check::new(CheckType::ResultingAccount(self.check))
     }
 }

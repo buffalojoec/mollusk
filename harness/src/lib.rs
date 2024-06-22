@@ -113,6 +113,11 @@ impl Mollusk {
         mollusk
     }
 
+    /// Get the current rent.
+    pub fn get_rent(&self) -> Arc<Rent> {
+        self.sysvar_cache.get_rent().unwrap_or_default()
+    }
+
     /// The main Mollusk API method.
     ///
     /// Process an instruction using the minified Solana Virtual Machine (SVM)
@@ -201,8 +206,9 @@ impl Mollusk {
         instruction: &Instruction,
         accounts: Vec<(Pubkey, AccountSharedData)>,
         checks: &[Check],
-    ) {
+    ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
         result.run_checks(checks);
+        result
     }
 }
