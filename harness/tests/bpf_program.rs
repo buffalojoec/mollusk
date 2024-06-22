@@ -43,7 +43,7 @@ fn test_write_data() {
 
         mollusk.process_and_validate_instruction(
             &account_not_signer_ix,
-            vec![(key, account.clone())],
+            &[(key, account.clone())],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
                 Check::compute_units(272),
@@ -58,7 +58,7 @@ fn test_write_data() {
 
         mollusk.process_and_validate_instruction(
             &data_too_large_ix,
-            vec![(key, account.clone())],
+            &[(key, account.clone())],
             &[
                 Check::err(ProgramError::AccountDataTooSmall),
                 Check::compute_units(281),
@@ -69,7 +69,7 @@ fn test_write_data() {
     // Success.
     mollusk.process_and_validate_instruction(
         &instruction,
-        vec![(key, account.clone())],
+        &[(key, account.clone())],
         &[
             Check::success(),
             Check::compute_units(350),
@@ -121,7 +121,7 @@ fn test_transfer() {
 
         mollusk.process_and_validate_instruction(
             &payer_not_signer_ix,
-            vec![
+            &[
                 (payer, payer_account.clone()),
                 (recipient, recipient_account.clone()),
                 (system_program::id(), system_program_account()),
@@ -137,7 +137,7 @@ fn test_transfer() {
     {
         mollusk.process_and_validate_instruction(
             &instruction,
-            vec![
+            &[
                 (payer, AccountSharedData::default()),
                 (recipient, recipient_account.clone()),
                 (system_program::id(), system_program_account()),
@@ -154,7 +154,7 @@ fn test_transfer() {
     // Success.
     mollusk.process_and_validate_instruction(
         &instruction,
-        vec![
+        &[
             (payer, payer_account.clone()),
             (recipient, recipient_account.clone()),
             (system_program::id(), system_program_account()),
@@ -200,7 +200,7 @@ fn test_close_account() {
 
         mollusk.process_and_validate_instruction(
             &account_not_signer_ix,
-            vec![
+            &[
                 (key, account.clone()),
                 (incinerator::id(), AccountSharedData::default()),
                 (system_program::id(), system_program_account()),
@@ -215,7 +215,7 @@ fn test_close_account() {
     // Success.
     mollusk.process_and_validate_instruction(
         &instruction,
-        vec![
+        &[
             (key, account.clone()),
             (incinerator::id(), AccountSharedData::default()),
             (system_program::id(), system_program_account()),

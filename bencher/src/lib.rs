@@ -9,17 +9,17 @@ use {
     std::path::PathBuf,
 };
 
-pub type Bench = (String, Instruction, Vec<(Pubkey, AccountSharedData)>);
+pub type Bench<'a> = (String, Instruction, &'a [(Pubkey, AccountSharedData)]);
 
-pub struct MolluskComputeUnitBencher {
-    benches: Vec<Bench>,
+pub struct MolluskComputeUnitBencher<'a> {
+    benches: Vec<Bench<'a>>,
     iterations: u64,
     mollusk: Mollusk,
     must_pass: bool,
     out_dir: PathBuf,
 }
 
-impl MolluskComputeUnitBencher {
+impl<'a> MolluskComputeUnitBencher<'a> {
     pub fn new(mollusk: Mollusk) -> Self {
         let mut out_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         out_dir.push("benches");
@@ -32,7 +32,7 @@ impl MolluskComputeUnitBencher {
         }
     }
 
-    pub fn bench(mut self, bench: Bench) -> Self {
+    pub fn bench(mut self, bench: Bench<'a>) -> Self {
         self.benches.push(bench);
         self
     }
@@ -59,9 +59,7 @@ impl MolluskComputeUnitBencher {
                 let mut results = vec![];
 
                 for _ in 0..self.iterations {
-                    let result = self
-                        .mollusk
-                        .process_instruction(&instruction, accounts.clone());
+                    let result = self.mollusk.process_instruction(&instruction, &accounts);
 
                     match result.program_result {
                         ProgramResult::Success => (),

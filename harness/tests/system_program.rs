@@ -16,7 +16,7 @@ fn test_transfer() {
     let transfer_amount = 42_000u64;
 
     let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
-    let accounts = vec![
+    let accounts = [
         (
             sender,
             AccountSharedData::new(base_lamports, 0, &system_program::id()),
@@ -37,7 +37,7 @@ fn test_transfer() {
             .build(),
     ];
 
-    Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);
+    Mollusk::default().process_and_validate_instruction(&instruction, &accounts, &checks);
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn test_transfer_bad_owner() {
     let transfer_amount = 42_000u64;
 
     let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
-    let accounts = vec![
+    let accounts = [
         (
             sender,
             AccountSharedData::new(base_lamports, 0, &Pubkey::new_unique()), // <-- Bad owner.
@@ -64,5 +64,5 @@ fn test_transfer_bad_owner() {
         Check::compute_units(DEFAULT_COMPUTE_UNITS),
     ];
 
-    Mollusk::default().process_and_validate_instruction(&instruction, accounts, &checks);
+    Mollusk::default().process_and_validate_instruction(&instruction, &accounts, &checks);
 }

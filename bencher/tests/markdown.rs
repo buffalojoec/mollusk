@@ -17,37 +17,13 @@ fn test_markdown() {
     let mollusk = Mollusk::new(&program_id, "test_program");
 
     MolluskComputeUnitBencher::new(mollusk)
-        .bench((
-            String::from("bench0"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((
-            String::from("bench1"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((
-            String::from("bench2"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((
-            String::from("bench3"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((
-            String::from("bench4"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((
-            String::from("bench5"),
-            instruction.clone(),
-            accounts.clone(),
-        ))
-        .bench((String::from("bench6"), instruction, accounts))
+        .bench((String::from("bench0"), instruction.clone(), &accounts))
+        .bench((String::from("bench1"), instruction.clone(), &accounts))
+        .bench((String::from("bench2"), instruction.clone(), &accounts))
+        .bench((String::from("bench3"), instruction.clone(), &accounts))
+        .bench((String::from("bench4"), instruction.clone(), &accounts))
+        .bench((String::from("bench5"), instruction.clone(), &accounts))
+        .bench((String::from("bench6"), instruction, &accounts))
         .iterations(100)
         .must_pass(true)
         .out_dir("../target/benches")
