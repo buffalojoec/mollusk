@@ -59,7 +59,7 @@ impl<'a> MolluskComputeUnitBencher<'a> {
                 let mut results = vec![];
 
                 for _ in 0..self.iterations {
-                    let result = self.mollusk.process_instruction(&instruction, &accounts);
+                    let result = self.mollusk.process_instruction(&instruction, accounts);
 
                     match result.program_result {
                         ProgramResult::Success => (),
