@@ -14,7 +14,7 @@ fn test_markdown() {
     let instruction = Instruction::new_with_bytes(program_id, &[0], vec![]);
     let accounts = vec![];
 
-    let mollusk = Mollusk::new(&program_id, "test_program");
+    let mollusk = Mollusk::new(&program_id, "test_program_primary");
 
     MolluskComputeUnitBencher::new(mollusk)
         .bench((String::from("bench0"), instruction.clone(), &accounts))

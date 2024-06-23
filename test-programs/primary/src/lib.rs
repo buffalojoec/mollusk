@@ -2,9 +2,10 @@ use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
     incinerator,
+    instruction::{AccountMeta, Instruction},
     program::invoke,
     program_error::ProgramError,
-    pubkey::Pubkey,
+    pubkey::{Pubkey, PUBKEY_BYTES},
     system_instruction, system_program,
 };
 
@@ -73,6 +74,23 @@ fn process_instruction(
                 &system_instruction::transfer(account_info.key, &incinerator::id(), lamports),
                 &[account_info.clone(), incinerator_info.clone()],
             )?;
+        }
+        Some((4, rest)) if rest.len() >= PUBKEY_BYTES => {
+            // Invoke the "CPI Target" test program, which will write the rest
+            // of the input data to the first account (after the provided
+            // program ID).
+            let account_info = next_account_info(accounts_iter)?;
+
+            let (program_id_bytes, data) = rest.split_at(PUBKEY_BYTES);
+
+            let program_id = Pubkey::new_from_array(program_id_bytes.try_into().unwrap());
+            let instruction = Instruction::new_with_bytes(
+                program_id,
+                data,
+                vec![AccountMeta::new(*account_info.key, true)],
+            );
+
+            invoke(&instruction, &[account_info.clone()])?;
         }
         _ => return Err(ProgramError::InvalidInstructionData),
     }

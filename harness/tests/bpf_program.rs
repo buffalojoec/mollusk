@@ -17,7 +17,7 @@ fn test_write_data() {
 
     let program_id = Pubkey::new_unique();
 
-    let mollusk = Mollusk::new(&program_id, "test_program");
+    let mollusk = Mollusk::new(&program_id, "test_program_primary");
 
     let data = &[1, 2, 3, 4, 5];
     let space = data.len();
@@ -46,7 +46,7 @@ fn test_write_data() {
             &[(key, account.clone())],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(272),
+                Check::compute_units(279),
             ],
         );
     }
@@ -61,7 +61,7 @@ fn test_write_data() {
             &[(key, account.clone())],
             &[
                 Check::err(ProgramError::AccountDataTooSmall),
-                Check::compute_units(281),
+                Check::compute_units(290),
             ],
         );
     }
@@ -72,7 +72,7 @@ fn test_write_data() {
         &[(key, account.clone())],
         &[
             Check::success(),
-            Check::compute_units(350),
+            Check::compute_units(358),
             Check::account(&key)
                 .data(data)
                 .lamports(lamports)
@@ -88,7 +88,7 @@ fn test_transfer() {
 
     let program_id = Pubkey::new_unique();
 
-    let mollusk = Mollusk::new(&program_id, "test_program");
+    let mollusk = Mollusk::new(&program_id, "test_program_primary");
 
     let payer = Pubkey::new_unique();
     let payer_lamports = 100_000_000;
@@ -128,7 +128,7 @@ fn test_transfer() {
             ],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(598),
+                Check::compute_units(605),
             ],
         );
     }
@@ -146,7 +146,7 @@ fn test_transfer() {
                 Check::err(ProgramError::Custom(
                     SystemError::ResultWithNegativeLamports as u32,
                 )),
-                Check::compute_units(2256),
+                Check::compute_units(2261),
             ],
         );
     }
@@ -161,7 +161,7 @@ fn test_transfer() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2366),
+            Check::compute_units(2371),
             Check::account(&payer)
                 .lamports(payer_lamports - transfer_amount)
                 .build(),
@@ -178,7 +178,7 @@ fn test_close_account() {
 
     let program_id = Pubkey::new_unique();
 
-    let mollusk = Mollusk::new(&program_id, "test_program");
+    let mollusk = Mollusk::new(&program_id, "test_program_primary");
 
     let key = Pubkey::new_unique();
     let account = AccountSharedData::new(50_000_000, 50, &program_id);
@@ -207,7 +207,7 @@ fn test_close_account() {
             ],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(598),
+                Check::compute_units(605),
             ],
         );
     }
@@ -222,7 +222,7 @@ fn test_close_account() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2558),
+            Check::compute_units(2563),
             Check::account(&key)
                 .data(&[])
                 .lamports(0)
