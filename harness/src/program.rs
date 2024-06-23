@@ -131,25 +131,6 @@ pub fn create_program_accounts(
     )
 }
 
-pub fn program_account(program_id: &Pubkey) -> AccountSharedData {
-    let data = bincode::serialize(&UpgradeableLoaderState::Program {
-        programdata_address: Pubkey::find_program_address(
-            &[program_id.as_ref()],
-            &bpf_loader_upgradeable::id(),
-        )
-        .0,
-    })
-    .unwrap();
-    let lamports = Rent::default().minimum_balance(data.len());
-    AccountSharedData::from(Account {
-        lamports,
-        data,
-        owner: bpf_loader_upgradeable::id(),
-        executable: true,
-        rent_epoch: 0,
-    })
-}
-
 /// Create a default program cache instance.
 pub fn default_program_cache() -> LoadedProgramsForTxBatch {
     let mut cache = LoadedProgramsForTxBatch::default();

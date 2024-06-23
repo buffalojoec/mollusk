@@ -70,7 +70,9 @@ jobs:
         if: steps.cache-solana-toolchain.outputs.cache-hit != 'true'
         with:
           version: ${{ env.SOLANA_VERSION }}
-      - name: Build test program
-        run: cargo build-sbf --manifest-path test-program/Cargo.toml
+      - name: Build test programs
+        run: |
+          cargo build-sbf --manifest-path test-programs/cpi-target/Cargo.toml
+          cargo build-sbf --manifest-path test-programs/primary/Cargo.toml
       - name: Test
         run: cargo test
