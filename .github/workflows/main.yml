@@ -49,17 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
-        id: cache-solana-toolchain
         with:
-          path: |
-            ~/.local/share/solana/install/releases/${{ env.SOLANA_VERSION }}
-            ~/.cache/solana
-          key: solana-toolchain-${{ env.SOLANA_VERSION }}
-          restore-keys: |
-            solana-toolchain-
-      - uses: actions/cache@v4
-        with:
-          with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
@@ -67,8 +57,8 @@ jobs:
           restore-keys: |
             cargo-build-sbf-
       - uses: metaplex-foundation/actions/install-solana@v1
-        if: steps.cache-solana-toolchain.outputs.cache-hit != 'true'
         with:
+          cache: true
           version: ${{ env.SOLANA_VERSION }}
       - name: Build test programs
         run: |
