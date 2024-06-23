@@ -95,9 +95,6 @@ MolluskComputeUnitBencher::new(mollusk)
     .bench(("bench1", &instruction1, &accounts1))
     .bench(("bench2", &instruction2, &accounts2))
     .bench(("bench3", &instruction3, &accounts3))
-    .bench(("bench4", &instruction4, &accounts4))
-    .bench(("bench5", &instruction5, &accounts5))
-    .bench(("bench6", &instruction6, &accounts6))
     .must_pass(true)
     .out_dir("../target/benches")
     .execute();
@@ -118,6 +115,7 @@ Mollusk will output bench details to the output directory in Markdown.
 
 | Name | CUs | Delta |
 |------|--------|------------|
-| bench1 | 579 | +129 |
+| bench0 | 450 | -- |
+| bench1 | 579 | -129 |
 | bench2 | 1,204 | +754 |
 | bench3 | 2,811 | +2,361 |
