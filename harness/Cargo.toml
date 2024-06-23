@@ -1,7 +1,12 @@
 [package]
-name = "mollusk"
-version = "0.1.0"
-edition = "2021"
+name = "mollusk-svm"
+version = "0.0.1"
+description = "SVM program test harness."
+documentation = "https://docs.rs/mollusk-svm"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
 
 [dependencies]
 bincode = { workspace = true }
@@ -10,7 +15,6 @@ solana-program-runtime = { workspace = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-logger = { workspace = true }
-
 
 [[bench]]
 name = "ips"

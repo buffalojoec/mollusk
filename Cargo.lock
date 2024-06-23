@@ -1659,8 +1659,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "mollusk"
-version = "0.1.0"
+name = "mollusk-svm"
+version = "0.0.1"
 dependencies = [
  "bincode",
  "criterion",
@@ -1672,11 +1672,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "mollusk-bencher"
-version = "0.1.0"
+name = "mollusk-svm-bencher"
+version = "0.0.1"
 dependencies = [
  "chrono",
- "mollusk",
+ "mollusk-svm",
  "num-format",
  "serde_json",
  "solana-logger",
