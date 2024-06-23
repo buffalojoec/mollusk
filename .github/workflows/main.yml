@@ -16,10 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: ~/.rustup/toolchains/${{ env.NIGHTLY_TOOLCHAIN }}
-          key: ${{ runner.os }}-rust-toolchain-${{ env.NIGHTLY_TOOLCHAIN }}
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
@@ -34,14 +30,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
-          path: ~/.rustup/toolchains/${{ env.NIGHTLY_TOOLCHAIN }}
-          key: ${{ runner.os }}-rust-toolchain-${{ env.NIGHTLY_TOOLCHAIN }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-clippy-
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           components: clippy
       - name: Run clippy
-        run: cargo +${{ env.NIGHTLY_TOOLCHAIN }} clippy --all -- --deny=warnings
+        run: cargo +${{ env.NIGHTLY_TOOLCHAIN }} clippy --all --tests -- --deny=warnings
 
   cargo_build_test:
     name: Cargo Build and Test
@@ -49,21 +49,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
-        with:
-          path: ~/.local/share/solana/install/active_release/bin/solana
-          key: ${{ runner.os }}-solana-${{ env.SOLANA_VERSION }}
-      - uses: actions/cache@v4
+        id: cache-solana-toolchain
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.local/share/solana/install/releases/${{ env.SOLANA_VERSION }}
+            ~/.cache/solana
+          key: solana-toolchain-${{ env.SOLANA_VERSION }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            solana-toolchain-
+      - uses: actions/cache@v4
+        with:
+          with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-build-sbf-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-build-sbf-
       - uses: metaplex-foundation/actions/install-solana@v1
+        if: steps.cache-solana-toolchain.outputs.cache-hit != 'true'
         with:
           version: ${{ env.SOLANA_VERSION }}
       - name: Build test program
