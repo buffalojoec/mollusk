@@ -5,13 +5,13 @@ use {
     std::path::Path,
 };
 
-pub(crate) struct MolluskComputeUnitBenchResult {
-    name: String,
+pub(crate) struct MolluskComputeUnitBenchResult<'a> {
+    name: &'a str,
     mean: u64,
 }
 
-impl MolluskComputeUnitBenchResult {
-    pub fn new(name: String, results: Vec<InstructionResult>) -> Self {
+impl<'a> MolluskComputeUnitBenchResult<'a> {
+    pub fn new(name: &'a str, results: Vec<InstructionResult>) -> Self {
         let mut runs = results
             .iter()
             .map(|result| result.compute_units_consumed)
@@ -28,11 +28,23 @@ impl MolluskComputeUnitBenchResult {
 pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBenchResult>) {
     let path = out_dir.join("compute_units.md");
 
+    // Load the existing bench content and parse the most recent table.
     let mut no_changes = true;
-    let previous = parse_last_md_table(&path);
+    let existing_content = if path.exists() {
+        Some(std::fs::read_to_string(&path).unwrap())
+    } else {
+        None
+    };
+    let previous = existing_content
+        .as_ref()
+        .map(|content| parse_last_md_table(content));
 
+    // Prepare to write a new table.
     let mut md_table = md_header();
 
+    // Evaluate the results against the previous table, if any.
+    // If there are changes, write a new table.
+    // If there are no changes, break out and abort gracefully.
     for result in results {
         let delta = match previous.as_ref().and_then(|prev_results| {
             prev_results
@@ -57,7 +69,6 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
                 "- new -".to_string()
             }
         };
-
         md_table.push_str(&format!(
             "| {} | {} | {} |\n",
             result.name, result.mean, delta
@@ -83,27 +94,22 @@ fn md_header() -> String {
     )
 }
 
-fn parse_last_md_table(path: &Path) -> Option<Vec<MolluskComputeUnitBenchResult>> {
-    if !path.exists() {
-        return None;
-    }
-
-    let contents = std::fs::read_to_string(path).unwrap();
+fn parse_last_md_table(content: &str) -> Vec<MolluskComputeUnitBenchResult> {
     let mut results = vec![];
 
-    for line in contents.lines().skip(4) {
+    for line in content.lines().skip(4) {
         if line.starts_with("####") || line.is_empty() {
             break;
         }
 
         let mut parts = line.split('|').skip(1).map(str::trim);
-        let name = parts.next().unwrap().to_string();
+        let name = parts.next().unwrap();
         let mean = parts.next().unwrap().parse().unwrap();
 
         results.push(MolluskComputeUnitBenchResult { name, mean });
     }
 
-    Some(results)
+    results
 }
 
 fn prepend_to_md_file(path: &Path, content: &str) {

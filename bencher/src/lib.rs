@@ -9,7 +9,7 @@ use {
     std::path::PathBuf,
 };
 
-pub type Bench<'a> = (String, Instruction, &'a [(Pubkey, AccountSharedData)]);
+pub type Bench<'a> = (&'a str, &'a Instruction, &'a [(Pubkey, AccountSharedData)]);
 
 pub struct MolluskComputeUnitBencher<'a> {
     benches: Vec<Bench<'a>>,
@@ -59,7 +59,7 @@ impl<'a> MolluskComputeUnitBencher<'a> {
                 let mut results = vec![];
 
                 for _ in 0..self.iterations {
-                    let result = self.mollusk.process_instruction(&instruction, accounts);
+                    let result = self.mollusk.process_instruction(instruction, accounts);
 
                     match result.program_result {
                         ProgramResult::Success => (),
