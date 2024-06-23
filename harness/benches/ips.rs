@@ -49,14 +49,14 @@ fn transfer_checked_unchecked(c: &mut Criterion) {
     // Bench transfer with post-execution checks
     g.bench_function("transfer_checked", |b| {
         b.iter(|| {
-            mollusk.process_and_validate_instruction(&instruction, accounts.clone(), &checks);
+            mollusk.process_and_validate_instruction(&instruction, &accounts, &checks);
         })
     });
 
     // Bench transfer without post-execution checks
     g.bench_function("transfer_unchecked", |b| {
         b.iter(|| {
-            mollusk.process_instruction(&instruction, accounts.clone());
+            mollusk.process_instruction(&instruction, &accounts);
         })
     });
 

@@ -158,7 +158,7 @@ impl Mollusk {
     pub fn process_instruction(
         &self,
         instruction: &Instruction,
-        accounts: Vec<(Pubkey, AccountSharedData)>,
+        accounts: &[(Pubkey, AccountSharedData)],
     ) -> InstructionResult {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
@@ -177,8 +177,9 @@ impl Mollusk {
             .collect::<Vec<_>>();
 
         let transaction_accounts = [(self.program_id, self.program_account.clone())]
-            .into_iter()
+            .iter()
             .chain(accounts)
+            .cloned()
             .collect::<Vec<_>>();
 
         let mut transaction_context = TransactionContext::new(
@@ -237,7 +238,7 @@ impl Mollusk {
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
-        accounts: Vec<(Pubkey, AccountSharedData)>,
+        accounts: &[(Pubkey, AccountSharedData)],
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
