@@ -9,11 +9,10 @@ use {
     std::path::PathBuf,
 };
 
-pub type Bench<'a> = (String, Instruction, &'a [(Pubkey, AccountSharedData)]);
+pub type Bench<'a> = (&'a str, &'a Instruction, &'a [(Pubkey, AccountSharedData)]);
 
 pub struct MolluskComputeUnitBencher<'a> {
     benches: Vec<Bench<'a>>,
-    iterations: u64,
     mollusk: Mollusk,
     must_pass: bool,
     out_dir: PathBuf,
@@ -25,7 +24,6 @@ impl<'a> MolluskComputeUnitBencher<'a> {
         out_dir.push("benches");
         Self {
             benches: Vec::new(),
-            iterations: 25, // Default to 25 iterations.
             mollusk,
             must_pass: false,
             out_dir,
@@ -34,11 +32,6 @@ impl<'a> MolluskComputeUnitBencher<'a> {
 
     pub fn bench(mut self, bench: Bench<'a>) -> Self {
         self.benches.push(bench);
-        self
-    }
-
-    pub fn iterations(mut self, iterations: u64) -> Self {
-        self.iterations = iterations;
         self
     }
 
@@ -56,28 +49,19 @@ impl<'a> MolluskComputeUnitBencher<'a> {
         let bench_results = std::mem::take(&mut self.benches)
             .into_iter()
             .map(|(name, instruction, accounts)| {
-                let mut results = vec![];
-
-                for _ in 0..self.iterations {
-                    let result = self.mollusk.process_instruction(&instruction, accounts);
-
-                    match result.program_result {
-                        ProgramResult::Success => (),
-                        _ => {
-                            if self.must_pass {
-                                panic!(
-                                    "Program execution failed, but `must_pass` was set. Error: \
-                                     {:?}",
-                                    result.program_result
-                                );
-                            }
+                let result = self.mollusk.process_instruction(instruction, accounts);
+                match result.program_result {
+                    ProgramResult::Success => (),
+                    _ => {
+                        if self.must_pass {
+                            panic!(
+                                "Program execution failed, but `must_pass` was set. Error: {:?}",
+                                result.program_result
+                            );
                         }
                     }
-
-                    results.push(result);
                 }
-
-                MolluskComputeUnitBenchResult::new(name, results)
+                MolluskComputeUnitBenchResult::new(name, result)
             })
             .collect::<Vec<_>>();
         write_results(&self.out_dir, bench_results);
