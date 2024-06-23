@@ -112,12 +112,11 @@ name = "compute_units"
 harness = false
 ```
 
-Mollusk will output bench details to the output directory in both JSON and
-Markdown.
+Mollusk will output bench details to the output directory in Markdown.
 
-Markdown example:
+> Note: `Delta` is the change since the last time the bench was run.
 
-| Name | Median | Mark Delta |
+| Name | CUs | Delta |
 |------|--------|------------|
 | bench1 | 579 | +129 |
 | bench2 | 1,204 | +754 |
