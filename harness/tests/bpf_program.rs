@@ -1,9 +1,13 @@
 use {
-    mollusk::{program::system_program_account, result::Check, Mollusk},
+    mollusk::{
+        program::{create_program_account, system_program_account},
+        result::Check,
+        Mollusk,
+    },
     solana_sdk::{
         account::AccountSharedData,
         incinerator,
-        instruction::{AccountMeta, Instruction},
+        instruction::{AccountMeta, Instruction, InstructionError},
         program_error::ProgramError,
         pubkey::Pubkey,
         system_instruction::SystemError,
@@ -228,6 +232,137 @@ fn test_close_account() {
                 .lamports(0)
                 .owner(system_program::id())
                 .closed()
+                .build(),
+        ],
+    );
+}
+
+#[test]
+fn test_cpi() {
+    std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+
+    let program_id = Pubkey::new_unique();
+    let cpi_target_program_id = Pubkey::new_unique();
+
+    let mut mollusk = Mollusk::new(&program_id, "test_program_primary");
+
+    let data = &[1, 2, 3, 4, 5];
+    let space = data.len();
+    let lamports = mollusk.get_rent().minimum_balance(space);
+
+    let key = Pubkey::new_unique();
+    let account = AccountSharedData::new(lamports, space, &cpi_target_program_id);
+
+    let instruction = {
+        let mut instruction_data = vec![4];
+        instruction_data.extend_from_slice(cpi_target_program_id.as_ref());
+        instruction_data.extend_from_slice(data);
+        Instruction::new_with_bytes(
+            program_id,
+            &instruction_data,
+            vec![
+                AccountMeta::new(key, true),
+                AccountMeta::new_readonly(cpi_target_program_id, false),
+            ],
+        )
+    };
+
+    // Fail CPI target program account not provided.
+    {
+        mollusk.process_and_validate_instruction(
+            &instruction,
+            &[(key, account.clone())],
+            &[
+                Check::err(ProgramError::NotEnoughAccountKeys),
+                Check::compute_units(0),
+            ],
+        );
+    }
+
+    // Fail CPI target program not added to test environment.
+    {
+        mollusk.process_and_validate_instruction(
+            &instruction,
+            &[
+                (key, account.clone()),
+                (
+                    cpi_target_program_id,
+                    create_program_account(&cpi_target_program_id),
+                ),
+            ],
+            &[
+                // This is the error thrown by SVM. It also emits the message
+                // "Program is not cached".
+                Check::err(ProgramError::InvalidAccountData),
+                Check::compute_units(1840),
+            ],
+        );
+    }
+
+    mollusk.add_program(&cpi_target_program_id, "test_program_cpi_target");
+
+    // Fail account not signer.
+    {
+        let mut account_not_signer_ix = instruction.clone();
+        account_not_signer_ix.accounts[0].is_signer = false;
+
+        mollusk.process_and_validate_instruction(
+            &account_not_signer_ix,
+            &[
+                (key, account.clone()),
+                (
+                    cpi_target_program_id,
+                    create_program_account(&cpi_target_program_id),
+                ),
+            ],
+            &[
+                Check::instruction_err(InstructionError::PrivilegeEscalation), // CPI
+                Check::compute_units(1841),
+            ],
+        );
+    }
+
+    // Fail data too large.
+    {
+        let mut data_too_large_ix = instruction.clone();
+        let mut too_large_data = vec![4];
+        too_large_data.extend_from_slice(cpi_target_program_id.as_ref());
+        too_large_data.extend_from_slice(&vec![1; space + 2]);
+        data_too_large_ix.data = too_large_data;
+
+        mollusk.process_and_validate_instruction(
+            &data_too_large_ix,
+            &[
+                (key, account.clone()),
+                (
+                    cpi_target_program_id,
+                    create_program_account(&cpi_target_program_id),
+                ),
+            ],
+            &[
+                Check::err(ProgramError::AccountDataTooSmall),
+                Check::compute_units(2162),
+            ],
+        );
+    }
+
+    // Success.
+    mollusk.process_and_validate_instruction(
+        &instruction,
+        &[
+            (key, account.clone()),
+            (
+                cpi_target_program_id,
+                create_program_account(&cpi_target_program_id),
+            ),
+        ],
+        &[
+            Check::success(),
+            Check::compute_units(2279),
+            Check::account(&key)
+                .data(data)
+                .lamports(lamports)
+                .owner(cpi_target_program_id)
                 .build(),
         ],
     );
