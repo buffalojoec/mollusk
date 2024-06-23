@@ -100,7 +100,7 @@ impl Mollusk {
 
         let mut mollusk = Self {
             program_id: *program_id,
-            program_account: program::program_account(program_id),
+            program_account: program::create_program_account(program_id),
             ..Default::default()
         };
 
@@ -113,6 +113,20 @@ impl Mollusk {
         );
 
         mollusk
+    }
+
+    /// Add a program to the test environment.
+    ///
+    /// If you intend to CPI to a program, this is likely what you want to use.
+    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &'static str) {
+        let elf = file::load_program_elf(program_name);
+        program::add_program_to_cache(
+            &mut self.program_cache,
+            program_id,
+            &elf,
+            &self.compute_budget,
+            &self.feature_set,
+        );
     }
 
     /// Get the current rent.
