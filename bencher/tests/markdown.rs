@@ -24,7 +24,6 @@ fn test_markdown() {
         .bench(("bench4", &instruction, &accounts))
         .bench(("bench5", &instruction, &accounts))
         .bench(("bench6", &instruction, &accounts))
-        .iterations(100)
         .must_pass(true)
         .out_dir("../target/benches")
         .execute();

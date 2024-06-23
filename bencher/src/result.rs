@@ -7,21 +7,13 @@ use {
 
 pub(crate) struct MolluskComputeUnitBenchResult<'a> {
     name: &'a str,
-    mean: u64,
+    cus_consumed: u64,
 }
 
 impl<'a> MolluskComputeUnitBenchResult<'a> {
-    pub fn new(name: &'a str, results: Vec<InstructionResult>) -> Self {
-        let mut runs = results
-            .iter()
-            .map(|result| result.compute_units_consumed)
-            .collect::<Vec<_>>();
-        runs.sort();
-
-        let len = runs.len();
-        let mean = runs.iter().sum::<u64>() / len as u64;
-
-        Self { name, mean }
+    pub fn new(name: &'a str, result: InstructionResult) -> Self {
+        let cus_consumed = result.compute_units_consumed;
+        Self { name, cus_consumed }
     }
 }
 
@@ -52,7 +44,7 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
                 .find(|prev_result| prev_result.name == result.name)
         }) {
             Some(prev) => {
-                let delta = result.mean as i64 - prev.mean as i64;
+                let delta = result.cus_consumed as i64 - prev.cus_consumed as i64;
                 if delta == 0 {
                     "--".to_string()
                 } else {
@@ -71,7 +63,7 @@ pub(crate) fn write_results(out_dir: &Path, results: Vec<MolluskComputeUnitBench
         };
         md_table.push_str(&format!(
             "| {} | {} | {} |\n",
-            result.name, result.mean, delta
+            result.name, result.cus_consumed, delta
         ));
     }
 
@@ -87,7 +79,7 @@ fn md_header() -> String {
     format!(
         r#"#### Compute Units: {}
 
-| Name | Mean | Delta |
+| Name | CUs | Delta |
 |------|------|-------|
 "#,
         now
@@ -104,9 +96,9 @@ fn parse_last_md_table(content: &str) -> Vec<MolluskComputeUnitBenchResult> {
 
         let mut parts = line.split('|').skip(1).map(str::trim);
         let name = parts.next().unwrap();
-        let mean = parts.next().unwrap().parse().unwrap();
+        let cus_consumed = parts.next().unwrap().parse().unwrap();
 
-        results.push(MolluskComputeUnitBenchResult { name, mean });
+        results.push(MolluskComputeUnitBenchResult { name, cus_consumed });
     }
 
     results
