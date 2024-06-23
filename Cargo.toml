@@ -7,6 +7,12 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+authors = ["Joe Caulfield <jcaulfield135@gmail.com>"]
+repository = "https://github.com/buffalojoec/mollusk"
+license = "../license"
+edition = "2021"
+
 [workspace.dependencies]
 bincode = "1.3.3"
 num-format = "0.4.4"

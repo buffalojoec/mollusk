@@ -1,5 +1,5 @@
 use {
-    mollusk::{result::Check, Mollusk},
+    mollusk_svm::{result::Check, Mollusk},
     solana_sdk::{
         account::AccountSharedData, instruction::InstructionError, pubkey::Pubkey,
         system_instruction, system_program,

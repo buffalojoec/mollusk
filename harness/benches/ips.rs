@@ -1,7 +1,7 @@
 //! Benches Mollusk invocation (instructions per second)
 use {
     criterion::{criterion_group, criterion_main, Criterion, Throughput},
-    mollusk::{result::Check, Mollusk},
+    mollusk_svm::{result::Check, Mollusk},
     solana_sdk::{
         account::AccountSharedData, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
         system_instruction, system_program,

@@ -1,6 +1,8 @@
+//! Compute unit benchmarking results and checks.
+
 use {
     chrono::{DateTime, Utc},
-    mollusk::result::InstructionResult,
+    mollusk_svm::result::InstructionResult,
     num_format::{Locale, ToFormattedString},
     std::path::Path,
 };

@@ -1,6 +1,6 @@
 use {
-    mollusk::Mollusk,
-    mollusk_bencher::MolluskComputeUnitBencher,
+    mollusk_svm::Mollusk,
+    mollusk_svm_bencher::MolluskComputeUnitBencher,
     solana_sdk::{instruction::Instruction, pubkey::Pubkey},
 };
 

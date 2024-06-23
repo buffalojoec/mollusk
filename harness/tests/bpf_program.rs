@@ -1,5 +1,5 @@
 use {
-    mollusk::{
+    mollusk_svm::{
         program::{create_program_account, system_program_account},
         result::Check,
         Mollusk,
