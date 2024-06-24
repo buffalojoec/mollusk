@@ -48,7 +48,6 @@ use {
         pubkey::Pubkey,
         rent::Rent,
         slot_hashes::SlotHashes,
-        system_program,
         transaction_context::{InstructionAccount, TransactionContext},
     },
     std::sync::Arc,
@@ -78,12 +77,13 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
+        let (program_id, program_account) = program::system_program();
         Self {
             compute_budget: ComputeBudget::default(),
             feature_set: FeatureSet::all_enabled(),
-            program_account: program::system_program_account(),
+            program_account,
             program_cache: program::default_program_cache(),
-            program_id: system_program::id(),
+            program_id,
             sysvar_cache: sysvar::default_sysvar_cache(),
         }
     }
@@ -100,7 +100,7 @@ impl Mollusk {
 
         let mut mollusk = Self {
             program_id: *program_id,
-            program_account: program::create_program_account(program_id),
+            program_account: program::program_account(program_id),
             ..Default::default()
         };
 

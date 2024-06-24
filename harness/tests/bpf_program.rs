@@ -1,6 +1,6 @@
 use {
     mollusk_svm::{
-        program::{create_program_account, system_program_account},
+        program::{program_account, system_program},
         result::Check,
         Mollusk,
     },
@@ -128,7 +128,7 @@ fn test_transfer() {
             &[
                 (payer, payer_account.clone()),
                 (recipient, recipient_account.clone()),
-                (system_program::id(), system_program_account()),
+                system_program(),
             ],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
@@ -144,7 +144,7 @@ fn test_transfer() {
             &[
                 (payer, AccountSharedData::default()),
                 (recipient, recipient_account.clone()),
-                (system_program::id(), system_program_account()),
+                system_program(),
             ],
             &[
                 Check::err(ProgramError::Custom(
@@ -161,7 +161,7 @@ fn test_transfer() {
         &[
             (payer, payer_account.clone()),
             (recipient, recipient_account.clone()),
-            (system_program::id(), system_program_account()),
+            system_program(),
         ],
         &[
             Check::success(),
@@ -207,7 +207,7 @@ fn test_close_account() {
             &[
                 (key, account.clone()),
                 (incinerator::id(), AccountSharedData::default()),
-                (system_program::id(), system_program_account()),
+                system_program(),
             ],
             &[
                 Check::err(ProgramError::MissingRequiredSignature),
@@ -222,7 +222,7 @@ fn test_close_account() {
         &[
             (key, account.clone()),
             (incinerator::id(), AccountSharedData::default()),
-            (system_program::id(), system_program_account()),
+            system_program(),
         ],
         &[
             Check::success(),
@@ -287,7 +287,7 @@ fn test_cpi() {
                 (key, account.clone()),
                 (
                     cpi_target_program_id,
-                    create_program_account(&cpi_target_program_id),
+                    program_account(&cpi_target_program_id),
                 ),
             ],
             &[
@@ -312,7 +312,7 @@ fn test_cpi() {
                 (key, account.clone()),
                 (
                     cpi_target_program_id,
-                    create_program_account(&cpi_target_program_id),
+                    program_account(&cpi_target_program_id),
                 ),
             ],
             &[
@@ -336,7 +336,7 @@ fn test_cpi() {
                 (key, account.clone()),
                 (
                     cpi_target_program_id,
-                    create_program_account(&cpi_target_program_id),
+                    program_account(&cpi_target_program_id),
                 ),
             ],
             &[
@@ -353,7 +353,7 @@ fn test_cpi() {
             (key, account.clone()),
             (
                 cpi_target_program_id,
-                create_program_account(&cpi_target_program_id),
+                program_account(&cpi_target_program_id),
             ),
         ],
         &[
