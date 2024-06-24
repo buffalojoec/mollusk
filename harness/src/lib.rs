@@ -42,12 +42,16 @@ use {
     solana_sdk::{
         account::AccountSharedData,
         clock::Clock,
+        epoch_rewards::EpochRewards,
+        epoch_schedule::EpochSchedule,
         feature_set::FeatureSet,
         hash::Hash,
         instruction::Instruction,
         pubkey::Pubkey,
         rent::Rent,
         slot_hashes::SlotHashes,
+        stake_history::StakeHistory,
+        sysvar::last_restart_slot::LastRestartSlot,
         transaction_context::{InstructionAccount, TransactionContext},
     },
     std::sync::Arc,
@@ -129,40 +133,46 @@ impl Mollusk {
         );
     }
 
+    /// Get the current clock.
+    pub fn get_clock(&self) -> Arc<Clock> {
+        self.sysvar_cache.get_clock().unwrap_or_default()
+    }
+
+    /// Get the current epoch rewards.
+    pub fn get_epoch_rewards(&self) -> Arc<EpochRewards> {
+        self.sysvar_cache.get_epoch_rewards().unwrap_or_default()
+    }
+
+    /// Get the current epoch schedule.
+    pub fn get_epoch_schedule(&self) -> Arc<EpochSchedule> {
+        self.sysvar_cache.get_epoch_schedule().unwrap_or_default()
+    }
+
+    /// Get the current last restart slot.
+    pub fn get_last_restart_slot(&self) -> Arc<LastRestartSlot> {
+        self.sysvar_cache
+            .get_last_restart_slot()
+            .unwrap_or_default()
+    }
+
     /// Get the current rent.
     pub fn get_rent(&self) -> Arc<Rent> {
         self.sysvar_cache.get_rent().unwrap_or_default()
     }
 
+    /// Get the current slot hashes.
+    pub fn get_slot_hashes(&self) -> Arc<SlotHashes> {
+        self.sysvar_cache.get_slot_hashes().unwrap_or_default()
+    }
+
+    /// Get the current stake history.
+    pub fn get_stake_history(&self) -> Arc<StakeHistory> {
+        self.sysvar_cache.get_stake_history().unwrap_or_default()
+    }
+
     /// Warp to a slot by updating the `Clock` and `SlotHashes` sysvars.
     pub fn warp_to_slot(&mut self, slot: u64) {
-        // First update `Clock`.
-        let epoch_schedule = self.sysvar_cache.get_epoch_schedule().unwrap_or_default();
-        let epoch = epoch_schedule.get_epoch(slot);
-        let leader_schedule_epoch = epoch_schedule.get_leader_schedule_epoch(slot);
-        self.sysvar_cache.set_clock(Clock {
-            slot,
-            epoch,
-            leader_schedule_epoch,
-            ..Default::default()
-        });
-
-        // Then update `SlotHashes`.
-        let mut i = 0;
-        if let Some(most_recent_slot_hash) = self
-            .sysvar_cache
-            .get_slot_hashes()
-            .unwrap_or_default()
-            .first()
-        {
-            i = most_recent_slot_hash.0;
-        }
-        let mut new_slot_hashes = vec![];
-        for slot in i..slot + 1 {
-            new_slot_hashes.push((slot, Hash::default()));
-        }
-        self.sysvar_cache
-            .set_slot_hashes(SlotHashes::new(&new_slot_hashes));
+        sysvar::warp_sysvar_cache_to_slot(&mut self.sysvar_cache, slot);
     }
 
     /// The main Mollusk API method.
