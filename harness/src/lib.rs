@@ -34,9 +34,11 @@ pub mod sysvar;
 
 use {
     crate::result::{Check, InstructionResult},
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
-        compute_budget::ComputeBudget, invoke_context::InvokeContext,
-        loaded_programs::LoadedProgramsForTxBatch, sysvar_cache::SysvarCache,
+        invoke_context::{EnvironmentConfig, InvokeContext},
+        loaded_programs::ProgramCacheForTxBatch,
+        sysvar_cache::SysvarCache,
         timings::ExecuteTimings,
     },
     solana_sdk::{
@@ -49,6 +51,7 @@ use {
         rent::Rent,
         slot_hashes::SlotHashes,
         system_program,
+        sysvar::SysvarId,
         transaction_context::{InstructionAccount, TransactionContext},
     },
     std::sync::Arc,
@@ -65,7 +68,7 @@ pub struct Mollusk {
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub program_account: AccountSharedData,
-    pub program_cache: LoadedProgramsForTxBatch,
+    pub program_cache: ProgramCacheForTxBatch,
     pub program_id: Pubkey,
     pub sysvar_cache: SysvarCache,
 }
@@ -140,12 +143,12 @@ impl Mollusk {
         let epoch_schedule = self.sysvar_cache.get_epoch_schedule().unwrap_or_default();
         let epoch = epoch_schedule.get_epoch(slot);
         let leader_schedule_epoch = epoch_schedule.get_leader_schedule_epoch(slot);
-        self.sysvar_cache.set_clock(Clock {
+        let new_clock = Clock {
             slot,
             epoch,
             leader_schedule_epoch,
             ..Default::default()
-        });
+        };
 
         // Then update `SlotHashes`.
         let mut i = 0;
@@ -161,8 +164,17 @@ impl Mollusk {
         for slot in i..slot + 1 {
             new_slot_hashes.push((slot, Hash::default()));
         }
+        let new_slot_hashes = SlotHashes::new(&new_slot_hashes);
+
         self.sysvar_cache
-            .set_slot_hashes(SlotHashes::new(&new_slot_hashes));
+            .fill_missing_entries(|pubkey, set_sysvar| {
+                if pubkey.eq(&Clock::id()) {
+                    set_sysvar(&bincode::serialize(&new_clock).unwrap());
+                }
+                if pubkey.eq(&SlotHashes::id()) {
+                    set_sysvar(&bincode::serialize(&new_slot_hashes).unwrap());
+                }
+            });
     }
 
     /// The main Mollusk API method.
@@ -199,23 +211,28 @@ impl Mollusk {
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
             Rent::default(),
-            self.compute_budget.max_invoke_stack_height,
+            self.compute_budget.max_instruction_stack_depth,
             self.compute_budget.max_instruction_trace_length,
         );
 
         let invoke_result = {
-            let mut programs_modified_by_tx = LoadedProgramsForTxBatch::default();
+            let mut program_cache = self.program_cache.clone();
+
+            let environment_config = EnvironmentConfig::new(
+                Hash::default(),
+                /* epoch_total_stake */ None,
+                /* epoch_vote_accounts */ None,
+                Arc::new(self.feature_set.clone()),
+                /* lamports_per_signature */ 0,
+                &self.sysvar_cache,
+            );
 
             let mut invoke_context = InvokeContext::new(
                 &mut transaction_context,
-                &self.sysvar_cache,
+                &mut program_cache,
+                environment_config,
                 None,
                 self.compute_budget,
-                &self.program_cache,
-                &mut programs_modified_by_tx,
-                Arc::new(self.feature_set.clone()),
-                Hash::default(),
-                0,
             );
 
             invoke_context.process_instruction(

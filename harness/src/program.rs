@@ -2,10 +2,10 @@
 
 use {
     solana_bpf_loader_program::syscalls::create_program_runtime_environment_v1,
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
-        compute_budget::ComputeBudget,
         invoke_context::BuiltinFunctionWithContext,
-        loaded_programs::{LoadProgramMetrics, LoadedProgram, LoadedProgramsForTxBatch},
+        loaded_programs::{LoadProgramMetrics, ProgramCacheEntry, ProgramCacheForTxBatch},
     },
     solana_sdk::{
         account::{Account, AccountSharedData},
@@ -37,8 +37,8 @@ impl Builtin {
         })
     }
 
-    fn program_cache_entry(&self) -> Arc<LoadedProgram> {
-        Arc::new(LoadedProgram::new_builtin(
+    fn program_cache_entry(&self) -> Arc<ProgramCacheEntry> {
+        Arc::new(ProgramCacheEntry::new_builtin(
             0,
             self.name.len(),
             self.entrypoint,
@@ -132,8 +132,8 @@ pub fn create_program_accounts(
 }
 
 /// Create a default program cache instance.
-pub fn default_program_cache() -> LoadedProgramsForTxBatch {
-    let mut cache = LoadedProgramsForTxBatch::default();
+pub fn default_program_cache() -> ProgramCacheForTxBatch {
+    let mut cache = ProgramCacheForTxBatch::default();
     BUILTINS.iter().for_each(|builtin| {
         let program_id = builtin.program_id;
         let entry = builtin.program_cache_entry();
@@ -144,7 +144,7 @@ pub fn default_program_cache() -> LoadedProgramsForTxBatch {
 
 /// Add a program to a program cache.
 pub fn add_program_to_cache(
-    cache: &mut LoadedProgramsForTxBatch,
+    cache: &mut ProgramCacheForTxBatch,
     program_id: &Pubkey,
     elf: &[u8],
     compute_budget: &ComputeBudget,
@@ -156,12 +156,11 @@ pub fn add_program_to_cache(
     cache.replenish(
         *program_id,
         Arc::new(
-            LoadedProgram::new(
+            ProgramCacheEntry::new(
                 &bpf_loader_upgradeable::id(),
                 environment,
                 0,
                 0,
-                None,
                 elf,
                 elf.len(),
                 &mut LoadProgramMetrics::default(),
