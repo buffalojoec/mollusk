@@ -25,18 +25,6 @@ struct Builtin {
 }
 
 impl Builtin {
-    fn program_account(&self) -> AccountSharedData {
-        let data = self.name.as_bytes().to_vec();
-        let lamports = Rent::default().minimum_balance(data.len());
-        AccountSharedData::from(Account {
-            lamports,
-            data,
-            owner: native_loader::id(),
-            executable: true,
-            rent_epoch: 0,
-        })
-    }
-
     fn program_cache_entry(&self) -> Arc<LoadedProgram> {
         Arc::new(LoadedProgram::new_builtin(
             0,
@@ -60,20 +48,33 @@ static BUILTINS: &[Builtin] = &[
     /* ... */
 ];
 
-/// Get the account for the system program.
-pub fn system_program_account() -> AccountSharedData {
-    BUILTINS[0].program_account()
+fn builtin_program_account(program_id: &Pubkey, name: &str) -> (Pubkey, AccountSharedData) {
+    let data = name.as_bytes().to_vec();
+    let lamports = Rent::default().minimum_balance(data.len());
+    let account = AccountSharedData::from(Account {
+        lamports,
+        data,
+        owner: native_loader::id(),
+        executable: true,
+        rent_epoch: 0,
+    });
+    (*program_id, account)
 }
 
-/// Get the account for the BPF Loader Upgradeable program.
-pub fn bpf_loader_upgradeable_program_account() -> AccountSharedData {
-    BUILTINS[1].program_account()
+/// Get the key and account for the system program.
+pub fn system_program() -> (Pubkey, AccountSharedData) {
+    builtin_program_account(&BUILTINS[0].program_id, BUILTINS[0].name)
+}
+
+/// Get the key and account for the BPF Loader Upgradeable program.
+pub fn bpf_loader_upgradeable_program() -> (Pubkey, AccountSharedData) {
+    builtin_program_account(&BUILTINS[1].program_id, BUILTINS[1].name)
 }
 
 /* ... */
 
 /// Create a BPF Loader Upgradeable program account.
-pub fn create_program_account(program_id: &Pubkey) -> AccountSharedData {
+pub fn program_account(program_id: &Pubkey) -> AccountSharedData {
     let programdata_address =
         Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id()).0;
     let data = bincode::serialize(&UpgradeableLoaderState::Program {
@@ -91,7 +92,7 @@ pub fn create_program_account(program_id: &Pubkey) -> AccountSharedData {
 }
 
 /// Create a BPF Loader Upgradeable program data account.
-pub fn create_program_data_account(elf: &[u8]) -> AccountSharedData {
+pub fn program_data_account(elf: &[u8]) -> AccountSharedData {
     let data = {
         let elf_offset = UpgradeableLoaderState::size_of_programdata_metadata();
         let data_len = elf_offset + elf.len();
@@ -121,14 +122,8 @@ pub fn create_program_data_account(elf: &[u8]) -> AccountSharedData {
 ///
 /// Returns a tuple, where the first element is the program account and the
 /// second element is the program data account.
-pub fn create_program_accounts(
-    program_id: &Pubkey,
-    elf: &[u8],
-) -> (AccountSharedData, AccountSharedData) {
-    (
-        create_program_account(program_id),
-        create_program_data_account(elf),
-    )
+pub fn program_accounts(program_id: &Pubkey, elf: &[u8]) -> (AccountSharedData, AccountSharedData) {
+    (program_account(program_id), program_data_account(elf))
 }
 
 /// Create a default program cache instance.
