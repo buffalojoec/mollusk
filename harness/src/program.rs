@@ -18,6 +18,58 @@ use {
     std::sync::Arc,
 };
 
+pub struct ProgramCache {
+    cache: LoadedProgramsForTxBatch,
+}
+
+impl Default for ProgramCache {
+    fn default() -> Self {
+        let mut cache = LoadedProgramsForTxBatch::default();
+        BUILTINS.iter().for_each(|builtin| {
+            let program_id = builtin.program_id;
+            let entry = builtin.program_cache_entry();
+            cache.replenish(program_id, entry);
+        });
+        Self { cache }
+    }
+}
+
+impl ProgramCache {
+    pub(crate) fn cache(&self) -> &LoadedProgramsForTxBatch {
+        &self.cache
+    }
+
+    /// Add a program to a program cache.
+    pub fn add_program(
+        &mut self,
+        program_id: &Pubkey,
+        elf: &[u8],
+        compute_budget: &ComputeBudget,
+        feature_set: &FeatureSet,
+    ) {
+        let environment = Arc::new(
+            create_program_runtime_environment_v1(feature_set, compute_budget, false, false)
+                .unwrap(),
+        );
+        self.cache.replenish(
+            *program_id,
+            Arc::new(
+                LoadedProgram::new(
+                    &bpf_loader_upgradeable::id(),
+                    environment,
+                    0,
+                    0,
+                    None,
+                    elf,
+                    elf.len(),
+                    &mut LoadProgramMetrics::default(),
+                )
+                .unwrap(),
+            ),
+        );
+    }
+}
+
 struct Builtin {
     program_id: Pubkey,
     name: &'static str,
@@ -124,44 +176,4 @@ pub fn program_data_account(elf: &[u8]) -> AccountSharedData {
 /// second element is the program data account.
 pub fn program_accounts(program_id: &Pubkey, elf: &[u8]) -> (AccountSharedData, AccountSharedData) {
     (program_account(program_id), program_data_account(elf))
-}
-
-/// Create a default program cache instance.
-pub fn default_program_cache() -> LoadedProgramsForTxBatch {
-    let mut cache = LoadedProgramsForTxBatch::default();
-    BUILTINS.iter().for_each(|builtin| {
-        let program_id = builtin.program_id;
-        let entry = builtin.program_cache_entry();
-        cache.replenish(program_id, entry);
-    });
-    cache
-}
-
-/// Add a program to a program cache.
-pub fn add_program_to_cache(
-    cache: &mut LoadedProgramsForTxBatch,
-    program_id: &Pubkey,
-    elf: &[u8],
-    compute_budget: &ComputeBudget,
-    feature_set: &FeatureSet,
-) {
-    let environment = Arc::new(
-        create_program_runtime_environment_v1(feature_set, compute_budget, false, false).unwrap(),
-    );
-    cache.replenish(
-        *program_id,
-        Arc::new(
-            LoadedProgram::new(
-                &bpf_loader_upgradeable::id(),
-                environment,
-                0,
-                0,
-                None,
-                elf,
-                elf.len(),
-                &mut LoadProgramMetrics::default(),
-            )
-            .unwrap(),
-        ),
-    );
 }
