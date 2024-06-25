@@ -43,6 +43,29 @@ impl TryFrom<proto::InstrEffects> for FixtureEffects {
     }
 }
 
+impl From<&FixtureEffects> for proto::InstrEffects {
+    fn from(input: &FixtureEffects) -> Self {
+        let FixtureEffects {
+            compute_units_consumed,
+            execution_time,
+            program_result,
+            resulting_accounts,
+        } = input;
+
+        let resulting_accounts = resulting_accounts
+            .iter()
+            .map(|a| a.into())
+            .collect::<Vec<_>>();
+
+        proto::InstrEffects {
+            compute_units_consumed: *compute_units_consumed,
+            execution_time: *execution_time,
+            program_result: *program_result,
+            resulting_accounts,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {super::*, solana_sdk::account::Account};

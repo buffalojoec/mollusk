@@ -7,12 +7,22 @@ pub mod context;
 pub mod effects;
 pub mod error;
 pub mod feature_set;
-mod proto {
+pub mod proto {
     include!(concat!(env!("OUT_DIR"), "/org.mollusk.svm.rs"));
 }
 pub mod sysvars;
 
-use {context::FixtureContext, effects::FixtureEffects, error::FixtureError, prost::Message};
+use {
+    context::FixtureContext,
+    effects::FixtureEffects,
+    error::FixtureError,
+    prost::Message,
+    std::{
+        fs::{self, File},
+        io::{Read, Write},
+        path::Path,
+    },
+};
 
 /// A fixture for invoking a single instruction against a simulated Solana
 /// program runtime environment, for a given program.
@@ -41,10 +51,55 @@ impl TryFrom<proto::InstrFixture> for Fixture {
     }
 }
 
+impl From<&Fixture> for proto::InstrFixture {
+    fn from(fixture: &Fixture) -> Self {
+        let Fixture { input, output } = fixture;
+        proto::InstrFixture {
+            input: Some(input.into()),
+            output: Some(output.into()),
+        }
+    }
+}
+
 impl Fixture {
     /// Decode a `Protobuf` blob into a `Fixture`.
     pub fn decode(blob: &[u8]) -> Result<Self, FixtureError> {
         let fixture: proto::InstrFixture = proto::InstrFixture::decode(blob)?;
         fixture.try_into()
+    }
+
+    /// Dumps the `Fixture` to a protobuf binary blob file.
+    /// The file name is a hash of the fixture with the `.fix` extension.
+    pub fn dump(&self, dir_path: &str) {
+        let proto_fixture: proto::InstrFixture = self.into();
+
+        let mut buf = Vec::new();
+        proto_fixture
+            .encode(&mut buf)
+            .expect("Failed to encode fixture");
+
+        let hash = solana_sdk::hash::hash(&buf);
+        let file_name = format!("instr-{}.fix", bs58::encode(hash).into_string());
+
+        fs::create_dir_all(dir_path).expect("Failed to create directory");
+        let file_path = Path::new(dir_path).join(file_name);
+
+        let mut file = File::create(file_path).unwrap();
+        file.write_all(&buf)
+            .expect("Failed to write fixture to file");
+    }
+
+    /// Reads a `Fixture` from a protobuf binary blob file.
+    pub fn read_from_file(file_path: &str) -> Result<Self, FixtureError> {
+        if !file_path.ends_with(".fix") {
+            panic!("Invalid fixture file extension: {}", file_path);
+        }
+
+        let mut file = File::open(file_path).expect("Failed to open fixture file");
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)
+            .expect("Failed to read fixture file");
+
+        Self::decode(&buf)
     }
 }

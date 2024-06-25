@@ -93,6 +93,18 @@ impl From<proto::FeatureSet> for FeatureSet {
     }
 }
 
+impl From<&FeatureSet> for proto::FeatureSet {
+    fn from(input: &FeatureSet) -> Self {
+        let features = input
+            .active
+            .keys()
+            .map(|id| u64::from_le_bytes(id.to_bytes()[..8].try_into().unwrap()))
+            .collect();
+
+        proto::FeatureSet { features }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

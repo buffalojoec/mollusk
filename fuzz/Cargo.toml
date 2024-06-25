@@ -9,6 +9,7 @@ license = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
+bs58 = { workspace = true }
 prost = { workspace = true }
 prost-types = { workspace = true }
 mollusk-svm = { path = "../harness" }

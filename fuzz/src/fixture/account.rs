@@ -4,7 +4,7 @@
 use {
     super::{error::FixtureError, proto},
     solana_sdk::{
-        account::{Account, AccountSharedData},
+        account::{Account, AccountSharedData, ReadableAccount},
         pubkey::Pubkey,
     },
 };
@@ -43,6 +43,20 @@ impl TryFrom<proto::AcctState> for (Pubkey, AccountSharedData) {
                 rent_epoch,
             }),
         ))
+    }
+}
+
+impl From<&(Pubkey, AccountSharedData)> for proto::AcctState {
+    fn from(input: &(Pubkey, AccountSharedData)) -> Self {
+        let (pubkey, account) = input;
+        proto::AcctState {
+            address: pubkey.to_bytes().to_vec(),
+            owner: account.owner().to_bytes().to_vec(),
+            lamports: account.lamports(),
+            data: account.data().to_vec(),
+            executable: account.executable(),
+            rent_epoch: account.rent_epoch(),
+        }
     }
 }
 
