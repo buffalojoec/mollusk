@@ -34,6 +34,7 @@ pub mod sysvar;
 
 use {
     crate::{
+        program::ProgramCache,
         result::{Check, InstructionResult},
         sysvar::Sysvars,
     },
@@ -65,7 +66,7 @@ pub struct Mollusk {
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub program_account: AccountSharedData,
-    pub program_cache: LoadedProgramsForTxBatch,
+    pub program_cache: ProgramCache,
     pub program_id: Pubkey,
     pub sysvars: Sysvars,
 }
@@ -83,7 +84,7 @@ impl Default for Mollusk {
             compute_budget: ComputeBudget::default(),
             feature_set: FeatureSet::all_enabled(),
             program_account,
-            program_cache: program::default_program_cache(),
+            program_cache: ProgramCache::default(),
             program_id,
             sysvars: Sysvars::default(),
         }
@@ -97,22 +98,12 @@ impl Mollusk {
     /// Once loaded, adds the program to the program cache and updates the
     /// Mollusk instance with the program's ID and account.
     pub fn new(program_id: &Pubkey, program_name: &'static str) -> Self {
-        let elf = file::load_program_elf(program_name);
-
         let mut mollusk = Self {
             program_id: *program_id,
             program_account: program::program_account(program_id),
             ..Default::default()
         };
-
-        program::add_program_to_cache(
-            &mut mollusk.program_cache,
-            program_id,
-            &elf,
-            &mollusk.compute_budget,
-            &mollusk.feature_set,
-        );
-
+        mollusk.add_program(program_id, program_name);
         mollusk
     }
 
@@ -121,13 +112,8 @@ impl Mollusk {
     /// If you intend to CPI to a program, this is likely what you want to use.
     pub fn add_program(&mut self, program_id: &Pubkey, program_name: &'static str) {
         let elf = file::load_program_elf(program_name);
-        program::add_program_to_cache(
-            &mut self.program_cache,
-            program_id,
-            &elf,
-            &self.compute_budget,
-            &self.feature_set,
-        );
+        self.program_cache
+            .add_program(program_id, &elf, &self.compute_budget, &self.feature_set);
     }
 
     /// Warp the test environment to a slot by updating sysvars.
@@ -182,7 +168,7 @@ impl Mollusk {
                 &sysvar_cache,
                 None,
                 self.compute_budget,
-                &self.program_cache,
+                self.program_cache.cache(),
                 &mut programs_modified_by_tx,
                 Arc::new(self.feature_set.clone()),
                 Hash::default(),
