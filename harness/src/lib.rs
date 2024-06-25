@@ -35,7 +35,7 @@ pub mod sysvar;
 use {
     crate::{
         result::{Check, InstructionResult},
-        sysvar::MolluskSysvars,
+        sysvar::Sysvars,
     },
     solana_program_runtime::{
         compute_budget::ComputeBudget, invoke_context::InvokeContext,
@@ -44,17 +44,11 @@ use {
     },
     solana_sdk::{
         account::AccountSharedData,
-        clock::Clock,
-        epoch_rewards::EpochRewards,
-        epoch_schedule::EpochSchedule,
         feature_set::FeatureSet,
         hash::Hash,
         instruction::Instruction,
         pubkey::Pubkey,
         rent::Rent,
-        slot_hashes::SlotHashes,
-        stake_history::StakeHistory,
-        sysvar::last_restart_slot::LastRestartSlot,
         transaction_context::{InstructionAccount, TransactionContext},
     },
     std::sync::Arc,
@@ -73,7 +67,7 @@ pub struct Mollusk {
     pub program_account: AccountSharedData,
     pub program_cache: LoadedProgramsForTxBatch,
     pub program_id: Pubkey,
-    pub sysvars: MolluskSysvars,
+    pub sysvars: Sysvars,
 }
 
 impl Default for Mollusk {
@@ -91,7 +85,7 @@ impl Default for Mollusk {
             program_account,
             program_cache: program::default_program_cache(),
             program_id,
-            sysvars: MolluskSysvars::default(),
+            sysvars: Sysvars::default(),
         }
     }
 }
@@ -134,41 +128,6 @@ impl Mollusk {
             &self.compute_budget,
             &self.feature_set,
         );
-    }
-
-    /// Get the `Clock` sysvar.
-    pub fn get_clock(&self) -> &Clock {
-        &self.sysvars.clock
-    }
-
-    /// Get the `EpochRewards` sysvar.
-    pub fn get_epoch_rewards(&self) -> &EpochRewards {
-        &self.sysvars.epoch_rewards
-    }
-
-    /// Get the `EpochSchedule` sysvar.
-    pub fn get_epoch_schedule(&self) -> &EpochSchedule {
-        &self.sysvars.epoch_schedule
-    }
-
-    /// Get the `LastRestartSlot` sysvar.
-    pub fn get_last_restart_slot(&self) -> &LastRestartSlot {
-        &self.sysvars.last_restart_slot
-    }
-
-    /// Get the `Rent` sysvar.
-    pub fn get_rent(&self) -> &Rent {
-        &self.sysvars.rent
-    }
-
-    /// Get the `SlotHashes` sysvar.
-    pub fn get_slot_hashes(&self) -> &SlotHashes {
-        &self.sysvars.slot_hashes
-    }
-
-    /// Get the `StakeHistory` sysvar.
-    pub fn get_stake_history(&self) -> &StakeHistory {
-        &self.sysvars.stake_history
     }
 
     /// Warp the test environment to a slot by updating sysvars.

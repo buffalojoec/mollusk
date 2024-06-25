@@ -25,7 +25,7 @@ fn test_write_data() {
 
     let data = &[1, 2, 3, 4, 5];
     let space = data.len();
-    let lamports = mollusk.get_rent().minimum_balance(space);
+    let lamports = mollusk.sysvars.rent.minimum_balance(space);
 
     let key = Pubkey::new_unique();
     let account = AccountSharedData::new(lamports, space, &program_id);
@@ -80,7 +80,7 @@ fn test_write_data() {
             Check::account(&key)
                 .data(data)
                 .lamports(lamports)
-                .owner(program_id)
+                .owner(&program_id)
                 .build(),
         ],
     );
@@ -230,7 +230,7 @@ fn test_close_account() {
             Check::account(&key)
                 .data(&[])
                 .lamports(0)
-                .owner(system_program::id())
+                .owner(&system_program::id())
                 .closed()
                 .build(),
         ],
@@ -248,7 +248,7 @@ fn test_cpi() {
 
     let data = &[1, 2, 3, 4, 5];
     let space = data.len();
-    let lamports = mollusk.get_rent().minimum_balance(space);
+    let lamports = mollusk.sysvars.rent.minimum_balance(space);
 
     let key = Pubkey::new_unique();
     let account = AccountSharedData::new(lamports, space, &cpi_target_program_id);
@@ -362,7 +362,7 @@ fn test_cpi() {
             Check::account(&key)
                 .data(data)
                 .lamports(lamports)
-                .owner(cpi_target_program_id)
+                .owner(&cpi_target_program_id)
                 .build(),
         ],
     );

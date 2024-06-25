@@ -18,7 +18,7 @@ use {
 // around it for modifying its contents.
 /// Mollusk sysvars.
 #[derive(Default)]
-pub struct MolluskSysvars {
+pub struct Sysvars {
     pub clock: Clock,
     pub epoch_rewards: EpochRewards,
     pub epoch_schedule: EpochSchedule,
@@ -28,7 +28,7 @@ pub struct MolluskSysvars {
     pub stake_history: StakeHistory,
 }
 
-impl MolluskSysvars {
+impl Sysvars {
     /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: Slot) {
         // First update `Clock`.
@@ -54,8 +54,8 @@ impl MolluskSysvars {
     }
 }
 
-impl From<&MolluskSysvars> for SysvarCache {
-    fn from(mollusk_cache: &MolluskSysvars) -> Self {
+impl From<&Sysvars> for SysvarCache {
+    fn from(mollusk_cache: &Sysvars) -> Self {
         let mut sysvar_cache = SysvarCache::default();
         sysvar_cache.fill_missing_entries(|pubkey, set_sysvar| {
             if pubkey.eq(&Clock::id()) {
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_warp_to_slot() {
-        let mut sysvars = MolluskSysvars::default();
+        let mut sysvars = Sysvars::default();
         assert_eq!(sysvars.clock.slot, 0);
 
         sysvars.warp_to_slot(200);
@@ -133,7 +133,7 @@ mod tests {
             stake_history
         };
 
-        let sysvars = MolluskSysvars {
+        let sysvars = Sysvars {
             clock,
             epoch_rewards,
             epoch_schedule,

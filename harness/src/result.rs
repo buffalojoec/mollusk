@@ -116,7 +116,7 @@ impl InstructionResult {
                             check_lamports, actual_lamports
                         );
                     }
-                    if let Some(check_owner) = &account.check_owner {
+                    if let Some(check_owner) = account.check_owner {
                         let actual_owner = resulting_account.owner();
                         assert_eq!(
                             check_owner, actual_owner,
@@ -200,7 +200,7 @@ struct AccountCheck<'a> {
     pubkey: Pubkey,
     check_data: Option<&'a [u8]>,
     check_lamports: Option<u64>,
-    check_owner: Option<Pubkey>,
+    check_owner: Option<&'a Pubkey>,
     check_state: Option<AccountStateCheck>,
 }
 
@@ -242,7 +242,7 @@ impl<'a> AccountCheckBuilder<'a> {
         self
     }
 
-    pub fn owner(mut self, owner: Pubkey) -> Self {
+    pub fn owner(mut self, owner: &'a Pubkey) -> Self {
         self.check.check_owner = Some(owner);
         self
     }
