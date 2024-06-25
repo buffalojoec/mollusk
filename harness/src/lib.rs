@@ -33,7 +33,10 @@ pub mod result;
 pub mod sysvar;
 
 use {
-    crate::result::{Check, InstructionResult},
+    crate::{
+        result::{Check, InstructionResult},
+        sysvar::MolluskSysvars,
+    },
     solana_program_runtime::{
         compute_budget::ComputeBudget, invoke_context::InvokeContext,
         loaded_programs::LoadedProgramsForTxBatch, sysvar_cache::SysvarCache,
@@ -70,7 +73,7 @@ pub struct Mollusk {
     pub program_account: AccountSharedData,
     pub program_cache: LoadedProgramsForTxBatch,
     pub program_id: Pubkey,
-    pub sysvar_cache: SysvarCache,
+    pub sysvars: MolluskSysvars,
 }
 
 impl Default for Mollusk {
@@ -88,7 +91,7 @@ impl Default for Mollusk {
             program_account,
             program_cache: program::default_program_cache(),
             program_id,
-            sysvar_cache: sysvar::default_sysvar_cache(),
+            sysvars: MolluskSysvars::default(),
         }
     }
 }
@@ -133,46 +136,44 @@ impl Mollusk {
         );
     }
 
-    /// Get the current clock.
-    pub fn get_clock(&self) -> Arc<Clock> {
-        self.sysvar_cache.get_clock().unwrap_or_default()
+    /// Get the `Clock` sysvar.
+    pub fn get_clock(&self) -> &Clock {
+        &self.sysvars.clock
     }
 
-    /// Get the current epoch rewards.
-    pub fn get_epoch_rewards(&self) -> Arc<EpochRewards> {
-        self.sysvar_cache.get_epoch_rewards().unwrap_or_default()
+    /// Get the `EpochRewards` sysvar.
+    pub fn get_epoch_rewards(&self) -> &EpochRewards {
+        &self.sysvars.epoch_rewards
     }
 
-    /// Get the current epoch schedule.
-    pub fn get_epoch_schedule(&self) -> Arc<EpochSchedule> {
-        self.sysvar_cache.get_epoch_schedule().unwrap_or_default()
+    /// Get the `EpochSchedule` sysvar.
+    pub fn get_epoch_schedule(&self) -> &EpochSchedule {
+        &self.sysvars.epoch_schedule
     }
 
-    /// Get the current last restart slot.
-    pub fn get_last_restart_slot(&self) -> Arc<LastRestartSlot> {
-        self.sysvar_cache
-            .get_last_restart_slot()
-            .unwrap_or_default()
+    /// Get the `LastRestartSlot` sysvar.
+    pub fn get_last_restart_slot(&self) -> &LastRestartSlot {
+        &self.sysvars.last_restart_slot
     }
 
-    /// Get the current rent.
-    pub fn get_rent(&self) -> Arc<Rent> {
-        self.sysvar_cache.get_rent().unwrap_or_default()
+    /// Get the `Rent` sysvar.
+    pub fn get_rent(&self) -> &Rent {
+        &self.sysvars.rent
     }
 
-    /// Get the current slot hashes.
-    pub fn get_slot_hashes(&self) -> Arc<SlotHashes> {
-        self.sysvar_cache.get_slot_hashes().unwrap_or_default()
+    /// Get the `SlotHashes` sysvar.
+    pub fn get_slot_hashes(&self) -> &SlotHashes {
+        &self.sysvars.slot_hashes
     }
 
-    /// Get the current stake history.
-    pub fn get_stake_history(&self) -> Arc<StakeHistory> {
-        self.sysvar_cache.get_stake_history().unwrap_or_default()
+    /// Get the `StakeHistory` sysvar.
+    pub fn get_stake_history(&self) -> &StakeHistory {
+        &self.sysvars.stake_history
     }
 
-    /// Warp to a slot by updating the `Clock` and `SlotHashes` sysvars.
+    /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: u64) {
-        sysvar::warp_sysvar_cache_to_slot(&mut self.sysvar_cache, slot);
+        self.sysvars.warp_to_slot(slot)
     }
 
     /// The main Mollusk API method.
@@ -215,10 +216,11 @@ impl Mollusk {
 
         let invoke_result = {
             let mut programs_modified_by_tx = LoadedProgramsForTxBatch::default();
+            let sysvar_cache = SysvarCache::from(&self.sysvars);
 
             let mut invoke_context = InvokeContext::new(
                 &mut transaction_context,
-                &self.sysvar_cache,
+                &sysvar_cache,
                 None,
                 self.compute_budget,
                 &self.program_cache,
