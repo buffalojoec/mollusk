@@ -1,0 +1,18 @@
+[package]
+name = "mollusk-svm-fuzz"
+version = "0.0.1"
+description = "SVM program fuzz harness."
+documentation = "https://docs.rs/mollusk-svm-fuzz"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+prost = { workspace = true }
+prost-types = { workspace = true }
+solana-sdk = { workspace = true }
+thiserror = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }
