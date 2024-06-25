@@ -1725,6 +1725,7 @@ version = "0.0.1"
 dependencies = [
  "bincode",
  "criterion",
+ "mollusk-svm-fuzz",
  "solana-bpf-loader-program",
  "solana-logger",
  "solana-program-runtime",
@@ -1749,22 +1750,12 @@ name = "mollusk-svm-fuzz"
 version = "0.0.1"
 dependencies = [
  "bs58 0.5.1",
- "mollusk-svm",
  "prost",
  "prost-build",
  "prost-types",
  "solana-program-runtime",
  "solana-sdk",
  "thiserror",
-]
-
-[[package]]
-name = "mollusk-svm-oyster"
-version = "0.0.1"
-dependencies = [
- "mollusk-svm",
- "mollusk-svm-fuzz",
- "solana-sdk",
 ]
 
 [[package]]

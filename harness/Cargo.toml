@@ -8,8 +8,12 @@ repository = { workspace = true }
 license = { workspace = true }
 edition = { workspace = true }
 
+[features]
+fuzz = ["dep:mollusk-svm-fuzz"]
+
 [dependencies]
 bincode = { workspace = true }
+mollusk-svm-fuzz = { path = "./fuzz", optional = true }
 solana-bpf-loader-program = { workspace = true }
 solana-program-runtime = { workspace = true }
 solana-system-program = { workspace = true }

@@ -1,9 +1,8 @@
 [workspace]
 members = [
     "bencher",
-    "fuzz",
     "harness",
-    "oyster",
+    "harness/fuzz",
     "test-programs/cpi-target",
     "test-programs/primary",
 ]

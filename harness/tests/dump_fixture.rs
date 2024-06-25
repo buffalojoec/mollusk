@@ -1,6 +1,7 @@
+#![cfg(feature = "fuzz")]
+
 use {
-    mollusk_svm_fuzz::fixture::Fixture,
-    mollusk_svm_oyster::{result::Check, Mollusk, Oyster},
+    mollusk_svm::{fuzz::fixture::Fixture, result::Check, Mollusk},
     solana_sdk::{
         account::AccountSharedData, feature_set::FeatureSet, pubkey::Pubkey, system_instruction,
         system_program,
@@ -82,7 +83,7 @@ fn test_dump() {
             .build(),
     ];
 
-    Oyster::process_and_validate_instruction(&mollusk, &instruction, &accounts, &checks);
+    mollusk.process_and_validate_instruction(&instruction, &accounts, &checks);
 
     let fixture_path = find_fixture(FIXTURES_DIR).unwrap();
     let fixture = Fixture::read_from_file(&fixture_path).unwrap();

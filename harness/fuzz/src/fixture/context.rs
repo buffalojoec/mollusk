@@ -3,12 +3,11 @@
 
 use {
     super::{error::FixtureError, proto, sysvars::FixtureSysvarContext},
-    mollusk_svm::Mollusk,
     solana_program_runtime::compute_budget::ComputeBudget,
     solana_sdk::{
         account::{AccountSharedData, ReadableAccount},
         feature_set::FeatureSet,
-        instruction::{AccountMeta, Instruction},
+        instruction::AccountMeta,
         pubkey::Pubkey,
     },
 };
@@ -146,36 +145,6 @@ impl From<&FixtureContext> for proto::InstrContext {
             program_id,
             instr_accounts,
             data: instruction_data.clone(),
-            accounts,
-        }
-    }
-}
-
-impl FixtureContext {
-    pub fn from_mollusk_test(
-        mollusk: &Mollusk,
-        instruction: &Instruction,
-        accounts: &[(Pubkey, AccountSharedData)],
-    ) -> Self {
-        let Mollusk {
-            compute_budget,
-            feature_set,
-            sysvars,
-            program_id,
-            ..
-        } = mollusk;
-
-        let instruction_accounts = instruction.accounts.clone();
-        let instruction_data = instruction.data.clone();
-        let accounts = accounts.to_vec();
-
-        Self {
-            compute_budget: *compute_budget,
-            feature_set: feature_set.clone(),
-            sysvar_context: sysvars.into(),
-            program_id: *program_id,
-            instruction_accounts,
-            instruction_data,
             accounts,
         }
     }
