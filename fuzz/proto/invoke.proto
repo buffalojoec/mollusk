@@ -1,6 +1,7 @@
 syntax = "proto3";
 package org.mollusk.svm;
 
+import "compute_budget.proto";
 import "sysvars.proto";
 
 // A set of feature flags.
@@ -33,42 +34,40 @@ message InstrAcct {
 // The execution context of an instruction. Contains all required
 // information to independently replay an instruction.
 message InstrContext {
+    ComputeBudget compute_budget = 1;
+
+    FeatureSet feature_set = 2;
+
+    SysvarContext sysvars = 3;
+
     // The program invoked.
-    bytes program_id = 1;
-
-    // The BPF loader ID if the program_id is a user deployed program.
-    bytes loader_id = 2;
-
-    FeatureSet feature_set = 3;
-
-    SysvarContext sysvars = 4;
-
-    // Account state accessed by the instruction.
-    repeated AcctState accounts = 5;
+    bytes program_id = 4;
 
     // Account access list for this instruction (refers to above accounts list)
-    repeated InstrAcct instr_accounts = 6;
+    repeated InstrAcct instr_accounts = 5;
 
     // The input data passed to program execution.
-    bytes data = 7;
+    bytes data = 6;
+
+    // Account state accessed by the instruction.
+    repeated AcctState accounts = 7;
 }
 
 // The results of executing an InstrContext.
 message InstrEffects {
-    // result is zero if the instruction executed successfully.
-    // Otherwise, a non-zero error code. Error codes are implementation
-    // defined.
-    int32 result = 1;
+    // Compute units consumed by the instruction.
+    uint64 compute_units_consumed = 1;
 
-    // Some error cases additionally have a custom error code. Unlike
-    // the expected_result, this is stable across clients.
-    uint64 custom_err = 2;
+    // Execution time for instruction.
+    uint64 execution_time = 2;
 
-    // Copies of accounts that were changed. May be in an arbitrary
-    // order. The pubkey of each account is unique in this list. Each
-    // account address modified here must also be in the
-    // InstrContext.
-    repeated AcctState modified_accounts = 3;
+    // Program return code. Zero is success, errors are non-zero.
+    uint32 program_result = 3;
+
+    // Copies of accounts that were provided to the instruction. May be in an
+    // arbitrary order. The pubkey of each account is unique in this list. Each
+    // account address must also be in the InstrContext.
+    repeated AcctState resulting_accounts = 4;
 }
 
 // An instruction processing test fixture.

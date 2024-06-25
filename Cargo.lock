@@ -1739,9 +1739,11 @@ dependencies = [
 name = "mollusk-svm-fuzz"
 version = "0.0.1"
 dependencies = [
+ "mollusk-svm",
  "prost",
  "prost-build",
  "prost-types",
+ "solana-program-runtime",
  "solana-sdk",
  "thiserror",
 ]

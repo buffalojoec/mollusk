@@ -6,13 +6,16 @@ use {
 };
 
 /// Represents the effects of a single instruction.
+#[derive(Debug)]
 pub struct FixtureEffects {
-    /// The result of the instruction.
-    pub result: i32,
-    /// The custom error of the instruction, if any.
-    pub custom_error: u64,
+    /// Compute units consumed by the instruction.
+    pub compute_units_consumed: u64,
+    /// Execution time for instruction.
+    pub execution_time: u64,
+    // Program return code. Zero is success, errors are non-zero.
+    pub program_result: u32,
     /// Resulting accounts with state, to be checked post-simulation.
-    pub modified_accounts: Vec<(Pubkey, AccountSharedData)>,
+    pub resulting_accounts: Vec<(Pubkey, AccountSharedData)>,
 }
 
 impl TryFrom<proto::InstrEffects> for FixtureEffects {
@@ -20,20 +23,22 @@ impl TryFrom<proto::InstrEffects> for FixtureEffects {
 
     fn try_from(input: proto::InstrEffects) -> Result<Self, Self::Error> {
         let proto::InstrEffects {
-            result,
-            custom_err: custom_error,
-            modified_accounts,
+            compute_units_consumed,
+            execution_time,
+            program_result,
+            resulting_accounts,
         } = input;
 
-        let modified_accounts = modified_accounts
+        let resulting_accounts = resulting_accounts
             .into_iter()
             .map(|acct_state| acct_state.try_into())
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self {
-            result,
-            custom_error,
-            modified_accounts,
+            compute_units_consumed,
+            execution_time,
+            program_result,
+            resulting_accounts,
         })
     }
 }
@@ -49,9 +54,10 @@ mod tests {
         let address2 = Pubkey::new_unique();
         let owner2 = Pubkey::new_unique();
 
-        let result = 0;
-        let custom_error = 0;
-        let modified_accounts = vec![
+        let compute_units_consumed = 50_000;
+        let execution_time = 100;
+        let program_result = 0;
+        let resulting_accounts = vec![
             proto::AcctState {
                 address: address1.to_bytes().to_vec(),
                 owner: owner1.to_bytes().to_vec(),
@@ -71,17 +77,19 @@ mod tests {
         ];
 
         let input = proto::InstrEffects {
-            result,
-            custom_err: custom_error,
-            modified_accounts,
+            compute_units_consumed,
+            execution_time,
+            program_result,
+            resulting_accounts,
         };
 
         let effects = FixtureEffects::try_from(input).unwrap();
-        assert_eq!(effects.result, result);
-        assert_eq!(effects.custom_error, custom_error);
-        assert_eq!(effects.modified_accounts.len(), 2);
+        assert_eq!(effects.compute_units_consumed, compute_units_consumed);
+        assert_eq!(effects.execution_time, execution_time);
+        assert_eq!(effects.program_result, program_result);
+        assert_eq!(effects.resulting_accounts.len(), 2);
 
-        let (pubkey, account) = &effects.modified_accounts[0];
+        let (pubkey, account) = &effects.resulting_accounts[0];
         assert_eq!(*pubkey, address1);
         assert_eq!(
             *account,
@@ -94,7 +102,7 @@ mod tests {
             })
         );
 
-        let (pubkey, account) = &effects.modified_accounts[1];
+        let (pubkey, account) = &effects.resulting_accounts[1];
         assert_eq!(*pubkey, address2);
         assert_eq!(
             *account,

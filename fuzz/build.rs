@@ -4,6 +4,7 @@ fn main() -> Result<()> {
     let proto_base_path = std::path::PathBuf::from("proto");
 
     let protos = &[
+        proto_base_path.join("compute_budget.proto"),
         proto_base_path.join("sysvars.proto"),
         proto_base_path.join("invoke.proto"),
     ];

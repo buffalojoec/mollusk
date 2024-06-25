@@ -2,6 +2,7 @@
 //! program runtime environment, for a given program.
 
 pub mod account;
+pub mod compute_budget;
 pub mod context;
 pub mod effects;
 pub mod error;
@@ -15,6 +16,7 @@ use {context::FixtureContext, effects::FixtureEffects, error::FixtureError, pros
 
 /// A fixture for invoking a single instruction against a simulated Solana
 /// program runtime environment, for a given program.
+#[derive(Debug)]
 pub struct Fixture {
     /// The fixture inputs.
     pub input: FixtureContext,

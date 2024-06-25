@@ -11,6 +11,8 @@ edition = { workspace = true }
 [dependencies]
 prost = { workspace = true }
 prost-types = { workspace = true }
+mollusk-svm = { path = "../harness" }
+solana-program-runtime = { workspace = true }
 solana-sdk = { workspace = true }
 thiserror = { workspace = true }
 
