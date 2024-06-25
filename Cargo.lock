@@ -1759,6 +1759,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk-svm-oyster"
+version = "0.0.1"
+dependencies = [
+ "mollusk-svm",
+ "mollusk-svm-fuzz",
+ "solana-sdk",
+]
+
+[[package]]
 name = "multimap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -2,6 +2,7 @@
 
 use {
     super::{error::FixtureError, proto},
+    mollusk_svm::sysvar::Sysvars as MolluskSysvars,
     solana_sdk::{
         clock::Clock,
         epoch_rewards::EpochRewards,
@@ -241,6 +242,20 @@ impl From<&FixtureSysvarContext> for proto::SysvarContext {
             rent: Some(rent.into()),
             slot_hashes: Some(slot_hashes.into()),
             stake_history: Some(stake_history.into()),
+        }
+    }
+}
+
+impl From<&MolluskSysvars> for FixtureSysvarContext {
+    fn from(input: &MolluskSysvars) -> Self {
+        let slot_hashes = SlotHashes::new(&input.slot_hashes);
+        Self {
+            clock: input.clock.clone(),
+            epoch_rewards: input.epoch_rewards,
+            epoch_schedule: input.epoch_schedule,
+            rent: input.rent,
+            slot_hashes,
+            stake_history: input.stake_history.clone(),
         }
     }
 }

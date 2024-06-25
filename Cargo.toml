@@ -3,6 +3,7 @@ members = [
     "bencher",
     "fuzz",
     "harness",
+    "oyster",
     "test-programs/cpi-target",
     "test-programs/primary",
 ]

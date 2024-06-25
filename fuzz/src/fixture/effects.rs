@@ -2,6 +2,7 @@
 
 use {
     super::{error::FixtureError, proto},
+    mollusk_svm::result::{InstructionResult, ProgramResult},
     solana_sdk::{account::AccountSharedData, pubkey::Pubkey},
 };
 
@@ -61,6 +62,32 @@ impl From<&FixtureEffects> for proto::InstrEffects {
             compute_units_consumed: *compute_units_consumed,
             execution_time: *execution_time,
             program_result: *program_result,
+            resulting_accounts,
+        }
+    }
+}
+
+impl FixtureEffects {
+    pub fn from_mollusk_result(result: &InstructionResult) -> Self {
+        let compute_units_consumed = result.compute_units_consumed;
+        let execution_time = result.execution_time;
+
+        let program_result = match &result.program_result {
+            ProgramResult::Success => 0,
+            ProgramResult::Failure(e) => e.clone().into(),
+            ProgramResult::UnknownError(_) => u64::MAX, //TODO
+        } as u32; // Also TODO.
+
+        let resulting_accounts = result
+            .resulting_accounts
+            .iter()
+            .map(|(pubkey, account)| (*pubkey, account.clone()))
+            .collect();
+
+        Self {
+            compute_units_consumed,
+            execution_time,
+            program_result,
             resulting_accounts,
         }
     }
