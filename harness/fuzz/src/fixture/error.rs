@@ -28,4 +28,7 @@ pub enum FixtureError {
     /// The output fixture is invalid.
     #[error("Invalid fixture output")]
     InvalidFixtureOutput,
+    /// The provided JSON fixture is invalid.
+    #[error("Invalid JSON fixture")]
+    InvalidJsonFixture,
 }

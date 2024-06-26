@@ -2,6 +2,7 @@
 
 use {
     super::{error::FixtureError, proto},
+    serde::{Deserialize, Serialize},
     solana_sdk::{
         clock::Clock,
         epoch_rewards::EpochRewards,
@@ -14,7 +15,7 @@ use {
 };
 
 /// A fixture containing the Solana runtime sysvars.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct FixtureSysvarContext {
     /// `Clock` sysvar.
     pub clock: Clock,

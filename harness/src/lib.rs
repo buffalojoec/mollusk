@@ -215,6 +215,9 @@ impl Mollusk {
     /// will convert the provided test to a fuzz fixture and write it to the
     /// provided directory.
     ///
+    /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
+    /// JSON format.
+    ///
     /// ```ignore
     /// EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
     /// ```
@@ -227,9 +230,20 @@ impl Mollusk {
         let result = self.process_instruction(instruction, accounts);
 
         #[cfg(feature = "fuzz")]
-        if let Ok(dir_path) = std::env::var("EJECT_FUZZ_FIXTURES") {
-            fuzz::build_fixture_from_mollusk_test(&self, instruction, accounts, &result, checks)
-                .dump(&dir_path);
+        {
+            let proto_dir = std::env::var("EJECT_FUZZ_FIXTURES").ok();
+            let json_dir = std::env::var("EJECT_FUZZ_FIXTURES_JSON").ok();
+            if proto_dir.is_some() || json_dir.is_some() {
+                let fixture = fuzz::build_fixture_from_mollusk_test(
+                    &self,
+                    instruction,
+                    accounts,
+                    &result,
+                    checks,
+                );
+                proto_dir.map(|dir| fixture.dump(&dir));
+                json_dir.map(|dir| fixture.dump_json(&dir));
+            }
         }
 
         result.run_checks(checks);

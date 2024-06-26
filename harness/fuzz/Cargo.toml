@@ -12,6 +12,9 @@ edition = { workspace = true }
 bs58 = { workspace = true }
 prost = { workspace = true }
 prost-types = { workspace = true }
+serde = { workspace = true }
+serde_derive = { workspace = true }
+serde_json = { workspace = true }
 solana-program-runtime = { workspace = true }
 solana-sdk = { workspace = true }
 thiserror = { workspace = true }
