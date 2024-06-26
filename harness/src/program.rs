@@ -95,6 +95,11 @@ static BUILTINS: &[Builtin] = &[
         entrypoint: solana_system_program::system_processor::Entrypoint::vm,
     },
     Builtin {
+        program_id: bpf_loader::id(),
+        name: "solana_bpf_loader_program",
+        entrypoint: solana_bpf_loader_program::Entrypoint::vm,
+    },
+    Builtin {
         program_id: bpf_loader_upgradeable::id(),
         name: "solana_bpf_loader_upgradeable_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
