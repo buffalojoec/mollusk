@@ -40,7 +40,7 @@ impl ProgramCache {
         &self.cache
     }
 
-    /// Add a program to a program cache.
+    /// Add a program to the cache.
     pub fn add_program(
         &mut self,
         program_id: &Pubkey,
@@ -70,9 +70,16 @@ impl ProgramCache {
             ),
         );
     }
+
+    /// Add a builtin program to the cache.
+    pub fn add_builtin(&mut self, builtin: Builtin) {
+        let program_id = builtin.program_id;
+        let entry = builtin.program_cache_entry();
+        self.cache.replenish(program_id, entry);
+    }
 }
 
-struct Builtin {
+pub struct Builtin {
     program_id: Pubkey,
     name: &'static str,
     entrypoint: BuiltinFunctionWithContext,
