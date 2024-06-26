@@ -9,6 +9,7 @@ use {
     },
     solana_sdk::{
         account::{Account, AccountSharedData},
+        bpf_loader,
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         feature_set::FeatureSet,
         native_loader,
@@ -43,6 +44,7 @@ impl ProgramCache {
     pub fn add_program(
         &mut self,
         program_id: &Pubkey,
+        loader_key: &Pubkey,
         elf: &[u8],
         compute_budget: &ComputeBudget,
         feature_set: &FeatureSet,
@@ -55,7 +57,7 @@ impl ProgramCache {
             *program_id,
             Arc::new(
                 LoadedProgram::new(
-                    &bpf_loader_upgradeable::id(),
+                    loader_key,
                     environment,
                     0,
                     0,
@@ -124,6 +126,18 @@ pub fn bpf_loader_upgradeable_program() -> (Pubkey, AccountSharedData) {
 }
 
 /* ... */
+
+/// Create a BPF Loader 2 program account.
+pub fn program_account_loader_2(elf: &[u8]) -> AccountSharedData {
+    let lamports = Rent::default().minimum_balance(elf.len());
+    AccountSharedData::from(Account {
+        lamports,
+        data: elf.to_vec(),
+        owner: bpf_loader::id(),
+        executable: true,
+        rent_epoch: 0,
+    })
+}
 
 /// Create a BPF Loader Upgradeable program account.
 pub fn program_account(program_id: &Pubkey) -> AccountSharedData {

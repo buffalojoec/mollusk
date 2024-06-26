@@ -45,6 +45,7 @@ use {
     },
     solana_sdk::{
         account::AccountSharedData,
+        bpf_loader_upgradeable,
         feature_set::FeatureSet,
         hash::Hash,
         instruction::Instruction,
@@ -112,8 +113,26 @@ impl Mollusk {
     /// If you intend to CPI to a program, this is likely what you want to use.
     pub fn add_program(&mut self, program_id: &Pubkey, program_name: &'static str) {
         let elf = file::load_program_elf(program_name);
-        self.program_cache
-            .add_program(program_id, &elf, &self.compute_budget, &self.feature_set);
+        self.program_cache.add_program(
+            program_id,
+            &bpf_loader_upgradeable::id(),
+            &elf,
+            &self.compute_budget,
+            &self.feature_set,
+        );
+    }
+
+    /// Add a program to the test environment using a provided ELF.
+    ///
+    /// If you intend to CPI to a program, this is likely what you want to use.
+    pub fn add_program_with_elf(&mut self, program_id: &Pubkey, loader_key: &Pubkey, elf: &[u8]) {
+        self.program_cache.add_program(
+            program_id,
+            loader_key,
+            elf,
+            &self.compute_budget,
+            &self.feature_set,
+        );
     }
 
     /// Warp the test environment to a slot by updating sysvars.
