@@ -2,10 +2,10 @@
 
 use {
     solana_bpf_loader_program::syscalls::create_program_runtime_environment_v1,
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
-        compute_budget::ComputeBudget,
         invoke_context::BuiltinFunctionWithContext,
-        loaded_programs::{LoadProgramMetrics, LoadedProgram, LoadedProgramsForTxBatch},
+        loaded_programs::{LoadProgramMetrics, ProgramCacheEntry, ProgramCacheForTxBatch},
     },
     solana_sdk::{
         account::{Account, AccountSharedData},
@@ -16,27 +16,29 @@ use {
         pubkey::Pubkey,
         rent::Rent,
     },
-    std::sync::Arc,
+    std::sync::{Arc, RwLock},
 };
 
 pub struct ProgramCache {
-    cache: LoadedProgramsForTxBatch,
+    cache: RwLock<ProgramCacheForTxBatch>,
 }
 
 impl Default for ProgramCache {
     fn default() -> Self {
-        let mut cache = LoadedProgramsForTxBatch::default();
+        let mut cache = ProgramCacheForTxBatch::default();
         BUILTINS.iter().for_each(|builtin| {
             let program_id = builtin.program_id;
             let entry = builtin.program_cache_entry();
             cache.replenish(program_id, entry);
         });
-        Self { cache }
+        Self {
+            cache: RwLock::new(cache),
+        }
     }
 }
 
 impl ProgramCache {
-    pub(crate) fn cache(&self) -> &LoadedProgramsForTxBatch {
+    pub(crate) fn cache(&self) -> &RwLock<ProgramCacheForTxBatch> {
         &self.cache
     }
 
@@ -53,15 +55,14 @@ impl ProgramCache {
             create_program_runtime_environment_v1(feature_set, compute_budget, false, false)
                 .unwrap(),
         );
-        self.cache.replenish(
+        self.cache.write().unwrap().replenish(
             *program_id,
             Arc::new(
-                LoadedProgram::new(
+                ProgramCacheEntry::new(
                     loader_key,
                     environment,
                     0,
                     0,
-                    None,
                     elf,
                     elf.len(),
                     &mut LoadProgramMetrics::default(),
@@ -75,7 +76,7 @@ impl ProgramCache {
     pub fn add_builtin(&mut self, builtin: Builtin) {
         let program_id = builtin.program_id;
         let entry = builtin.program_cache_entry();
-        self.cache.replenish(program_id, entry);
+        self.cache.write().unwrap().replenish(program_id, entry);
     }
 }
 
@@ -86,8 +87,8 @@ pub struct Builtin {
 }
 
 impl Builtin {
-    fn program_cache_entry(&self) -> Arc<LoadedProgram> {
-        Arc::new(LoadedProgram::new_builtin(
+    fn program_cache_entry(&self) -> Arc<ProgramCacheEntry> {
+        Arc::new(ProgramCacheEntry::new_builtin(
             0,
             self.name.len(),
             self.entrypoint,

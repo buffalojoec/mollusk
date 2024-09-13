@@ -38,15 +38,17 @@ use {
         result::{Check, InstructionResult},
         sysvar::Sysvars,
     },
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
-        compute_budget::ComputeBudget, invoke_context::InvokeContext,
-        loaded_programs::LoadedProgramsForTxBatch, sysvar_cache::SysvarCache,
+        invoke_context::{EnvironmentConfig, InvokeContext},
+        sysvar_cache::SysvarCache,
         timings::ExecuteTimings,
     },
     solana_sdk::{
         account::AccountSharedData,
         bpf_loader_upgradeable,
         feature_set::FeatureSet,
+        fee::FeeStructure,
         hash::Hash,
         instruction::Instruction,
         pubkey::Pubkey,
@@ -66,6 +68,7 @@ const PROGRAM_INDICES: &[u16] = &[0];
 pub struct Mollusk {
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
+    pub fee_structure: FeeStructure,
     pub program_account: AccountSharedData,
     pub program_cache: ProgramCache,
     pub program_id: Pubkey,
@@ -84,6 +87,7 @@ impl Default for Mollusk {
         Self {
             compute_budget: ComputeBudget::default(),
             feature_set: FeatureSet::all_enabled(),
+            fee_structure: FeeStructure::default(),
             program_account,
             program_cache: ProgramCache::default(),
             program_id,
@@ -174,27 +178,27 @@ impl Mollusk {
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
             Rent::default(),
-            self.compute_budget.max_invoke_stack_height,
+            self.compute_budget.max_instruction_stack_depth,
             self.compute_budget.max_instruction_trace_length,
         );
 
         let invoke_result = {
-            let mut programs_modified_by_tx = LoadedProgramsForTxBatch::default();
-            let sysvar_cache = SysvarCache::from(&self.sysvars);
-
-            let mut invoke_context = InvokeContext::new(
+            let mut cache = self.program_cache.cache().write().unwrap();
+            InvokeContext::new(
                 &mut transaction_context,
-                &sysvar_cache,
+                &mut cache,
+                EnvironmentConfig::new(
+                    Hash::default(),
+                    None,
+                    None,
+                    Arc::new(self.feature_set.clone()),
+                    self.fee_structure.lamports_per_signature,
+                    &SysvarCache::from(&self.sysvars),
+                ),
                 None,
                 self.compute_budget,
-                self.program_cache.cache(),
-                &mut programs_modified_by_tx,
-                Arc::new(self.feature_set.clone()),
-                Hash::default(),
-                0,
-            );
-
-            invoke_context.process_instruction(
+            )
+            .process_instruction(
                 &instruction.data,
                 &instruction_accounts,
                 PROGRAM_INDICES,
