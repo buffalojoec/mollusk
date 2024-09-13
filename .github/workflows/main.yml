@@ -8,7 +8,7 @@ on:
 
 env:
   NIGHTLY_TOOLCHAIN: nightly-2023-10-05
-  SOLANA_VERSION: 1.18.14
+  SOLANA_VERSION: 2.0.0
 
 jobs:
   rust_fmt:
