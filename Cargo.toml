@@ -10,7 +10,7 @@ resolver = "2"
 [workspace.package]
 authors = ["Joe Caulfield <jcaulfield135@gmail.com>"]
 repository = "https://github.com/buffalojoec/mollusk"
-license = "../license"
+license = "MIT"
 edition = "2021"
 
 [workspace.dependencies]
