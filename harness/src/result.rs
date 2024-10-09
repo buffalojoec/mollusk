@@ -67,27 +67,27 @@ impl InstructionResult {
                     let check_units = *units;
                     let actual_units = self.compute_units_consumed;
                     assert_eq!(
-                        check_units, actual_units,
-                        "Checking compute units consumed: expected {}, got {}",
-                        check_units, actual_units
+                        actual_units, check_units,
+                        "CHECK: compute units: got: {}, expected {}",
+                        actual_units, check_units,
                     );
                 }
                 CheckType::ExecutionTime(time) => {
                     let check_time = *time;
                     let actual_time = self.execution_time;
                     assert_eq!(
-                        check_time, actual_time,
-                        "Checking execution time: expected {}, got {}",
-                        check_time, actual_time
+                        actual_time, check_time,
+                        "CHECK: execution time: got: {}, expected {}",
+                        actual_time, check_time,
                     );
                 }
                 CheckType::ProgramResult(result) => {
                     let check_result = result;
                     let actual_result = &self.program_result;
                     assert_eq!(
-                        check_result, actual_result,
-                        "Checking program result: expected {:?}, got {:?}",
-                        check_result, actual_result
+                        actual_result, check_result,
+                        "CHECK: program result: got {:?}, expected {:?}",
+                        actual_result, check_result,
                     );
                 }
                 CheckType::ResultingAccount(account) => {
@@ -103,25 +103,25 @@ impl InstructionResult {
                     if let Some(check_data) = account.check_data {
                         let actual_data = resulting_account.data();
                         assert_eq!(
-                            check_data, actual_data,
-                            "Checking account data: expected {:?}, got {:?}",
-                            check_data, actual_data
+                            actual_data, check_data,
+                            "CHECK: account data: got {:?}, expected {:?}",
+                            actual_data, check_data,
                         );
                     }
                     if let Some(check_lamports) = account.check_lamports {
                         let actual_lamports = resulting_account.lamports();
                         assert_eq!(
-                            check_lamports, actual_lamports,
-                            "Checking account lamports: expected {}, got {}",
-                            check_lamports, actual_lamports
+                            actual_lamports, check_lamports,
+                            "CHECK: account lamports: got {}, expected {}",
+                            actual_lamports, check_lamports,
                         );
                     }
                     if let Some(check_owner) = account.check_owner {
                         let actual_owner = resulting_account.owner();
                         assert_eq!(
-                            check_owner, actual_owner,
-                            "Checking account owner: expected {}, got {}",
-                            check_owner, actual_owner
+                            actual_owner, check_owner,
+                            "CHECK: account owner: got {}, expected {}",
+                            actual_owner, check_owner,
                         );
                     }
                     if let Some(check_state) = &account.check_state {
@@ -130,7 +130,7 @@ impl InstructionResult {
                                 assert_eq!(
                                     &AccountSharedData::default(),
                                     resulting_account,
-                                    "Checking account closed: expected true, got false"
+                                    "CHECK: account closed: got false, expected true"
                                 );
                             }
                         }
