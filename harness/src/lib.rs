@@ -52,7 +52,6 @@ use {
         hash::Hash,
         instruction::Instruction,
         pubkey::Pubkey,
-        rent::Rent,
         transaction_context::{InstructionAccount, TransactionContext},
     },
     std::sync::Arc,
@@ -225,7 +224,7 @@ impl Mollusk {
 
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
-            Rent::default(),
+            self.sysvars.rent.clone(),
             self.compute_budget.max_instruction_stack_depth,
             self.compute_budget.max_instruction_trace_length,
         );
