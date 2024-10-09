@@ -58,6 +58,8 @@ use {
     std::sync::Arc,
 };
 
+const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
+
 const PROGRAM_ACCOUNTS_LEN: usize = 1;
 const PROGRAM_INDICES: &[u16] = &[0];
 
@@ -102,7 +104,7 @@ impl Mollusk {
     /// Attempts the load the program's ELF file from the default search paths.
     /// Once loaded, adds the program to the program cache and updates the
     /// Mollusk instance with the program's ID and account.
-    pub fn new(program_id: &Pubkey, program_name: &'static str) -> Self {
+    pub fn new(program_id: &Pubkey, program_name: &str) -> Self {
         let mut mollusk = Self {
             program_id: *program_id,
             program_account: program::create_program_account_loader_v3(program_id),
@@ -115,21 +117,41 @@ impl Mollusk {
     /// Add a program to the test environment.
     ///
     /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &'static str) {
+    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &str) {
         let elf = file::load_program_elf(program_name);
-        self.program_cache.add_program(
-            program_id,
-            &bpf_loader_upgradeable::id(),
-            &elf,
-            &self.compute_budget,
-            &self.feature_set,
-        );
+        self.add_program_with_elf(program_id, &elf);
+    }
+
+    /// Add a program to the test environment under a specific loader.
+    ///
+    /// If you intend to CPI to a program, this is likely what you want to use.
+    pub fn add_program_with_loader(
+        &mut self,
+        program_id: &Pubkey,
+        program_name: &str,
+        loader_key: &Pubkey,
+    ) {
+        let elf = file::load_program_elf(program_name);
+        self.add_program_with_elf_and_loader(program_id, &elf, loader_key);
     }
 
     /// Add a program to the test environment using a provided ELF.
     ///
     /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program_with_elf(&mut self, program_id: &Pubkey, loader_key: &Pubkey, elf: &[u8]) {
+    pub fn add_program_with_elf(&mut self, program_id: &Pubkey, elf: &[u8]) {
+        self.add_program_with_elf_and_loader(program_id, elf, &DEFAULT_LOADER_KEY);
+    }
+
+    /// Add a program to the test environment using a provided ELF under a
+    /// specific loader.
+    ///
+    /// If you intend to CPI to a program, this is likely what you want to use.
+    pub fn add_program_with_elf_and_loader(
+        &mut self,
+        program_id: &Pubkey,
+        elf: &[u8],
+        loader_key: &Pubkey,
+    ) {
         self.program_cache.add_program(
             program_id,
             loader_key,
