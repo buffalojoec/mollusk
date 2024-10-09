@@ -83,7 +83,7 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
-        let (program_id, program_account) = program::system_program();
+        let (program_id, program_account) = program::keyed_account_for_system_program();
         Self {
             compute_budget: ComputeBudget::default(),
             feature_set: FeatureSet::all_enabled(),
@@ -105,7 +105,7 @@ impl Mollusk {
     pub fn new(program_id: &Pubkey, program_name: &'static str) -> Self {
         let mut mollusk = Self {
             program_id: *program_id,
-            program_account: program::program_account(program_id),
+            program_account: program::create_program_account_loader_v3(program_id),
             ..Default::default()
         };
         mollusk.add_program(program_id, program_name);
