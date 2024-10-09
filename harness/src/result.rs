@@ -108,6 +108,14 @@ impl InstructionResult {
                             actual_data, check_data,
                         );
                     }
+                    if let Some(check_executable) = account.check_executable {
+                        let actual_executable = resulting_account.executable();
+                        assert_eq!(
+                            actual_executable, check_executable,
+                            "CHECK: account executable: got {}, expected {}",
+                            actual_executable, check_executable,
+                        );
+                    }
                     if let Some(check_lamports) = account.check_lamports {
                         let actual_lamports = resulting_account.lamports();
                         assert_eq!(
@@ -122,6 +130,14 @@ impl InstructionResult {
                             actual_owner, check_owner,
                             "CHECK: account owner: got {}, expected {}",
                             actual_owner, check_owner,
+                        );
+                    }
+                    if let Some(check_space) = account.check_space {
+                        let actual_space = resulting_account.data().len();
+                        assert_eq!(
+                            actual_space, check_space,
+                            "CHECK: account space: got {}, expected {}",
+                            actual_space, check_space,
                         );
                     }
                     if let Some(check_state) = &account.check_state {
@@ -199,8 +215,10 @@ enum AccountStateCheck {
 struct AccountCheck<'a> {
     pubkey: Pubkey,
     check_data: Option<&'a [u8]>,
+    check_executable: Option<bool>,
     check_lamports: Option<u64>,
     check_owner: Option<&'a Pubkey>,
+    check_space: Option<usize>,
     check_state: Option<AccountStateCheck>,
 }
 
@@ -209,8 +227,10 @@ impl AccountCheck<'_> {
         Self {
             pubkey: *pubkey,
             check_data: None,
+            check_executable: None,
             check_lamports: None,
             check_owner: None,
+            check_space: None,
             check_state: None,
         }
     }
@@ -237,6 +257,11 @@ impl<'a> AccountCheckBuilder<'a> {
         self
     }
 
+    pub fn executable(mut self, executable: bool) -> Self {
+        self.check.check_executable = Some(executable);
+        self
+    }
+
     pub fn lamports(mut self, lamports: u64) -> Self {
         self.check.check_lamports = Some(lamports);
         self
@@ -244,6 +269,11 @@ impl<'a> AccountCheckBuilder<'a> {
 
     pub fn owner(mut self, owner: &'a Pubkey) -> Self {
         self.check.check_owner = Some(owner);
+        self
+    }
+
+    pub fn space(mut self, space: usize) -> Self {
+        self.check.check_space = Some(space);
         self
     }
 

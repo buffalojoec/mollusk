@@ -81,6 +81,7 @@ fn test_write_data() {
                 .data(data)
                 .lamports(lamports)
                 .owner(&program_id)
+                .space(space)
                 .build(),
         ],
     );
@@ -228,10 +229,11 @@ fn test_close_account() {
             Check::success(),
             Check::compute_units(2563),
             Check::account(&key)
+                .closed() // The rest is unnecessary, just testing.
                 .data(&[])
                 .lamports(0)
                 .owner(&system_program::id())
-                .closed()
+                .space(0)
                 .build(),
         ],
     );
@@ -363,6 +365,7 @@ fn test_cpi() {
                 .data(data)
                 .lamports(lamports)
                 .owner(&cpi_target_program_id)
+                .space(space)
                 .build(),
         ],
     );
