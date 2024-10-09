@@ -67,27 +67,27 @@ impl InstructionResult {
                     let check_units = *units;
                     let actual_units = self.compute_units_consumed;
                     assert_eq!(
-                        check_units, actual_units,
-                        "Checking compute units consumed: expected {}, got {}",
-                        check_units, actual_units
+                        actual_units, check_units,
+                        "CHECK: compute units: got: {}, expected {}",
+                        actual_units, check_units,
                     );
                 }
                 CheckType::ExecutionTime(time) => {
                     let check_time = *time;
                     let actual_time = self.execution_time;
                     assert_eq!(
-                        check_time, actual_time,
-                        "Checking execution time: expected {}, got {}",
-                        check_time, actual_time
+                        actual_time, check_time,
+                        "CHECK: execution time: got: {}, expected {}",
+                        actual_time, check_time,
                     );
                 }
                 CheckType::ProgramResult(result) => {
                     let check_result = result;
                     let actual_result = &self.program_result;
                     assert_eq!(
-                        check_result, actual_result,
-                        "Checking program result: expected {:?}, got {:?}",
-                        check_result, actual_result
+                        actual_result, check_result,
+                        "CHECK: program result: got {:?}, expected {:?}",
+                        actual_result, check_result,
                     );
                 }
                 CheckType::ResultingAccount(account) => {
@@ -103,25 +103,41 @@ impl InstructionResult {
                     if let Some(check_data) = account.check_data {
                         let actual_data = resulting_account.data();
                         assert_eq!(
-                            check_data, actual_data,
-                            "Checking account data: expected {:?}, got {:?}",
-                            check_data, actual_data
+                            actual_data, check_data,
+                            "CHECK: account data: got {:?}, expected {:?}",
+                            actual_data, check_data,
+                        );
+                    }
+                    if let Some(check_executable) = account.check_executable {
+                        let actual_executable = resulting_account.executable();
+                        assert_eq!(
+                            actual_executable, check_executable,
+                            "CHECK: account executable: got {}, expected {}",
+                            actual_executable, check_executable,
                         );
                     }
                     if let Some(check_lamports) = account.check_lamports {
                         let actual_lamports = resulting_account.lamports();
                         assert_eq!(
-                            check_lamports, actual_lamports,
-                            "Checking account lamports: expected {}, got {}",
-                            check_lamports, actual_lamports
+                            actual_lamports, check_lamports,
+                            "CHECK: account lamports: got {}, expected {}",
+                            actual_lamports, check_lamports,
                         );
                     }
                     if let Some(check_owner) = account.check_owner {
                         let actual_owner = resulting_account.owner();
                         assert_eq!(
-                            check_owner, actual_owner,
-                            "Checking account owner: expected {}, got {}",
-                            check_owner, actual_owner
+                            actual_owner, check_owner,
+                            "CHECK: account owner: got {}, expected {}",
+                            actual_owner, check_owner,
+                        );
+                    }
+                    if let Some(check_space) = account.check_space {
+                        let actual_space = resulting_account.data().len();
+                        assert_eq!(
+                            actual_space, check_space,
+                            "CHECK: account space: got {}, expected {}",
+                            actual_space, check_space,
                         );
                     }
                     if let Some(check_state) = &account.check_state {
@@ -130,7 +146,7 @@ impl InstructionResult {
                                 assert_eq!(
                                     &AccountSharedData::default(),
                                     resulting_account,
-                                    "Checking account closed: expected true, got false"
+                                    "CHECK: account closed: got false, expected true"
                                 );
                             }
                         }
@@ -199,8 +215,10 @@ enum AccountStateCheck {
 struct AccountCheck<'a> {
     pubkey: Pubkey,
     check_data: Option<&'a [u8]>,
+    check_executable: Option<bool>,
     check_lamports: Option<u64>,
     check_owner: Option<&'a Pubkey>,
+    check_space: Option<usize>,
     check_state: Option<AccountStateCheck>,
 }
 
@@ -209,8 +227,10 @@ impl AccountCheck<'_> {
         Self {
             pubkey: *pubkey,
             check_data: None,
+            check_executable: None,
             check_lamports: None,
             check_owner: None,
+            check_space: None,
             check_state: None,
         }
     }
@@ -237,6 +257,11 @@ impl<'a> AccountCheckBuilder<'a> {
         self
     }
 
+    pub fn executable(mut self, executable: bool) -> Self {
+        self.check.check_executable = Some(executable);
+        self
+    }
+
     pub fn lamports(mut self, lamports: u64) -> Self {
         self.check.check_lamports = Some(lamports);
         self
@@ -244,6 +269,11 @@ impl<'a> AccountCheckBuilder<'a> {
 
     pub fn owner(mut self, owner: &'a Pubkey) -> Self {
         self.check.check_owner = Some(owner);
+        self
+    }
+
+    pub fn space(mut self, space: usize) -> Self {
+        self.check.check_space = Some(space);
         self
     }
 
