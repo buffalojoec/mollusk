@@ -1,18 +1,18 @@
 [package]
 name = "mollusk-svm-bencher"
-version = "0.0.1"
 description = "SVM program bench harness."
 documentation = "https://docs.rs/mollusk-svm-bencher"
 authors = { workspace = true }
 repository = { workspace = true }
 license = { workspace = true }
 edition = { workspace = true }
+version = { workspace = true }
 
 [dependencies]
 chrono = "0.4.38"
 num-format = { workspace = true }
 serde_json = { workspace = true }
-mollusk-svm = { path = "../harness", version = "0.0.1" }
+mollusk-svm = { workspace = true }
 solana-sdk = { workspace = true }
 
 [dev-dependencies]

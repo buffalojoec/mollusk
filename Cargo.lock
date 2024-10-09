@@ -1496,7 +1496,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bincode",
  "criterion",
@@ -1510,7 +1510,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "chrono",
  "mollusk-svm",
