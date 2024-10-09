@@ -161,6 +161,32 @@ impl Mollusk {
         );
     }
 
+    /// Switch the target program to a different program.
+    ///
+    /// Note: The program must already be contained in the program cache.
+    pub fn switch_target_program(&mut self, program_id: &Pubkey) {
+        let loader_key: Pubkey = self
+            .program_cache
+            .cache()
+            .read()
+            .unwrap()
+            .find(program_id)
+            .expect("Program not found in cache")
+            .account_owner
+            .into();
+        if loader_key != DEFAULT_LOADER_KEY {
+            panic!("Loader not supported for target program: {:?}", loader_key);
+        }
+        self.program_id = *program_id;
+        self.program_account = program::create_program_account_loader_v3(program_id);
+    }
+
+    /// Add a program to the cache and make it the target program.
+    pub fn add_and_switch_target_program(&mut self, program_id: &Pubkey, program_name: &str) {
+        self.add_program(program_id, program_name);
+        self.switch_target_program(program_id);
+    }
+
     /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: u64) {
         self.sysvars.warp_to_slot(slot)
