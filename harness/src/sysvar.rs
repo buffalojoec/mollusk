@@ -3,14 +3,16 @@
 use {
     solana_program_runtime::sysvar_cache::SysvarCache,
     solana_sdk::{
+        account::AccountSharedData,
         clock::{Clock, Slot},
         epoch_rewards::EpochRewards,
         epoch_schedule::EpochSchedule,
         hash::Hash,
+        pubkey::Pubkey,
         rent::Rent,
         slot_hashes::SlotHashes,
         stake_history::StakeHistory,
-        sysvar::{last_restart_slot::LastRestartSlot, SysvarId},
+        sysvar::{self, last_restart_slot::LastRestartSlot, Sysvar, SysvarId},
     },
 };
 
@@ -29,6 +31,50 @@ pub struct Sysvars {
 }
 
 impl Sysvars {
+    fn sysvar_account<T: SysvarId + Sysvar>(&self, sysvar: &T) -> (Pubkey, AccountSharedData) {
+        let data = bincode::serialize::<T>(sysvar).unwrap();
+        let space = data.len();
+        let lamports = self.rent.minimum_balance(space);
+        let mut account = AccountSharedData::new(lamports, space, &sysvar::id());
+        account.set_data_from_slice(&data);
+        (T::id(), account)
+    }
+
+    /// Get the key and account for the clock sysvar.
+    pub fn keyed_account_for_clock_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.clock)
+    }
+
+    /// Get the key and account for the epoch rewards sysvar.
+    pub fn keyed_account_for_epoch_rewards_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.epoch_rewards)
+    }
+
+    /// Get the key and account for the epoch schedule sysvar.
+    pub fn keyed_account_for_epoch_schedule_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.epoch_schedule)
+    }
+
+    /// Get the key and account for the last restart slot sysvar.
+    pub fn keyed_account_for_last_restart_slot_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.last_restart_slot)
+    }
+
+    /// Get the key and account for the rent sysvar.
+    pub fn keyed_account_for_rent_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.rent)
+    }
+
+    /// Get the key and account for the slot hashes sysvar.
+    pub fn keyed_account_for_slot_hashes_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.slot_hashes)
+    }
+
+    /// Get the key and account for the stake history sysvar.
+    pub fn keyed_account_for_stake_history_sysvar(&self) -> (Pubkey, AccountSharedData) {
+        self.sysvar_account(&self.stake_history)
+    }
+
     /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: Slot) {
         // First update `Clock`.
