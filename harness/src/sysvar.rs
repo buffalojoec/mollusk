@@ -10,8 +10,8 @@ use {
         hash::Hash,
         pubkey::Pubkey,
         rent::Rent,
-        slot_hashes::SlotHashes,
-        stake_history::StakeHistory,
+        slot_hashes::{self, SlotHashes},
+        stake_history::{StakeHistory, StakeHistoryEntry},
         sysvar::{self, last_restart_slot::LastRestartSlot, Sysvar, SysvarId},
     },
 };
@@ -19,7 +19,6 @@ use {
 // Agave's sysvar cache is difficult to work with, so Mollusk offers a wrapper
 // around it for modifying its contents.
 /// Mollusk sysvars.
-#[derive(Default)]
 pub struct Sysvars {
     pub clock: Clock,
     pub epoch_rewards: EpochRewards,
@@ -28,6 +27,35 @@ pub struct Sysvars {
     pub rent: Rent,
     pub slot_hashes: SlotHashes,
     pub stake_history: StakeHistory,
+}
+
+impl Default for Sysvars {
+    fn default() -> Self {
+        let clock = Clock::default();
+        let epoch_rewards = EpochRewards::default();
+        let epoch_schedule = EpochSchedule::default();
+        let last_restart_slot = LastRestartSlot::default();
+        let rent = Rent::default();
+
+        let slot_hashes = {
+            let mut default_slot_hashes = vec![(0, Hash::default()); slot_hashes::MAX_ENTRIES];
+            default_slot_hashes[0] = (clock.slot, Hash::default());
+            SlotHashes::new(&default_slot_hashes)
+        };
+
+        let mut stake_history = StakeHistory::default();
+        stake_history.add(clock.slot, StakeHistoryEntry::default());
+
+        Self {
+            clock,
+            epoch_rewards,
+            epoch_schedule,
+            last_restart_slot,
+            rent,
+            slot_hashes,
+            stake_history,
+        }
+    }
 }
 
 impl Sysvars {
@@ -88,15 +116,18 @@ impl Sysvars {
         };
 
         // Then update `SlotHashes`.
-        let mut i = 0;
-        if let Some(most_recent_slot_hash) = self.slot_hashes.first() {
-            i = most_recent_slot_hash.0;
+        let i = if let Some(most_recent_slot_hash) = self.slot_hashes.first() {
+            most_recent_slot_hash.0
+        } else {
+            // By default, this zero is never used, but a user can overwrite
+            // `SlotHashes`.
+            0
+        };
+        // Don't include the target slot, since it will become the "current"
+        // slot.
+        for slot in i..slot {
+            self.slot_hashes.add(slot, Hash::default());
         }
-        let mut new_slot_hashes = vec![];
-        for slot in i..slot + 1 {
-            new_slot_hashes.push((slot, Hash::default()));
-        }
-        self.slot_hashes = SlotHashes::new(&new_slot_hashes);
     }
 }
 
@@ -137,16 +168,30 @@ mod tests {
     #[test]
     fn test_warp_to_slot() {
         let mut sysvars = Sysvars::default();
-        assert_eq!(sysvars.clock.slot, 0);
 
-        sysvars.warp_to_slot(200);
-        assert_eq!(sysvars.clock.slot, 200);
+        let slot = 0;
+        assert_eq!(sysvars.clock.slot, slot);
+        assert_eq!(sysvars.clock.epoch, sysvars.epoch_schedule.get_epoch(slot));
+        assert_eq!(
+            sysvars.slot_hashes.as_slice(),
+            &[(slot, Hash::default()); slot_hashes::MAX_ENTRIES]
+        );
+        assert_eq!(sysvars.slot_hashes.len(), slot_hashes::MAX_ENTRIES);
 
-        sysvars.warp_to_slot(4_000);
-        assert_eq!(sysvars.clock.slot, 4_000);
+        let mut warp_and_check = |slot: Slot| {
+            sysvars.warp_to_slot(slot);
+            assert_eq!(sysvars.clock.slot, slot);
+            assert_eq!(sysvars.clock.epoch, sysvars.epoch_schedule.get_epoch(slot));
+            assert_eq!(
+                sysvars.slot_hashes.first(),
+                Some(&(slot - 1, Hash::default())),
+            );
+            assert_eq!(sysvars.slot_hashes.len(), slot_hashes::MAX_ENTRIES);
+        };
 
-        sysvars.warp_to_slot(800_000);
-        assert_eq!(sysvars.clock.slot, 800_000);
+        warp_and_check(200);
+        warp_and_check(4_000);
+        warp_and_check(800_000);
     }
 
     #[test]
