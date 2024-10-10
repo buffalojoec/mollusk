@@ -1,0 +1,11 @@
+[package]
+name = "mollusk-svm-fuzz"
+description = "SVM program fuzz harness."
+documentation = "https://docs.rs/mollusk-svm-fuzz"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
