@@ -6,7 +6,11 @@ use {
         error::FixtureError, feature_set::FixtureFeatureSet, proto, sysvars::FixtureSysvarContext,
     },
     solana_compute_budget::compute_budget::ComputeBudget,
-    solana_sdk::{account::AccountSharedData, instruction::AccountMeta, pubkey::Pubkey},
+    solana_sdk::{
+        account::{AccountSharedData, ReadableAccount},
+        instruction::AccountMeta,
+        pubkey::Pubkey,
+    },
 };
 
 /// Instruction context fixture.
@@ -91,5 +95,54 @@ impl TryFrom<proto::InstrContext> for FixtureContext {
             instruction_data,
             accounts,
         })
+    }
+}
+
+impl From<&FixtureContext> for proto::InstrContext {
+    fn from(input: &FixtureContext) -> Self {
+        let FixtureContext {
+            compute_budget,
+            feature_set,
+            sysvar_context,
+            program_id,
+            instruction_accounts,
+            instruction_data,
+            accounts,
+        } = input;
+        let compute_budget = Some(compute_budget.into());
+        let feature_set = Some(feature_set.into());
+        let sysvars = Some(sysvar_context.into());
+        let program_id = program_id.to_bytes().to_vec();
+        let instr_accounts = instruction_accounts
+            .iter()
+            .map(|acct| proto::InstrAcct {
+                index: accounts
+                    .iter()
+                    .position(|(pubkey, _)| *pubkey == acct.pubkey)
+                    .unwrap() as u32,
+                is_signer: acct.is_signer,
+                is_writable: acct.is_writable,
+            })
+            .collect::<Vec<_>>();
+        let accounts = accounts
+            .iter()
+            .map(|(pubkey, account)| proto::AcctState {
+                address: pubkey.to_bytes().to_vec(),
+                owner: account.owner().to_bytes().to_vec(),
+                lamports: account.lamports(),
+                data: account.data().to_vec(),
+                executable: account.executable(),
+                rent_epoch: account.rent_epoch(),
+            })
+            .collect::<Vec<_>>();
+        Self {
+            compute_budget,
+            feature_set,
+            sysvars,
+            program_id,
+            instr_accounts,
+            data: instruction_data.clone(),
+            accounts,
+        }
     }
 }

@@ -41,6 +41,16 @@ impl TryFrom<proto::InstrFixture> for Fixture {
     }
 }
 
+impl From<&Fixture> for proto::InstrFixture {
+    fn from(fixture: &Fixture) -> Self {
+        let Fixture { input, output } = fixture;
+        proto::InstrFixture {
+            input: Some(input.into()),
+            output: Some(output.into()),
+        }
+    }
+}
+
 impl Fixture {
     /// Decode a `Protobuf` blob into a `Fixture`.
     pub fn decode(blob: &[u8]) -> Result<Self, FixtureError> {
