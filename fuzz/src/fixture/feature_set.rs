@@ -40,6 +40,13 @@ impl From<proto::FeatureSet> for FixtureFeatureSet {
         }
     }
 }
+impl From<&FixtureFeatureSet> for proto::FeatureSet {
+    fn from(input: &FixtureFeatureSet) -> Self {
+        proto::FeatureSet {
+            features: input.features.clone(),
+        }
+    }
+}
 
 impl From<FixtureFeatureSet> for FeatureSet {
     fn from(input: FixtureFeatureSet) -> Self {
@@ -48,7 +55,6 @@ impl From<FixtureFeatureSet> for FeatureSet {
         })
     }
 }
-
 impl From<&FeatureSet> for FixtureFeatureSet {
     fn from(input: &FeatureSet) -> Self {
         let features = input.active.keys().map(discriminator).collect();

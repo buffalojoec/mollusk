@@ -54,6 +54,17 @@ impl From<proto::Clock> for Clock {
         }
     }
 }
+impl From<&Clock> for proto::Clock {
+    fn from(input: &Clock) -> Self {
+        Self {
+            slot: input.slot,
+            epoch_start_timestamp: input.epoch_start_timestamp,
+            epoch: input.epoch,
+            leader_schedule_epoch: input.leader_schedule_epoch,
+            unix_timestamp: input.unix_timestamp,
+        }
+    }
+}
 
 impl TryFrom<proto::EpochRewards> for EpochRewards {
     type Error = FixtureError;
@@ -72,9 +83,33 @@ impl TryFrom<proto::EpochRewards> for EpochRewards {
         })
     }
 }
+impl From<&EpochRewards> for proto::EpochRewards {
+    fn from(input: &EpochRewards) -> Self {
+        Self {
+            distribution_starting_block_height: input.distribution_starting_block_height,
+            num_partitions: input.num_partitions,
+            parent_blockhash: input.parent_blockhash.to_bytes().to_vec(),
+            total_points: input.total_points.to_le_bytes().to_vec(),
+            total_rewards: input.total_rewards,
+            distributed_rewards: input.distributed_rewards,
+            active: input.active,
+        }
+    }
+}
 
 impl From<proto::EpochSchedule> for EpochSchedule {
     fn from(input: proto::EpochSchedule) -> Self {
+        Self {
+            slots_per_epoch: input.slots_per_epoch,
+            leader_schedule_slot_offset: input.leader_schedule_slot_offset,
+            warmup: input.warmup,
+            first_normal_epoch: input.first_normal_epoch,
+            first_normal_slot: input.first_normal_slot,
+        }
+    }
+}
+impl From<&EpochSchedule> for proto::EpochSchedule {
+    fn from(input: &EpochSchedule) -> Self {
         Self {
             slots_per_epoch: input.slots_per_epoch,
             leader_schedule_slot_offset: input.leader_schedule_slot_offset,
@@ -98,6 +133,15 @@ impl TryFrom<proto::Rent> for Rent {
         })
     }
 }
+impl From<&Rent> for proto::Rent {
+    fn from(input: &Rent) -> Self {
+        Self {
+            lamports_per_byte_year: input.lamports_per_byte_year,
+            exemption_threshold: input.exemption_threshold,
+            burn_percent: input.burn_percent as u32,
+        }
+    }
+}
 
 impl TryFrom<proto::SlotHashEntry> for SlotHash {
     type Error = FixtureError;
@@ -110,6 +154,15 @@ impl TryFrom<proto::SlotHashEntry> for SlotHash {
                 .map_err(|_| FixtureError::InvalidHashBytes)?,
         );
         Ok((input.slot, hash))
+    }
+}
+impl From<&SlotHash> for proto::SlotHashEntry {
+    fn from(input: &SlotHash) -> Self {
+        let (slot, hash) = input;
+        Self {
+            slot: *slot,
+            hash: hash.to_bytes().to_vec(),
+        }
     }
 }
 
@@ -125,6 +178,13 @@ impl TryFrom<proto::SlotHashes> for SlotHashes {
         Ok(Self::new(&slot_hashes))
     }
 }
+impl From<&SlotHashes> for proto::SlotHashes {
+    fn from(input: &SlotHashes) -> Self {
+        Self {
+            slot_hashes: input.slot_hashes().iter().map(Into::into).collect(),
+        }
+    }
+}
 
 impl From<proto::StakeHistoryEntry> for (u64, StakeHistoryEntry) {
     fn from(input: proto::StakeHistoryEntry) -> (u64, StakeHistoryEntry) {
@@ -138,6 +198,16 @@ impl From<proto::StakeHistoryEntry> for (u64, StakeHistoryEntry) {
         )
     }
 }
+impl From<(u64, StakeHistoryEntry)> for proto::StakeHistoryEntry {
+    fn from(input: (u64, StakeHistoryEntry)) -> Self {
+        Self {
+            epoch: input.0,
+            effective: input.1.effective,
+            activating: input.1.activating,
+            deactivating: input.1.deactivating,
+        }
+    }
+}
 
 impl From<proto::StakeHistory> for StakeHistory {
     fn from(input: proto::StakeHistory) -> Self {
@@ -146,6 +216,13 @@ impl From<proto::StakeHistory> for StakeHistory {
             stake_history.add(epoch, entry);
         }
         stake_history
+    }
+}
+impl From<&StakeHistory> for proto::StakeHistory {
+    fn from(input: &StakeHistory) -> Self {
+        Self {
+            stake_history: input.iter().cloned().map(Into::into).collect(),
+        }
     }
 }
 
@@ -173,6 +250,27 @@ impl TryFrom<proto::SysvarContext> for FixtureSysvarContext {
                 .unwrap_or_default(),
             stake_history: input.stake_history.map(Into::into).unwrap_or_default(),
         })
+    }
+}
+
+impl From<&FixtureSysvarContext> for proto::SysvarContext {
+    fn from(input: &FixtureSysvarContext) -> Self {
+        let FixtureSysvarContext {
+            clock,
+            epoch_rewards,
+            epoch_schedule,
+            rent,
+            slot_hashes,
+            stake_history,
+        } = input;
+        Self {
+            clock: Some(clock.into()),
+            epoch_rewards: Some(epoch_rewards.into()),
+            epoch_schedule: Some(epoch_schedule.into()),
+            rent: Some(rent.into()),
+            slot_hashes: Some(slot_hashes.into()),
+            stake_history: Some(stake_history.into()),
+        }
     }
 }
 
