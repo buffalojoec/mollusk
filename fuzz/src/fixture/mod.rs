@@ -86,6 +86,19 @@ impl Fixture {
             .expect("Failed to write fixture to file");
     }
 
+    /// Dumps the `Fixture` to a JSON file.
+    /// The file name is a hash of the fixture with the `.json` extension.
+    pub fn dump_to_json_file(&self, dir_path: &str) {
+        let json = serde_json::to_string_pretty(&self).expect("Failed to serialize fixture");
+        let hash = solana_sdk::hash::hash(json.as_bytes());
+        let file_name = format!("instr-{}.json", bs58::encode(hash).into_string());
+        fs::create_dir_all(dir_path).expect("Failed to create directory");
+        let file_path = Path::new(dir_path).join(file_name);
+        let mut file = File::create(file_path).unwrap();
+        file.write_all(json.as_bytes())
+            .expect("Failed to write fixture to file");
+    }
+
     /// Loads a `Fixture` from a protobuf binary blob file.
     pub fn load_from_blob_file(file_path: &str) -> Result<Self, FixtureError> {
         if !file_path.ends_with(".fix") {
