@@ -1583,7 +1583,12 @@ dependencies = [
 name = "mollusk-svm-fuzz"
 version = "0.0.4"
 dependencies = [
+ "prost",
  "prost-build",
+ "prost-types",
+ "solana-compute-budget",
+ "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]

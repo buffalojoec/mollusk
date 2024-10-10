@@ -4,3 +4,5 @@
 //! Mollusk, it is not required. Developers can use this fuzz harness on their
 //! own custom SVM entrypoint. Hence the distinction between fixture types and
 //! Mollusk types.
+
+pub mod fixture;
