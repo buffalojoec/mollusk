@@ -28,6 +28,8 @@
 //!   series of checks on the result, panicking if any checks fail.
 
 pub mod file;
+#[cfg(feature = "fuzz")]
+pub mod fuzz;
 pub mod program;
 pub mod result;
 pub mod sysvar;
@@ -276,6 +278,19 @@ impl Mollusk {
     /// Process an instruction using the minified Solana Virtual Machine (SVM)
     /// environment, then perform checks on the result. Panics if any checks
     /// fail.
+    ///
+    /// For `fuzz` feature only:
+    ///
+    /// If the `EJECT_FUZZ_FIXTURES` environment variable is set, this function
+    /// will convert the provided test to a fuzz fixture and write it to the
+    /// provided directory.
+    ///
+    /// ```ignore
+    /// EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
+    /// ```
+    ///
+    /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
+    /// JSON format.
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
@@ -283,6 +298,28 @@ impl Mollusk {
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
+
+        #[cfg(feature = "fuzz")]
+        {
+            let blob_dir = std::env::var("EJECT_FUZZ_FIXTURES").ok();
+            let json_dir = std::env::var("EJECT_FUZZ_FIXTURES_JSON").ok();
+            if blob_dir.is_some() || json_dir.is_some() {
+                let fixture = fuzz::build_fixture_from_mollusk_test(
+                    self,
+                    instruction,
+                    accounts,
+                    &result,
+                    checks,
+                );
+                if let Some(blob_dir) = blob_dir {
+                    fixture.dump_to_blob_file(&blob_dir);
+                }
+                if let Some(json_dir) = json_dir {
+                    fixture.dump_to_json_file(&json_dir);
+                }
+            }
+        }
+
         result.run_checks(checks);
         result
     }
