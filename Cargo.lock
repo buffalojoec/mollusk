@@ -1583,6 +1583,7 @@ dependencies = [
 name = "mollusk-svm-fuzz"
 version = "0.0.4"
 dependencies = [
+ "bs58",
  "prost",
  "prost-build",
  "prost-types",
