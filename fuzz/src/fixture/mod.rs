@@ -12,7 +12,13 @@ mod proto {
 }
 pub mod sysvars;
 
-use {context::FixtureContext, effects::FixtureEffects, error::FixtureError, prost::Message};
+use {
+    context::FixtureContext,
+    effects::FixtureEffects,
+    error::FixtureError,
+    prost::Message,
+    std::{fs::File, io::Read},
+};
 
 /// A fixture for invoking a single instruction against a simulated Solana
 /// program runtime environment, for a given program.
@@ -56,5 +62,17 @@ impl Fixture {
     pub fn decode(blob: &[u8]) -> Result<Self, FixtureError> {
         let fixture: proto::InstrFixture = proto::InstrFixture::decode(blob)?;
         fixture.try_into()
+    }
+
+    /// Loads a `Fixture` from a protobuf binary blob file.
+    pub fn load_from_blob_file(file_path: &str) -> Result<Self, FixtureError> {
+        if !file_path.ends_with(".fix") {
+            panic!("Invalid fixture file extension: {}", file_path);
+        }
+        let mut file = File::open(file_path).expect("Failed to open fixture file");
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)
+            .expect("Failed to read fixture file");
+        Self::decode(&buf)
     }
 }
