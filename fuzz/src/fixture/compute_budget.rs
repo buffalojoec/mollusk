@@ -1,8 +1,66 @@
 //! Compute budget for instructions.
 
-use {super::proto, solana_compute_budget::compute_budget::ComputeBudget};
+use {
+    super::proto,
+    serde::{Deserialize, Serialize},
+    solana_compute_budget::compute_budget::ComputeBudget,
+};
 
-impl From<proto::ComputeBudget> for ComputeBudget {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FixtureComputeBudget {
+    compute_unit_limit: u64,
+    log_64_units: u64,
+    create_program_address_units: u64,
+    invoke_units: u64,
+    max_instruction_stack_depth: usize,
+    max_instruction_trace_length: usize,
+    sha256_base_cost: u64,
+    sha256_byte_cost: u64,
+    sha256_max_slices: u64,
+    max_call_depth: usize,
+    stack_frame_size: usize,
+    log_pubkey_units: u64,
+    max_cpi_instruction_size: usize,
+    cpi_bytes_per_unit: u64,
+    sysvar_base_cost: u64,
+    secp256k1_recover_cost: u64,
+    syscall_base_cost: u64,
+    curve25519_edwards_validate_point_cost: u64,
+    curve25519_edwards_add_cost: u64,
+    curve25519_edwards_subtract_cost: u64,
+    curve25519_edwards_multiply_cost: u64,
+    curve25519_edwards_msm_base_cost: u64,
+    curve25519_edwards_msm_incremental_cost: u64,
+    curve25519_ristretto_validate_point_cost: u64,
+    curve25519_ristretto_add_cost: u64,
+    curve25519_ristretto_subtract_cost: u64,
+    curve25519_ristretto_multiply_cost: u64,
+    curve25519_ristretto_msm_base_cost: u64,
+    curve25519_ristretto_msm_incremental_cost: u64,
+    heap_size: u32,
+    heap_cost: u64,
+    mem_op_base_cost: u64,
+    alt_bn128_addition_cost: u64,
+    alt_bn128_multiplication_cost: u64,
+    alt_bn128_pairing_one_pair_cost_first: u64,
+    alt_bn128_pairing_one_pair_cost_other: u64,
+    big_modular_exponentiation_cost: u64,
+    poseidon_cost_coefficient_a: u64,
+    poseidon_cost_coefficient_c: u64,
+    get_remaining_compute_units_cost: u64,
+    alt_bn128_g1_compress: u64,
+    alt_bn128_g1_decompress: u64,
+    alt_bn128_g2_compress: u64,
+    alt_bn128_g2_decompress: u64,
+}
+
+impl Default for FixtureComputeBudget {
+    fn default() -> Self {
+        Self::from(&ComputeBudget::default())
+    }
+}
+
+impl From<proto::ComputeBudget> for FixtureComputeBudget {
     fn from(input: proto::ComputeBudget) -> Self {
         let proto::ComputeBudget {
             compute_unit_limit,
@@ -57,7 +115,7 @@ impl From<proto::ComputeBudget> for ComputeBudget {
         let stack_frame_size = stack_frame_size as usize;
         let max_cpi_instruction_size = max_cpi_instruction_size as usize;
 
-        ComputeBudget {
+        FixtureComputeBudget {
             compute_unit_limit,
             log_64_units,
             create_program_address_units,
@@ -106,9 +164,9 @@ impl From<proto::ComputeBudget> for ComputeBudget {
     }
 }
 
-impl From<&ComputeBudget> for proto::ComputeBudget {
-    fn from(input: &ComputeBudget) -> Self {
-        let ComputeBudget {
+impl From<&FixtureComputeBudget> for proto::ComputeBudget {
+    fn from(input: &FixtureComputeBudget) -> Self {
+        let FixtureComputeBudget {
             compute_unit_limit,
             log_64_units,
             create_program_address_units,
@@ -154,7 +212,8 @@ impl From<&ComputeBudget> for proto::ComputeBudget {
             alt_bn128_g2_compress,
             alt_bn128_g2_decompress,
         } = input;
-        Self {
+
+        proto::ComputeBudget {
             compute_unit_limit: *compute_unit_limit,
             log_64_units: *log_64_units,
             create_program_address_units: *create_program_address_units,
@@ -199,6 +258,112 @@ impl From<&ComputeBudget> for proto::ComputeBudget {
             alt_bn128_g1_decompress: *alt_bn128_g1_decompress,
             alt_bn128_g2_compress: *alt_bn128_g2_compress,
             alt_bn128_g2_decompress: *alt_bn128_g2_decompress,
+        }
+    }
+}
+
+impl From<FixtureComputeBudget> for ComputeBudget {
+    fn from(input: FixtureComputeBudget) -> Self {
+        ComputeBudget {
+            compute_unit_limit: input.compute_unit_limit,
+            log_64_units: input.log_64_units,
+            create_program_address_units: input.create_program_address_units,
+            invoke_units: input.invoke_units,
+            max_instruction_stack_depth: input.max_instruction_stack_depth,
+            max_instruction_trace_length: input.max_instruction_trace_length,
+            sha256_base_cost: input.sha256_base_cost,
+            sha256_byte_cost: input.sha256_byte_cost,
+            sha256_max_slices: input.sha256_max_slices,
+            max_call_depth: input.max_call_depth,
+            stack_frame_size: input.stack_frame_size,
+            log_pubkey_units: input.log_pubkey_units,
+            max_cpi_instruction_size: input.max_cpi_instruction_size,
+            cpi_bytes_per_unit: input.cpi_bytes_per_unit,
+            sysvar_base_cost: input.sysvar_base_cost,
+            secp256k1_recover_cost: input.secp256k1_recover_cost,
+            syscall_base_cost: input.syscall_base_cost,
+            curve25519_edwards_validate_point_cost: input.curve25519_edwards_validate_point_cost,
+            curve25519_edwards_add_cost: input.curve25519_edwards_add_cost,
+            curve25519_edwards_subtract_cost: input.curve25519_edwards_subtract_cost,
+            curve25519_edwards_multiply_cost: input.curve25519_edwards_multiply_cost,
+            curve25519_edwards_msm_base_cost: input.curve25519_edwards_msm_base_cost,
+            curve25519_edwards_msm_incremental_cost: input.curve25519_edwards_msm_incremental_cost,
+            curve25519_ristretto_validate_point_cost: input
+                .curve25519_ristretto_validate_point_cost,
+            curve25519_ristretto_add_cost: input.curve25519_ristretto_add_cost,
+            curve25519_ristretto_subtract_cost: input.curve25519_ristretto_subtract_cost,
+            curve25519_ristretto_multiply_cost: input.curve25519_ristretto_multiply_cost,
+            curve25519_ristretto_msm_base_cost: input.curve25519_ristretto_msm_base_cost,
+            curve25519_ristretto_msm_incremental_cost: input
+                .curve25519_ristretto_msm_incremental_cost,
+            heap_size: input.heap_size,
+            heap_cost: input.heap_cost,
+            mem_op_base_cost: input.mem_op_base_cost,
+            alt_bn128_addition_cost: input.alt_bn128_addition_cost,
+            alt_bn128_multiplication_cost: input.alt_bn128_multiplication_cost,
+            alt_bn128_pairing_one_pair_cost_first: input.alt_bn128_pairing_one_pair_cost_first,
+            alt_bn128_pairing_one_pair_cost_other: input.alt_bn128_pairing_one_pair_cost_other,
+            big_modular_exponentiation_cost: input.big_modular_exponentiation_cost,
+            poseidon_cost_coefficient_a: input.poseidon_cost_coefficient_a,
+            poseidon_cost_coefficient_c: input.poseidon_cost_coefficient_c,
+            get_remaining_compute_units_cost: input.get_remaining_compute_units_cost,
+            alt_bn128_g1_compress: input.alt_bn128_g1_compress,
+            alt_bn128_g1_decompress: input.alt_bn128_g1_decompress,
+            alt_bn128_g2_compress: input.alt_bn128_g2_compress,
+            alt_bn128_g2_decompress: input.alt_bn128_g2_decompress,
+        }
+    }
+}
+
+impl From<&ComputeBudget> for FixtureComputeBudget {
+    fn from(input: &ComputeBudget) -> Self {
+        FixtureComputeBudget {
+            compute_unit_limit: input.compute_unit_limit,
+            log_64_units: input.log_64_units,
+            create_program_address_units: input.create_program_address_units,
+            invoke_units: input.invoke_units,
+            max_instruction_stack_depth: input.max_instruction_stack_depth,
+            max_instruction_trace_length: input.max_instruction_trace_length,
+            sha256_base_cost: input.sha256_base_cost,
+            sha256_byte_cost: input.sha256_byte_cost,
+            sha256_max_slices: input.sha256_max_slices,
+            max_call_depth: input.max_call_depth,
+            stack_frame_size: input.stack_frame_size,
+            log_pubkey_units: input.log_pubkey_units,
+            max_cpi_instruction_size: input.max_cpi_instruction_size,
+            cpi_bytes_per_unit: input.cpi_bytes_per_unit,
+            sysvar_base_cost: input.sysvar_base_cost,
+            secp256k1_recover_cost: input.secp256k1_recover_cost,
+            syscall_base_cost: input.syscall_base_cost,
+            curve25519_edwards_validate_point_cost: input.curve25519_edwards_validate_point_cost,
+            curve25519_edwards_add_cost: input.curve25519_edwards_add_cost,
+            curve25519_edwards_subtract_cost: input.curve25519_edwards_subtract_cost,
+            curve25519_edwards_multiply_cost: input.curve25519_edwards_multiply_cost,
+            curve25519_edwards_msm_base_cost: input.curve25519_edwards_msm_base_cost,
+            curve25519_edwards_msm_incremental_cost: input.curve25519_edwards_msm_incremental_cost,
+            curve25519_ristretto_validate_point_cost: input
+                .curve25519_ristretto_validate_point_cost,
+            curve25519_ristretto_add_cost: input.curve25519_ristretto_add_cost,
+            curve25519_ristretto_subtract_cost: input.curve25519_ristretto_subtract_cost,
+            curve25519_ristretto_multiply_cost: input.curve25519_ristretto_multiply_cost,
+            curve25519_ristretto_msm_base_cost: input.curve25519_ristretto_msm_base_cost,
+            curve25519_ristretto_msm_incremental_cost: input
+                .curve25519_ristretto_msm_incremental_cost,
+            heap_size: input.heap_size,
+            heap_cost: input.heap_cost,
+            mem_op_base_cost: input.mem_op_base_cost,
+            alt_bn128_addition_cost: input.alt_bn128_addition_cost,
+            alt_bn128_multiplication_cost: input.alt_bn128_multiplication_cost,
+            alt_bn128_pairing_one_pair_cost_first: input.alt_bn128_pairing_one_pair_cost_first,
+            alt_bn128_pairing_one_pair_cost_other: input.alt_bn128_pairing_one_pair_cost_other,
+            big_modular_exponentiation_cost: input.big_modular_exponentiation_cost,
+            poseidon_cost_coefficient_a: input.poseidon_cost_coefficient_a,
+            poseidon_cost_coefficient_c: input.poseidon_cost_coefficient_c,
+            get_remaining_compute_units_cost: input.get_remaining_compute_units_cost,
+            alt_bn128_g1_compress: input.alt_bn128_g1_compress,
+            alt_bn128_g1_decompress: input.alt_bn128_g1_decompress,
+            alt_bn128_g2_compress: input.alt_bn128_g2_compress,
+            alt_bn128_g2_decompress: input.alt_bn128_g2_decompress,
         }
     }
 }

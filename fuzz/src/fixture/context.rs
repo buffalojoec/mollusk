@@ -3,9 +3,10 @@
 
 use {
     super::{
-        error::FixtureError, feature_set::FixtureFeatureSet, proto, sysvars::FixtureSysvarContext,
+        compute_budget::FixtureComputeBudget, error::FixtureError, feature_set::FixtureFeatureSet,
+        proto, sysvars::FixtureSysvarContext,
     },
-    solana_compute_budget::compute_budget::ComputeBudget,
+    serde::{Deserialize, Serialize},
     solana_sdk::{
         account::{AccountSharedData, ReadableAccount},
         instruction::AccountMeta,
@@ -14,10 +15,10 @@ use {
 };
 
 /// Instruction context fixture.
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FixtureContext {
     /// The compute budget to use for the simulation.
-    pub compute_budget: ComputeBudget,
+    pub compute_budget: FixtureComputeBudget,
     /// The feature set to use for the simulation.
     pub feature_set: FixtureFeatureSet,
     /// The sysvar context to use for the simulation.

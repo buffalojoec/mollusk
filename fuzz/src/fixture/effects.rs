@@ -2,11 +2,12 @@
 
 use {
     super::{error::FixtureError, proto},
+    serde::{Deserialize, Serialize},
     solana_sdk::{account::AccountSharedData, pubkey::Pubkey},
 };
 
 /// Represents the effects of a single instruction.
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FixtureEffects {
     /// Compute units consumed by the instruction.
     pub compute_units_consumed: u64,

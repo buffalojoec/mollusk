@@ -2,6 +2,7 @@
 
 use {
     mollusk_svm::{fuzz::fixture::Fixture, result::Check, Mollusk},
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
         account::AccountSharedData, feature_set::FeatureSet, instruction::Instruction,
         pubkey::Pubkey, system_instruction, system_program,
@@ -91,7 +92,10 @@ fn test_dump() {
 
     let fixture_path = find_fixture().unwrap();
     let fixture = Fixture::load_from_blob_file(&fixture_path).unwrap();
-    assert_eq!(fixture.input.compute_budget, mollusk.compute_budget);
+    assert_eq!(
+        ComputeBudget::from(fixture.input.compute_budget),
+        mollusk.compute_budget
+    );
     assert_eq!(
         FeatureSet::from(fixture.input.feature_set),
         mollusk.feature_set

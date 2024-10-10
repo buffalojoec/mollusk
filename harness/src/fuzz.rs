@@ -76,7 +76,7 @@ fn build_fixture_context(
     let accounts = accounts.to_vec();
 
     FixtureContext {
-        compute_budget: *compute_budget,
+        compute_budget: compute_budget.into(),
         feature_set: feature_set.into(),
         sysvar_context: sysvars.into(),
         program_id: instruction.program_id,
