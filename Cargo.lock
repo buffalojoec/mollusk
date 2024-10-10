@@ -1587,6 +1587,7 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
+ "serde",
  "solana-compute-budget",
  "solana-sdk",
  "thiserror",

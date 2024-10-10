@@ -2,6 +2,7 @@
 
 use {
     super::proto,
+    serde::{Deserialize, Serialize},
     solana_sdk::{feature_set::*, pubkey::Pubkey},
 };
 
@@ -22,7 +23,7 @@ fn create_feature_set<'a>(
     feature_set
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct FixtureFeatureSet {
     pub features: Vec<u64>,
 }

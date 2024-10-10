@@ -17,6 +17,7 @@ use {
     effects::FixtureEffects,
     error::FixtureError,
     prost::Message,
+    serde::{Deserialize, Serialize},
     std::{
         fs::{self, File},
         io::{Read, Write},
@@ -26,7 +27,7 @@ use {
 
 /// A fixture for invoking a single instruction against a simulated Solana
 /// program runtime environment, for a given program.
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Fixture {
     /// The fixture inputs.
     pub input: FixtureContext,
