@@ -228,6 +228,9 @@ impl Mollusk {
     /// ```ignore
     /// EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
     /// ```
+    ///
+    /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
+    /// JSON format.
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
@@ -237,9 +240,24 @@ impl Mollusk {
         let result = self.process_instruction(instruction, accounts);
 
         #[cfg(feature = "fuzz")]
-        if let Ok(dir_path) = std::env::var("EJECT_FUZZ_FIXTURES") {
-            fuzz::build_fixture_from_mollusk_test(self, instruction, accounts, &result, checks)
-                .dump_to_blob_file(&dir_path);
+        {
+            let blob_dir = std::env::var("EJECT_FUZZ_FIXTURES").ok();
+            let json_dir = std::env::var("EJECT_FUZZ_FIXTURES_JSON").ok();
+            if blob_dir.is_some() || json_dir.is_some() {
+                let fixture = fuzz::build_fixture_from_mollusk_test(
+                    self,
+                    instruction,
+                    accounts,
+                    &result,
+                    checks,
+                );
+                if let Some(blob_dir) = blob_dir {
+                    fixture.dump_to_blob_file(&blob_dir);
+                }
+                if let Some(json_dir) = json_dir {
+                    fixture.dump_to_json_file(&json_dir);
+                }
+            }
         }
 
         result.run_checks(checks);
