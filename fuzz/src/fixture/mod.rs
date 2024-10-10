@@ -97,4 +97,16 @@ impl Fixture {
             .expect("Failed to read fixture file");
         Self::decode(&buf)
     }
+
+    /// Loads a `Fixture` from a JSON file.
+    pub fn load_from_json_file(file_path: &str) -> Result<Self, FixtureError> {
+        if !file_path.ends_with(".json") {
+            panic!("Invalid fixture file extension: {}", file_path);
+        }
+        let mut file = File::open(file_path).expect("Failed to open fixture file");
+        let mut json = String::new();
+        file.read_to_string(&mut json)
+            .expect("Failed to read fixture file");
+        serde_json::from_str(&json).map_err(|_| FixtureError::InvalidJsonFixture)
+    }
 }
