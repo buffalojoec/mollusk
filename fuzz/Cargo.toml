@@ -9,3 +9,6 @@ edition = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
+
+[build-dependencies]
+prost-build = { workspace = true }
