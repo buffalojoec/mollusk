@@ -54,7 +54,7 @@ use {
         pubkey::Pubkey,
         transaction_context::{InstructionAccount, TransactionContext},
     },
-    std::sync::Arc,
+    std::{collections::HashMap, sync::Arc},
 };
 
 const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
@@ -203,18 +203,34 @@ impl Mollusk {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
 
-        let instruction_accounts = instruction
-            .accounts
-            .iter()
-            .enumerate()
-            .map(|(i, meta)| InstructionAccount {
-                index_in_callee: i as u16,
-                index_in_caller: i as u16,
-                index_in_transaction: (i + PROGRAM_ACCOUNTS_LEN) as u16,
-                is_signer: meta.is_signer,
-                is_writable: meta.is_writable,
-            })
-            .collect::<Vec<_>>();
+        let instruction_accounts = {
+            // For ensuring each account has the proper privilege level (dedupe).
+            //  <pubkey, (is_signer, is_writable)>
+            let mut privileges: HashMap<Pubkey, (bool, bool)> = HashMap::new();
+
+            for meta in instruction.accounts.iter() {
+                let entry = privileges.entry(meta.pubkey).or_default();
+                entry.0 |= meta.is_signer;
+                entry.1 |= meta.is_writable;
+            }
+
+            instruction
+                .accounts
+                .iter()
+                .enumerate()
+                .map(|(i, meta)| {
+                    // Guaranteed by the last iteration.
+                    let (is_signer, is_writable) = privileges.get(&meta.pubkey).unwrap();
+                    InstructionAccount {
+                        index_in_callee: i as u16,
+                        index_in_caller: i as u16,
+                        index_in_transaction: (i + PROGRAM_ACCOUNTS_LEN) as u16,
+                        is_signer: *is_signer,
+                        is_writable: *is_writable,
+                    }
+                })
+                .collect::<Vec<_>>()
+        };
 
         let transaction_accounts = [(self.program_id, self.program_account.clone())]
             .iter()

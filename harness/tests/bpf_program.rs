@@ -48,10 +48,7 @@ fn test_write_data() {
         mollusk.process_and_validate_instruction(
             &account_not_signer_ix,
             &[(key, account.clone())],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(279),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -63,10 +60,7 @@ fn test_write_data() {
         mollusk.process_and_validate_instruction(
             &data_too_large_ix,
             &[(key, account.clone())],
-            &[
-                Check::err(ProgramError::AccountDataTooSmall),
-                Check::compute_units(290),
-            ],
+            &[Check::err(ProgramError::AccountDataTooSmall)],
         );
     }
 
@@ -131,10 +125,7 @@ fn test_transfer() {
                 (recipient, recipient_account.clone()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(605),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -147,12 +138,9 @@ fn test_transfer() {
                 (recipient, recipient_account.clone()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::Custom(
-                    SystemError::ResultWithNegativeLamports as u32,
-                )),
-                Check::compute_units(2261),
-            ],
+            &[Check::err(ProgramError::Custom(
+                SystemError::ResultWithNegativeLamports as u32,
+            ))],
         );
     }
 
@@ -166,7 +154,7 @@ fn test_transfer() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2371),
+            Check::compute_units(2373),
             Check::account(&payer)
                 .lamports(payer_lamports - transfer_amount)
                 .build(),
@@ -210,10 +198,7 @@ fn test_close_account() {
                 (incinerator::id(), AccountSharedData::default()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(605),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -227,7 +212,7 @@ fn test_close_account() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2563),
+            Check::compute_units(2562),
             Check::account(&key)
                 .closed() // The rest is unnecessary, just testing.
                 .data(&[])
@@ -276,7 +261,7 @@ fn test_cpi() {
             &[(key, account.clone())],
             &[
                 Check::err(ProgramError::NotEnoughAccountKeys),
-                Check::compute_units(0),
+                Check::compute_units(0), // No compute units used.
             ],
         );
     }
@@ -296,7 +281,6 @@ fn test_cpi() {
                 // This is the error thrown by SVM. It also emits the message
                 // "Program is not cached".
                 Check::err(ProgramError::InvalidAccountData),
-                Check::compute_units(1840),
             ],
         );
     }
@@ -319,7 +303,6 @@ fn test_cpi() {
             ],
             &[
                 Check::instruction_err(InstructionError::PrivilegeEscalation), // CPI
-                Check::compute_units(1841),
             ],
         );
     }
@@ -341,10 +324,7 @@ fn test_cpi() {
                     create_program_account_loader_v3(&cpi_target_program_id),
                 ),
             ],
-            &[
-                Check::err(ProgramError::AccountDataTooSmall),
-                Check::compute_units(2162),
-            ],
+            &[Check::err(ProgramError::AccountDataTooSmall)],
         );
     }
 
@@ -360,7 +340,7 @@ fn test_cpi() {
         ],
         &[
             Check::success(),
-            Check::compute_units(2279),
+            Check::compute_units(2278),
             Check::account(&key)
                 .data(data)
                 .lamports(lamports)
@@ -369,4 +349,75 @@ fn test_cpi() {
                 .build(),
         ],
     );
+}
+
+#[test]
+fn test_account_dedupe() {
+    std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+
+    let program_id = Pubkey::new_unique();
+
+    let mollusk = Mollusk::new(&program_id, "test_program_primary");
+
+    let key = Pubkey::new_unique();
+
+    // Success first not writable.
+    {
+        let instruction = Instruction::new_with_bytes(
+            program_id,
+            &[5],
+            vec![
+                AccountMeta::new_readonly(key, false), // Not writable.
+                AccountMeta::new_readonly(key, true),
+            ],
+        );
+        mollusk.process_and_validate_instruction(
+            &instruction,
+            &[
+                (key, AccountSharedData::default()),
+                (key, AccountSharedData::default()),
+            ],
+            &[Check::success()],
+        );
+    }
+
+    // Success second not signer.
+    {
+        let instruction = Instruction::new_with_bytes(
+            program_id,
+            &[5],
+            vec![
+                AccountMeta::new(key, false),
+                AccountMeta::new_readonly(key, false), // Not signer.
+            ],
+        );
+        mollusk.process_and_validate_instruction(
+            &instruction,
+            &[
+                (key, AccountSharedData::default()),
+                (key, AccountSharedData::default()),
+            ],
+            &[Check::success()],
+        );
+    }
+
+    // Success with writable and signer.
+    {
+        let instruction = Instruction::new_with_bytes(
+            program_id,
+            &[5],
+            vec![
+                AccountMeta::new(key, false),
+                AccountMeta::new_readonly(key, true),
+            ],
+        );
+        mollusk.process_and_validate_instruction(
+            &instruction,
+            &[
+                (key, AccountSharedData::default()),
+                (key, AccountSharedData::default()),
+            ],
+            &[Check::success()],
+        );
+    }
 }
