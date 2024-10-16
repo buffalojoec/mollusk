@@ -92,6 +92,24 @@ fn process_instruction(
 
             invoke(&instruction, &[account_info.clone()])?;
         }
+        Some((5, _)) => {
+            // Load the same account twice and assert both infos share the
+            // same privilege level.
+            let first_info = next_account_info(accounts_iter)?;
+            let second_info = next_account_info(accounts_iter)?;
+
+            if first_info.key != second_info.key {
+                return Err(ProgramError::InvalidArgument);
+            }
+
+            if first_info.is_writable != second_info.is_writable {
+                return Err(ProgramError::Immutable);
+            }
+
+            if first_info.is_signer != second_info.is_signer {
+                return Err(ProgramError::MissingRequiredSignature);
+            }
+        }
         _ => return Err(ProgramError::InvalidInstructionData),
     }
 
