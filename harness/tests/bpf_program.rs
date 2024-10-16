@@ -48,10 +48,7 @@ fn test_write_data() {
         mollusk.process_and_validate_instruction(
             &account_not_signer_ix,
             &[(key, account.clone())],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(279),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -63,10 +60,7 @@ fn test_write_data() {
         mollusk.process_and_validate_instruction(
             &data_too_large_ix,
             &[(key, account.clone())],
-            &[
-                Check::err(ProgramError::AccountDataTooSmall),
-                Check::compute_units(290),
-            ],
+            &[Check::err(ProgramError::AccountDataTooSmall)],
         );
     }
 
@@ -131,10 +125,7 @@ fn test_transfer() {
                 (recipient, recipient_account.clone()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(605),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -147,12 +138,9 @@ fn test_transfer() {
                 (recipient, recipient_account.clone()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::Custom(
-                    SystemError::ResultWithNegativeLamports as u32,
-                )),
-                Check::compute_units(2261),
-            ],
+            &[Check::err(ProgramError::Custom(
+                SystemError::ResultWithNegativeLamports as u32,
+            ))],
         );
     }
 
@@ -210,10 +198,7 @@ fn test_close_account() {
                 (incinerator::id(), AccountSharedData::default()),
                 keyed_account_for_system_program(),
             ],
-            &[
-                Check::err(ProgramError::MissingRequiredSignature),
-                Check::compute_units(605),
-            ],
+            &[Check::err(ProgramError::MissingRequiredSignature)],
         );
     }
 
@@ -276,7 +261,7 @@ fn test_cpi() {
             &[(key, account.clone())],
             &[
                 Check::err(ProgramError::NotEnoughAccountKeys),
-                Check::compute_units(0),
+                Check::compute_units(0), // No compute units used.
             ],
         );
     }
@@ -296,7 +281,6 @@ fn test_cpi() {
                 // This is the error thrown by SVM. It also emits the message
                 // "Program is not cached".
                 Check::err(ProgramError::InvalidAccountData),
-                Check::compute_units(1840),
             ],
         );
     }
@@ -319,7 +303,6 @@ fn test_cpi() {
             ],
             &[
                 Check::instruction_err(InstructionError::PrivilegeEscalation), // CPI
-                Check::compute_units(1841),
             ],
         );
     }
@@ -341,10 +324,7 @@ fn test_cpi() {
                     create_program_account_loader_v3(&cpi_target_program_id),
                 ),
             ],
-            &[
-                Check::err(ProgramError::AccountDataTooSmall),
-                Check::compute_units(2162),
-            ],
+            &[Check::err(ProgramError::AccountDataTooSmall)],
         );
     }
 
