@@ -1,0 +1,11 @@
+[package]
+name = "mollusk-svm-fuzz-fixture"
+description = "Mollusk-compatible fuzz fixture for SVM programs."
+documentation = "https://docs.rs/mollusk-svm-fuzz-fixture"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
