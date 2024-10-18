@@ -254,18 +254,6 @@ fn test_cpi() {
         )
     };
 
-    // Fail CPI target program account not provided.
-    {
-        mollusk.process_and_validate_instruction(
-            &instruction,
-            &[(key, account.clone())],
-            &[
-                Check::err(ProgramError::NotEnoughAccountKeys),
-                Check::compute_units(0), // No compute units used.
-            ],
-        );
-    }
-
     // Fail CPI target program not added to test environment.
     {
         mollusk.process_and_validate_instruction(

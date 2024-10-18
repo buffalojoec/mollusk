@@ -42,6 +42,13 @@ impl ProgramCache {
         &self.cache
     }
 
+    /// Add a builtin program to the cache.
+    pub fn add_builtin(&mut self, builtin: Builtin) {
+        let program_id = builtin.program_id;
+        let entry = builtin.program_cache_entry();
+        self.cache.write().unwrap().replenish(program_id, entry);
+    }
+
     /// Add a program to the cache.
     pub fn add_program(
         &mut self,
@@ -72,11 +79,9 @@ impl ProgramCache {
         );
     }
 
-    /// Add a builtin program to the cache.
-    pub fn add_builtin(&mut self, builtin: Builtin) {
-        let program_id = builtin.program_id;
-        let entry = builtin.program_cache_entry();
-        self.cache.write().unwrap().replenish(program_id, entry);
+    /// Load a program from the cache.
+    pub fn load_program(&self, program_id: &Pubkey) -> Option<Arc<ProgramCacheEntry>> {
+        self.cache.read().unwrap().find(program_id)
     }
 }
 
