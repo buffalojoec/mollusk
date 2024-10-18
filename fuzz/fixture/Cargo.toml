@@ -1,0 +1,21 @@
+[package]
+name = "mollusk-svm-fuzz-fixture"
+description = "Mollusk-compatible fuzz fixture for SVM programs."
+documentation = "https://docs.rs/mollusk-svm-fuzz-fixture"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
+bs58 = { workspace = true }
+prost = { workspace = true }
+prost-types = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+solana-compute-budget = { workspace = true }
+solana-sdk = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }
