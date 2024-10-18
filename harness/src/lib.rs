@@ -28,6 +28,7 @@
 //!   series of checks on the result, panicking if any checks fail.
 
 pub mod file;
+mod keys;
 pub mod program;
 pub mod result;
 pub mod sysvar;
@@ -38,6 +39,7 @@ use {
         result::{Check, InstructionResult},
         sysvar::Sysvars,
     },
+    keys::CompiledAccounts,
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
         invoke_context::{EnvironmentConfig, InvokeContext},
@@ -45,22 +47,14 @@ use {
         timings::ExecuteTimings,
     },
     solana_sdk::{
-        account::AccountSharedData,
-        bpf_loader_upgradeable,
-        feature_set::FeatureSet,
-        fee::FeeStructure,
-        hash::Hash,
-        instruction::Instruction,
-        pubkey::Pubkey,
-        transaction_context::{InstructionAccount, TransactionContext},
+        account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
+        fee::FeeStructure, hash::Hash, instruction::Instruction, pubkey::Pubkey,
+        transaction_context::TransactionContext,
     },
-    std::{collections::HashMap, sync::Arc},
+    std::sync::Arc,
 };
 
 const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
-
-const PROGRAM_ACCOUNTS_LEN: usize = 1;
-const PROGRAM_INDICES: &[u16] = &[0];
 
 /// The Mollusk API, providing a simple interface for testing Solana programs.
 ///
@@ -203,40 +197,22 @@ impl Mollusk {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
 
-        let instruction_accounts = {
-            // For ensuring each account has the proper privilege level (dedupe).
-            //  <pubkey, (is_signer, is_writable)>
-            let mut privileges: HashMap<Pubkey, (bool, bool)> = HashMap::new();
+        let loader_key = self
+            .program_cache
+            .load_program(&instruction.program_id)
+            .unwrap_or_else(|| {
+                panic!(
+                    "    [mollusk]: Program targeted by instruction is missing from cache: {:?}",
+                    instruction.program_id,
+                )
+            })
+            .account_owner();
 
-            for meta in instruction.accounts.iter() {
-                let entry = privileges.entry(meta.pubkey).or_default();
-                entry.0 |= meta.is_signer;
-                entry.1 |= meta.is_writable;
-            }
-
-            instruction
-                .accounts
-                .iter()
-                .enumerate()
-                .map(|(i, meta)| {
-                    // Guaranteed by the last iteration.
-                    let (is_signer, is_writable) = privileges.get(&meta.pubkey).unwrap();
-                    InstructionAccount {
-                        index_in_callee: i as u16,
-                        index_in_caller: i as u16,
-                        index_in_transaction: (i + PROGRAM_ACCOUNTS_LEN) as u16,
-                        is_signer: *is_signer,
-                        is_writable: *is_writable,
-                    }
-                })
-                .collect::<Vec<_>>()
-        };
-
-        let transaction_accounts = [(self.program_id, self.program_account.clone())]
-            .iter()
-            .chain(accounts)
-            .cloned()
-            .collect::<Vec<_>>();
+        let CompiledAccounts {
+            program_id_index,
+            instruction_accounts,
+            transaction_accounts,
+        } = crate::keys::compile_accounts(instruction, accounts, loader_key);
 
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
@@ -264,20 +240,26 @@ impl Mollusk {
             .process_instruction(
                 &instruction.data,
                 &instruction_accounts,
-                PROGRAM_INDICES,
+                &[program_id_index],
                 &mut compute_units_consumed,
                 &mut timings,
             )
         };
 
-        let resulting_accounts = transaction_context
-            .deconstruct_without_keys()
-            .unwrap()
-            .into_iter()
-            .skip(PROGRAM_ACCOUNTS_LEN)
-            .zip(instruction.accounts.iter())
-            .map(|(account, meta)| (meta.pubkey, account))
-            .collect::<Vec<_>>();
+        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = (0..transaction_context
+            .get_number_of_accounts())
+            .filter_map(|index| {
+                let key = transaction_context
+                    .get_key_of_account_at_index(index)
+                    .unwrap();
+                let account = transaction_context.get_account_at_index(index).unwrap();
+                if *key != instruction.program_id {
+                    Some((*key, account.take()))
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         InstructionResult {
             compute_units_consumed,
