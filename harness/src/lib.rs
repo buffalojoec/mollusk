@@ -64,9 +64,7 @@ pub struct Mollusk {
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub fee_structure: FeeStructure,
-    pub program_account: AccountSharedData,
     pub program_cache: ProgramCache,
-    pub program_id: Pubkey,
     pub sysvars: Sysvars,
 }
 
@@ -78,61 +76,34 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
-        let (program_id, program_account) = program::keyed_account_for_system_program();
         Self {
             compute_budget: ComputeBudget::default(),
             feature_set: FeatureSet::all_enabled(),
             fee_structure: FeeStructure::default(),
-            program_account,
             program_cache: ProgramCache::default(),
-            program_id,
             sysvars: Sysvars::default(),
         }
     }
 }
 
 impl Mollusk {
-    /// Create a new Mollusk instance for the provided program.
+    /// Create a new Mollusk instance containing the provided program.
     ///
     /// Attempts the load the program's ELF file from the default search paths.
-    /// Once loaded, adds the program to the program cache and updates the
-    /// Mollusk instance with the program's ID and account.
+    /// Once loaded, adds the program to the program cache and returns the
+    /// newly created Mollusk instance.
     pub fn new(program_id: &Pubkey, program_name: &str) -> Self {
-        let mut mollusk = Self {
-            program_id: *program_id,
-            program_account: program::create_program_account_loader_v3(program_id),
-            ..Default::default()
-        };
-        mollusk.add_program(program_id, program_name);
+        let mut mollusk = Self::default();
+        mollusk.add_program(program_id, program_name, &DEFAULT_LOADER_KEY);
         mollusk
     }
 
     /// Add a program to the test environment.
     ///
     /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &str) {
-        let elf = file::load_program_elf(program_name);
-        self.add_program_with_elf(program_id, &elf);
-    }
-
-    /// Add a program to the test environment under a specific loader.
-    ///
-    /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program_with_loader(
-        &mut self,
-        program_id: &Pubkey,
-        program_name: &str,
-        loader_key: &Pubkey,
-    ) {
+    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &str, loader_key: &Pubkey) {
         let elf = file::load_program_elf(program_name);
         self.add_program_with_elf_and_loader(program_id, &elf, loader_key);
-    }
-
-    /// Add a program to the test environment using a provided ELF.
-    ///
-    /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program_with_elf(&mut self, program_id: &Pubkey, elf: &[u8]) {
-        self.add_program_with_elf_and_loader(program_id, elf, &DEFAULT_LOADER_KEY);
     }
 
     /// Add a program to the test environment using a provided ELF under a
@@ -152,32 +123,6 @@ impl Mollusk {
             &self.compute_budget,
             &self.feature_set,
         );
-    }
-
-    /// Switch the target program to a different program.
-    ///
-    /// Note: The program must already be contained in the program cache.
-    pub fn switch_target_program(&mut self, program_id: &Pubkey) {
-        let loader_key: Pubkey = self
-            .program_cache
-            .cache()
-            .read()
-            .unwrap()
-            .find(program_id)
-            .expect("Program not found in cache")
-            .account_owner
-            .into();
-        if loader_key != DEFAULT_LOADER_KEY {
-            panic!("Loader not supported for target program: {:?}", loader_key);
-        }
-        self.program_id = *program_id;
-        self.program_account = program::create_program_account_loader_v3(program_id);
-    }
-
-    /// Add a program to the cache and make it the target program.
-    pub fn add_and_switch_target_program(&mut self, program_id: &Pubkey, program_name: &str) {
-        self.add_program(program_id, program_name);
-        self.switch_target_program(program_id);
     }
 
     /// Warp the test environment to a slot by updating sysvars.

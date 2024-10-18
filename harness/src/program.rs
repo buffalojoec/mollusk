@@ -9,8 +9,7 @@ use {
     },
     solana_sdk::{
         account::{Account, AccountSharedData},
-        bpf_loader,
-        bpf_loader_upgradeable::{self, UpgradeableLoaderState},
+        bpf_loader_upgradeable::UpgradeableLoaderState,
         feature_set::FeatureSet,
         native_loader,
         pubkey::Pubkey,
@@ -18,6 +17,14 @@ use {
     },
     std::sync::{Arc, RwLock},
 };
+
+/// Loader keys, re-exported from `solana_sdk` for convenience.
+pub mod loader_keys {
+    pub use solana_sdk::{
+        bpf_loader::ID as LOADER_V2, bpf_loader_upgradeable::ID as LOADER_V3,
+        loader_v4::ID as LOADER_V4, native_loader::ID as NATIVE_LOADER,
+    };
+}
 
 pub struct ProgramCache {
     cache: RwLock<ProgramCacheForTxBatch>,
@@ -108,12 +115,12 @@ static BUILTINS: &[Builtin] = &[
         entrypoint: solana_system_program::system_processor::Entrypoint::vm,
     },
     Builtin {
-        program_id: bpf_loader::id(),
+        program_id: loader_keys::LOADER_V2,
         name: "solana_bpf_loader_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
     Builtin {
-        program_id: bpf_loader_upgradeable::id(),
+        program_id: loader_keys::LOADER_V3,
         name: "solana_bpf_loader_upgradeable_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
@@ -160,7 +167,7 @@ pub fn create_program_account_loader_v2(elf: &[u8]) -> AccountSharedData {
     AccountSharedData::from(Account {
         lamports,
         data: elf.to_vec(),
-        owner: bpf_loader::id(),
+        owner: loader_keys::LOADER_V2,
         executable: true,
         rent_epoch: 0,
     })
@@ -169,7 +176,7 @@ pub fn create_program_account_loader_v2(elf: &[u8]) -> AccountSharedData {
 /// Create a BPF Loader v3 (Upgradeable) program account.
 pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedData {
     let programdata_address =
-        Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id()).0;
+        Pubkey::find_program_address(&[program_id.as_ref()], &loader_keys::LOADER_V3).0;
     let data = bincode::serialize(&UpgradeableLoaderState::Program {
         programdata_address,
     })
@@ -178,7 +185,7 @@ pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedDat
     AccountSharedData::from(Account {
         lamports,
         data,
-        owner: bpf_loader_upgradeable::id(),
+        owner: loader_keys::LOADER_V3,
         executable: true,
         rent_epoch: 0,
     })
@@ -205,7 +212,7 @@ pub fn create_program_data_account_loader_v3(elf: &[u8]) -> AccountSharedData {
     AccountSharedData::from(Account {
         lamports,
         data,
-        owner: bpf_loader_upgradeable::id(),
+        owner: loader_keys::LOADER_V3,
         executable: false,
         rent_epoch: 0,
     })

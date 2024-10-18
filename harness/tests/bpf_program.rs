@@ -273,7 +273,11 @@ fn test_cpi() {
         );
     }
 
-    mollusk.add_program(&cpi_target_program_id, "test_program_cpi_target");
+    mollusk.add_program(
+        &cpi_target_program_id,
+        "test_program_cpi_target",
+        &mollusk_svm::program::loader_keys::LOADER_V3,
+    );
 
     // Fail account not signer.
     {
