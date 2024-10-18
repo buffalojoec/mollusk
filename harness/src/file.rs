@@ -18,10 +18,13 @@
 //! purposes, most of them will panic if the file is not found or if there is an
 //! error reading the file.
 
-use std::{
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
+use {
+    crate::error::{MolluskError, MolluskPanic},
+    std::{
+        fs::File,
+        io::Read,
+        path::{Path, PathBuf},
+    },
 };
 
 fn default_shared_object_dirs() -> Vec<PathBuf> {
@@ -55,12 +58,11 @@ fn find_file(filename: &str) -> Option<PathBuf> {
 /// Read the contents of a file into a `Vec<u8>`.
 pub fn read_file<P: AsRef<Path>>(path: P) -> Vec<u8> {
     let path = path.as_ref();
-    let mut file = File::open(path)
-        .unwrap_or_else(|err| panic!("Failed to open \"{}\": {}", path.display(), err));
+    let mut file = File::open(path).or_panic_with(MolluskError::FileOpenError(path));
 
     let mut file_data = Vec::new();
     file.read_to_end(&mut file_data)
-        .unwrap_or_else(|err| panic!("Failed to read \"{}\": {}", path.display(), err));
+        .or_panic_with(MolluskError::FileReadError(path));
     file_data
 }
 
@@ -77,7 +79,6 @@ pub fn read_file<P: AsRef<Path>>(path: P) -> Vec<u8> {
 /// The name of the program ELF file is expected to be `{program_name}.so`.
 pub fn load_program_elf(program_name: &str) -> Vec<u8> {
     let file_name = format!("{program_name}.so");
-    let program_file = find_file(&file_name)
-        .unwrap_or_else(|| panic!("Program file data not available for \"{}\"", file_name,));
+    let program_file = find_file(&file_name).or_panic_with(MolluskError::FileNotFound(&file_name));
     read_file(program_file)
 }
