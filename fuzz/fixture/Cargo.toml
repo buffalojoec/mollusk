@@ -9,8 +9,11 @@ edition = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
+bs58 = { workspace = true }
 prost = { workspace = true }
 prost-types = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 solana-compute-budget = { workspace = true }
 solana-sdk = { workspace = true }
 
