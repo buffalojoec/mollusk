@@ -17,6 +17,7 @@ solana-program-runtime = { workspace = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-logger = { workspace = true }
+thiserror = { workspace = true }
 
 [[bench]]
 name = "ips"

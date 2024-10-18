@@ -20,6 +20,7 @@
 //! <https://github.com/anza-xyz/agave/blob/c6e8239843af8e6301cd198e39d0a44add427bef/sdk/program/src/message/legacy.rs#L357>.
 
 use {
+    crate::error::{MolluskError, MolluskPanic},
     solana_sdk::{
         account::{AccountSharedData, WritableAccount},
         instruction::Instruction,
@@ -141,13 +142,7 @@ pub fn compile_accounts(
                     .iter()
                     .find(|(k, _)| k == *key)
                     .map(|(_, account)| account.clone())
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "    [mollusk]: An account required by the instruction was not \
-                             provided: {:?}",
-                            key,
-                        )
-                    });
+                    .or_panic_with(MolluskError::AccountMissing(key));
                 (**key, account)
             }
         })

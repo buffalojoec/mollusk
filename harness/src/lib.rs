@@ -27,6 +27,7 @@
 //! * `process_and_validate_instruction`: Process an instruction and perform a
 //!   series of checks on the result, panicking if any checks fail.
 
+mod error;
 pub mod file;
 mod keys;
 pub mod program;
@@ -35,6 +36,7 @@ pub mod sysvar;
 
 use {
     crate::{
+        error::{MolluskError, MolluskPanic},
         program::ProgramCache,
         result::{Check, InstructionResult},
         sysvar::Sysvars,
@@ -145,12 +147,7 @@ impl Mollusk {
         let loader_key = self
             .program_cache
             .load_program(&instruction.program_id)
-            .unwrap_or_else(|| {
-                panic!(
-                    "    [mollusk]: Program targeted by instruction is missing from cache: {:?}",
-                    instruction.program_id,
-                )
-            })
+            .or_panic_with(MolluskError::ProgramNotCached(&instruction.program_id))
             .account_owner();
 
         let CompiledAccounts {
