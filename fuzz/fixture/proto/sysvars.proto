@@ -1,0 +1,72 @@
+syntax = "proto3";
+package org.mollusk.svm;
+
+// The `Clock` sysvar.
+message Clock {
+    uint64 slot = 1;
+    int64 epoch_start_timestamp = 2;
+    uint64 epoch = 3;
+    uint64 leader_schedule_epoch = 4;
+    int64 unix_timestamp = 5;
+}
+
+// The `EpochRewards` sysvar.
+message EpochRewards {
+    uint64 distribution_starting_block_height = 1;
+    uint64 num_partitions = 2;
+    bytes parent_blockhash = 3;
+    bytes total_points = 4;
+    uint64 total_rewards = 5;
+    uint64 distributed_rewards = 6;
+    bool active = 7;
+}
+
+// The `EpochSchedule` sysvar.
+message EpochSchedule {
+    uint64 slots_per_epoch = 1;
+    uint64 leader_schedule_slot_offset = 2;
+    bool warmup = 3;
+    uint64 first_normal_epoch = 4;
+    uint64 first_normal_slot = 5;
+}
+
+// The `Rent` sysvar.
+message Rent {
+    uint64 lamports_per_byte_year = 1;
+    double exemption_threshold = 2;
+    uint32 burn_percent = 3;
+}
+
+// A `SlotHashEntry` entry for the `SlotHashes` sysvar.
+message SlotHashEntry {
+    uint64 slot = 1;
+    bytes hash = 2;
+}
+
+// The `SlotHashes` sysvar.
+message SlotHashes {
+    repeated SlotHashEntry slot_hashes = 1;
+}
+
+// A `StakeHistoryEntry` entry for the `StakeHistory` sysvar.
+message StakeHistoryEntry {
+    uint64 epoch = 1;
+    uint64 effective = 2;
+    uint64 activating = 3;
+    uint64 deactivating = 4;
+}
+
+// The `StakeHistory` sysvar.
+message StakeHistory {
+    repeated StakeHistoryEntry stake_history = 1;
+}
+
+// The sysvar context.
+message SysvarContext {
+    Clock clock = 1;
+    EpochRewards epoch_rewards = 2;
+    EpochSchedule epoch_schedule = 3;
+    Rent rent = 4;
+    SlotHashes slot_hashes = 5;
+    StakeHistory stake_history = 6;
+}
