@@ -13,6 +13,7 @@ use {
 };
 
 /// Instruction context fixture.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Context {
     /// The compute budget to use for the simulation.
     pub compute_budget: ComputeBudget,

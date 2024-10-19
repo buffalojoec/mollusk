@@ -20,7 +20,7 @@ use {
 };
 
 /// A fixture of runtime sysvars.
-#[derive(Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Sysvars {
     /// `Clock` sysvar.
     pub clock: Clock,
@@ -34,6 +34,19 @@ pub struct Sysvars {
     pub slot_hashes: SlotHashes,
     /// `StakeHistory` sysvar.
     pub stake_history: StakeHistory,
+}
+
+impl Clone for Sysvars {
+    fn clone(&self) -> Self {
+        Self {
+            clock: self.clock.clone(),
+            epoch_rewards: self.epoch_rewards.clone(),
+            epoch_schedule: self.epoch_schedule.clone(),
+            rent: self.rent.clone(),
+            slot_hashes: SlotHashes::new(self.slot_hashes.slot_hashes()),
+            stake_history: self.stake_history.clone(),
+        }
+    }
 }
 
 // Clock sysvar.

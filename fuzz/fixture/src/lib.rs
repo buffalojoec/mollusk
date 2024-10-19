@@ -27,6 +27,7 @@ use {
 
 /// A fixture for invoking a single instruction against a simulated SVM
 /// program runtime environment, for a given program.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Fixture {
     /// The fixture inputs.
     pub input: Context,
@@ -65,10 +66,11 @@ impl Fixture {
     /// Dumps the `Fixture` to a JSON file.
     /// The file name is a hash of the fixture with the `.json` extension.
     pub fn dump_to_json_file(self, dir_path: &str) {
+        let blob = self.clone().encode();
         let json = serde_json::to_string_pretty(&ProtoFixture::from(self))
             .expect("Failed to serialize fixture to JSON");
 
-        let hash = solana_sdk::hash::hash(json.as_bytes());
+        let hash = solana_sdk::hash::hash(&blob);
         let file_name = format!("instr-{}.json", bs58::encode(hash).into_string());
 
         write_file(Path::new(dir_path), &file_name, json.as_bytes());

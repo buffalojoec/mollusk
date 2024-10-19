@@ -6,6 +6,7 @@ use {
 };
 
 /// Represents the effects of a single instruction.
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Effects {
     /// Compute units consumed by the instruction.
     pub compute_units_consumed: u64,
