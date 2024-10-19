@@ -134,8 +134,6 @@ impl Mollusk {
         self.sysvars.warp_to_slot(slot)
     }
 
-    /// The main Mollusk API method.
-    ///
     /// Process an instruction using the minified Solana Virtual Machine (SVM)
     /// environment. Simply returns the result.
     pub fn process_instruction(
@@ -213,8 +211,36 @@ impl Mollusk {
         }
     }
 
-    /// The secondary Mollusk API method.
+    /// Process a chain of instructions using the minified Solana Virtual
+    /// Machine (SVM) environment. The returned result is an
+    /// `InstructionResult`, containing:
     ///
+    /// * `compute_units_consumed`: The total compute units consumed across all
+    ///   instructions.
+    /// * `execution_time`: The total execution time across all instructions.
+    /// * `program_result`: The program result of the _last_ instruction.
+    /// * `resulting_accounts`: The resulting accounts after the _last_
+    ///   instruction.
+    pub fn process_instruction_chain(
+        &self,
+        instructions: &[Instruction],
+        accounts: &[(Pubkey, AccountSharedData)],
+    ) -> InstructionResult {
+        let mut result = InstructionResult {
+            resulting_accounts: accounts.to_vec(),
+            ..Default::default()
+        };
+
+        for instruction in instructions {
+            result.absorb(self.process_instruction(instruction, &result.resulting_accounts));
+            if result.program_result.is_err() {
+                break;
+            }
+        }
+
+        result
+    }
+
     /// Process an instruction using the minified Solana Virtual Machine (SVM)
     /// environment, then perform checks on the result. Panics if any checks
     /// fail.
@@ -263,6 +289,23 @@ impl Mollusk {
                 fixture.dump_to_json_file(&json_dir);
             }
         }
+
+        result.run_checks(checks);
+        result
+    }
+
+    /// Process a chain of instructions using the minified Solana Virtual
+    /// Machine (SVM) environment, then perform checks on the result.
+    /// Panics if any checks fail.
+    pub fn process_and_validate_instruction_chain(
+        &self,
+        instructions: &[Instruction],
+        accounts: &[(Pubkey, AccountSharedData)],
+        checks: &[Check],
+    ) -> InstructionResult {
+        let result = self.process_instruction_chain(instructions, accounts);
+
+        // No fuzz support yet...
 
         result.run_checks(checks);
         result
