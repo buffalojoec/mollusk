@@ -9,6 +9,7 @@ memo = []
 memo-v1 = []
 
 [lib]
+crate-type = ["lib"]
 
 [dependencies]
 mollusk-svm = { workspace = true }
