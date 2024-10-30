@@ -1553,6 +1553,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk-memo"
+version = "0.1.0"
+dependencies = [
+ "mollusk-svm",
+ "solana-sdk",
+]
+
+[[package]]
 name = "mollusk-svm"
 version = "0.0.6"
 dependencies = [
@@ -1591,6 +1599,14 @@ dependencies = [
  "serde",
  "serde_json",
  "solana-compute-budget",
+ "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-token"
+version = "0.1.0"
+dependencies = [
+ "mollusk-svm",
  "solana-sdk",
 ]
 

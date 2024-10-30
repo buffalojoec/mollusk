@@ -3,6 +3,7 @@ members = [
     "bencher",
     "fuzz/*",
     "harness",
+    "programs/*",
     "test-programs/*",
 ]
 resolver = "2"
