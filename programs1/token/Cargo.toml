@@ -1,0 +1,16 @@
+[package]
+name = "mollusk-token"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["token", "associated-token", "token-2022"]
+token = []
+associated-token = []
+token-2022 = []
+
+[lib]
+
+[dependencies]
+mollusk-svm = { workspace = true }
+solana-sdk = { workspace = true }
