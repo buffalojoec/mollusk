@@ -1,0 +1,15 @@
+[package]
+name = "mollusk-memo"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["memo", "memo-v1"]
+memo = []
+memo-v1 = []
+
+[lib]
+
+[dependencies]
+mollusk-svm = { workspace = true }
+solana-sdk = { workspace = true }
