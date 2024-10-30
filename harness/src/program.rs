@@ -21,9 +21,9 @@ use {
 /// Loader keys, re-exported from `solana_sdk` for convenience.
 pub mod loader_keys {
     pub use solana_sdk::{
-        bpf_loader_deprecated::ID as LOADER_V1,
-        bpf_loader::ID as LOADER_V2, bpf_loader_upgradeable::ID as LOADER_V3,
-        loader_v4::ID as LOADER_V4, native_loader::ID as NATIVE_LOADER,
+        bpf_loader::ID as LOADER_V2, bpf_loader_deprecated::ID as LOADER_V1,
+        bpf_loader_upgradeable::ID as LOADER_V3, loader_v4::ID as LOADER_V4,
+        native_loader::ID as NATIVE_LOADER,
     };
 }
 
