@@ -1647,6 +1647,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk-memo"
+version = "0.1.0"
+dependencies = [
+ "mollusk-svm",
+ "solana-sdk",
+]
+
+[[package]]
 name = "mollusk-svm"
 version = "0.0.10"
 dependencies = [
@@ -1728,6 +1736,14 @@ name = "mollusk-svm-keys"
 version = "0.0.10"
 dependencies = [
  "mollusk-svm-error",
+ "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-token"
+version = "0.1.0"
+dependencies = [
+ "mollusk-svm",
  "solana-sdk",
 ]
 

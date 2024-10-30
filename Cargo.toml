@@ -5,6 +5,7 @@ members = [
     "fuzz/*",
     "harness",
     "keys",
+    "programs/*",
     "test-programs/*",
 ]
 resolver = "2"
