@@ -27,23 +27,22 @@
 //! * `process_and_validate_instruction`: Process an instruction and perform a
 //!   series of checks on the result, panicking if any checks fail.
 
-mod error;
+mod accounts;
 pub mod file;
 #[cfg(feature = "fuzz")]
 pub mod fuzz;
-mod keys;
 pub mod program;
 pub mod result;
 pub mod sysvar;
 
 use {
     crate::{
-        error::{MolluskError, MolluskPanic},
         program::ProgramCache,
         result::{Check, InstructionResult},
         sysvar::Sysvars,
     },
-    keys::CompiledAccounts,
+    accounts::CompiledAccounts,
+    mollusk_svm_error::error::{MolluskError, MolluskPanic},
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
         invoke_context::{EnvironmentConfig, InvokeContext},
@@ -154,7 +153,7 @@ impl Mollusk {
             program_id_index,
             instruction_accounts,
             transaction_accounts,
-        } = crate::keys::compile_accounts(instruction, accounts, loader_key);
+        } = crate::accounts::compile_accounts(instruction, accounts, loader_key);
 
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,

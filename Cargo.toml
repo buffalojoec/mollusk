@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "bencher",
+    "error",
     "fuzz/*",
     "harness",
+    "keys",
     "test-programs/*",
 ]
 resolver = "2"
@@ -20,7 +22,9 @@ bincode = "1.3.3"
 bs58 = "0.5.1"
 mollusk-svm = { path = "harness", version = "0.0.6" }
 mollusk-svm-bencher = { path = "bencher", version = "0.0.6" }
+mollusk-svm-error = { path = "error", version = "0.0.6" }
 mollusk-svm-fuzz-fixture = { path = "fuzz/fixture", version = "0.0.6" }
+mollusk-svm-keys = { path = "keys", version = "0.0.6" }
 num-format = "0.4.4"
 prost = "0.10"
 prost-build = "0.10"

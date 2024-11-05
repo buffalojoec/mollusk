@@ -19,7 +19,7 @@
 //! error reading the file.
 
 use {
-    crate::error::{MolluskError, MolluskPanic},
+    mollusk_svm_error::error::{MolluskError, MolluskPanic},
     std::{
         fs::File,
         io::Read,
