@@ -2,14 +2,15 @@
 
 use {
     solana_bpf_loader_program::syscalls::create_program_runtime_environment_v1,
-    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
+        compute_budget::ComputeBudget,
         invoke_context::BuiltinFunctionWithContext,
-        loaded_programs::{LoadProgramMetrics, ProgramCacheEntry, ProgramCacheForTxBatch},
+        loaded_programs::{LoadProgramMetrics, LoadedProgram, LoadedProgramsForTxBatch},
     },
     solana_sdk::{
         account::{Account, AccountSharedData},
-        bpf_loader_upgradeable::UpgradeableLoaderState,
+        bpf_loader,
+        bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         feature_set::FeatureSet,
         native_loader,
         pubkey::Pubkey,
@@ -18,21 +19,13 @@ use {
     std::sync::{Arc, RwLock},
 };
 
-/// Loader keys, re-exported from `solana_sdk` for convenience.
-pub mod loader_keys {
-    pub use solana_sdk::{
-        bpf_loader::ID as LOADER_V2, bpf_loader_upgradeable::ID as LOADER_V3,
-        loader_v4::ID as LOADER_V4, native_loader::ID as NATIVE_LOADER,
-    };
-}
-
-pub struct ProgramCache {
-    cache: RwLock<ProgramCacheForTxBatch>,
+pub(crate) struct ProgramCache {
+    cache: RwLock<LoadedProgramsForTxBatch>,
 }
 
 impl Default for ProgramCache {
     fn default() -> Self {
-        let mut cache = ProgramCacheForTxBatch::default();
+        let mut cache = LoadedProgramsForTxBatch::default();
         BUILTINS.iter().for_each(|builtin| {
             let program_id = builtin.program_id;
             let entry = builtin.program_cache_entry();
@@ -45,19 +38,12 @@ impl Default for ProgramCache {
 }
 
 impl ProgramCache {
-    pub(crate) fn cache(&self) -> &RwLock<ProgramCacheForTxBatch> {
+    pub(crate) fn cache(&self) -> &RwLock<LoadedProgramsForTxBatch> {
         &self.cache
     }
 
-    /// Add a builtin program to the cache.
-    pub fn add_builtin(&mut self, builtin: Builtin) {
-        let program_id = builtin.program_id;
-        let entry = builtin.program_cache_entry();
-        self.cache.write().unwrap().replenish(program_id, entry);
-    }
-
     /// Add a program to the cache.
-    pub fn add_program(
+    pub(crate) fn add_program(
         &mut self,
         program_id: &Pubkey,
         loader_key: &Pubkey,
@@ -72,11 +58,12 @@ impl ProgramCache {
         self.cache.write().unwrap().replenish(
             *program_id,
             Arc::new(
-                ProgramCacheEntry::new(
+                LoadedProgram::new(
                     loader_key,
                     environment,
                     0,
                     0,
+                    None,
                     elf,
                     elf.len(),
                     &mut LoadProgramMetrics::default(),
@@ -87,20 +74,20 @@ impl ProgramCache {
     }
 
     /// Load a program from the cache.
-    pub fn load_program(&self, program_id: &Pubkey) -> Option<Arc<ProgramCacheEntry>> {
+    pub(crate) fn load_program(&self, program_id: &Pubkey) -> Option<Arc<LoadedProgram>> {
         self.cache.read().unwrap().find(program_id)
     }
 }
 
-pub struct Builtin {
+struct Builtin {
     program_id: Pubkey,
     name: &'static str,
     entrypoint: BuiltinFunctionWithContext,
 }
 
 impl Builtin {
-    fn program_cache_entry(&self) -> Arc<ProgramCacheEntry> {
-        Arc::new(ProgramCacheEntry::new_builtin(
+    fn program_cache_entry(&self) -> Arc<LoadedProgram> {
+        Arc::new(LoadedProgram::new_builtin(
             0,
             self.name.len(),
             self.entrypoint,
@@ -115,17 +102,21 @@ static BUILTINS: &[Builtin] = &[
         entrypoint: solana_system_program::system_processor::Entrypoint::vm,
     },
     Builtin {
-        program_id: loader_keys::LOADER_V2,
+        program_id: bpf_loader::id(),
         name: "solana_bpf_loader_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
     Builtin {
-        program_id: loader_keys::LOADER_V3,
+        program_id: bpf_loader_upgradeable::id(),
         name: "solana_bpf_loader_upgradeable_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
     /* ... */
 ];
+
+pub(crate) fn is_builtin(program_id: &Pubkey) -> bool {
+    BUILTINS.iter().any(|b| b.program_id == *program_id)
+}
 
 /// Create a key and account for a builtin program.
 pub fn create_keyed_account_for_builtin_program(
@@ -149,11 +140,6 @@ pub fn keyed_account_for_system_program() -> (Pubkey, AccountSharedData) {
     create_keyed_account_for_builtin_program(&BUILTINS[0].program_id, BUILTINS[0].name)
 }
 
-/// Get the key and account for the BPF Loader v2 program.
-pub fn keyed_account_for_bpf_loader_v2_program() -> (Pubkey, AccountSharedData) {
-    create_keyed_account_for_builtin_program(&BUILTINS[1].program_id, BUILTINS[1].name)
-}
-
 /// Get the key and account for the BPF Loader v3 (Upgradeable) program.
 pub fn keyed_account_for_bpf_loader_v3_program() -> (Pubkey, AccountSharedData) {
     create_keyed_account_for_builtin_program(&BUILTINS[1].program_id, BUILTINS[1].name)
@@ -161,22 +147,10 @@ pub fn keyed_account_for_bpf_loader_v3_program() -> (Pubkey, AccountSharedData) 
 
 /* ... */
 
-/// Create a BPF Loader 2 program account.
-pub fn create_program_account_loader_v2(elf: &[u8]) -> AccountSharedData {
-    let lamports = Rent::default().minimum_balance(elf.len());
-    AccountSharedData::from(Account {
-        lamports,
-        data: elf.to_vec(),
-        owner: loader_keys::LOADER_V2,
-        executable: true,
-        rent_epoch: 0,
-    })
-}
-
 /// Create a BPF Loader v3 (Upgradeable) program account.
 pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedData {
     let programdata_address =
-        Pubkey::find_program_address(&[program_id.as_ref()], &loader_keys::LOADER_V3).0;
+        Pubkey::find_program_address(&[program_id.as_ref()], &bpf_loader_upgradeable::id()).0;
     let data = bincode::serialize(&UpgradeableLoaderState::Program {
         programdata_address,
     })
@@ -185,7 +159,7 @@ pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedDat
     AccountSharedData::from(Account {
         lamports,
         data,
-        owner: loader_keys::LOADER_V3,
+        owner: bpf_loader_upgradeable::id(),
         executable: true,
         rent_epoch: 0,
     })
@@ -212,7 +186,7 @@ pub fn create_program_data_account_loader_v3(elf: &[u8]) -> AccountSharedData {
     AccountSharedData::from(Account {
         lamports,
         data,
-        owner: loader_keys::LOADER_V3,
+        owner: bpf_loader_upgradeable::id(),
         executable: false,
         rent_epoch: 0,
     })

@@ -29,8 +29,6 @@
 
 mod error;
 pub mod file;
-#[cfg(feature = "fuzz")]
-pub mod fuzz;
 mod keys;
 pub mod program;
 pub mod result;
@@ -44,10 +42,8 @@ use {
         sysvar::Sysvars,
     },
     keys::CompiledAccounts,
-    solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
-        invoke_context::{EnvironmentConfig, InvokeContext},
-        sysvar_cache::SysvarCache,
+        compute_budget::ComputeBudget, invoke_context::InvokeContext, sysvar_cache::SysvarCache,
         timings::ExecuteTimings,
     },
     solana_sdk::{
@@ -68,7 +64,7 @@ pub struct Mollusk {
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub fee_structure: FeeStructure,
-    pub program_cache: ProgramCache,
+    program_cache: ProgramCache,
     pub sysvars: Sysvars,
 }
 
@@ -98,31 +94,26 @@ impl Mollusk {
     /// newly created Mollusk instance.
     pub fn new(program_id: &Pubkey, program_name: &str) -> Self {
         let mut mollusk = Self::default();
-        mollusk.add_program(program_id, program_name, &DEFAULT_LOADER_KEY);
+        mollusk.add_program(program_id, program_name);
         mollusk
     }
 
     /// Add a program to the test environment.
     ///
     /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &str, loader_key: &Pubkey) {
+    pub fn add_program(&mut self, program_id: &Pubkey, program_name: &str) {
         let elf = file::load_program_elf(program_name);
-        self.add_program_with_elf_and_loader(program_id, &elf, loader_key);
+        self.add_program_with_elf(program_id, &elf);
     }
 
     /// Add a program to the test environment using a provided ELF under a
     /// specific loader.
     ///
     /// If you intend to CPI to a program, this is likely what you want to use.
-    pub fn add_program_with_elf_and_loader(
-        &mut self,
-        program_id: &Pubkey,
-        elf: &[u8],
-        loader_key: &Pubkey,
-    ) {
+    pub fn add_program_with_elf(&mut self, program_id: &Pubkey, elf: &[u8]) {
         self.program_cache.add_program(
             program_id,
-            loader_key,
+            &DEFAULT_LOADER_KEY,
             elf,
             &self.compute_budget,
             &self.feature_set,
@@ -144,11 +135,15 @@ impl Mollusk {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
 
-        let loader_key = self
-            .program_cache
+        self.program_cache
             .load_program(&instruction.program_id)
-            .or_panic_with(MolluskError::ProgramNotCached(&instruction.program_id))
-            .account_owner();
+            .or_panic_with(MolluskError::ProgramNotCached(&instruction.program_id));
+
+        let loader_key = if crate::program::is_builtin(&instruction.program_id) {
+            solana_sdk::native_loader::id()
+        } else {
+            DEFAULT_LOADER_KEY
+        };
 
         let CompiledAccounts {
             program_id_index,
@@ -158,26 +153,24 @@ impl Mollusk {
 
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
-            self.sysvars.rent.clone(),
-            self.compute_budget.max_instruction_stack_depth,
+            self.sysvars.rent,
+            self.compute_budget.max_invoke_stack_height,
             self.compute_budget.max_instruction_trace_length,
         );
 
         let invoke_result = {
+            let readonly_cache = self.program_cache.cache().read().unwrap().clone();
             let mut cache = self.program_cache.cache().write().unwrap();
             InvokeContext::new(
                 &mut transaction_context,
-                &mut cache,
-                EnvironmentConfig::new(
-                    Hash::default(),
-                    None,
-                    None,
-                    Arc::new(self.feature_set.clone()),
-                    self.fee_structure.lamports_per_signature,
-                    &SysvarCache::from(&self.sysvars),
-                ),
+                &SysvarCache::from(&self.sysvars),
                 None,
                 self.compute_budget,
+                &readonly_cache,
+                &mut cache,
+                Arc::new(self.feature_set.clone()),
+                Hash::default(),
+                self.fee_structure.lamports_per_signature,
             )
             .process_instruction(
                 &instruction.data,
@@ -244,19 +237,6 @@ impl Mollusk {
     /// Process an instruction using the minified Solana Virtual Machine (SVM)
     /// environment, then perform checks on the result. Panics if any checks
     /// fail.
-    ///
-    /// For `fuzz` feature only:
-    ///
-    /// If the `EJECT_FUZZ_FIXTURES` environment variable is set, this function
-    /// will convert the provided test to a fuzz fixture and write it to the
-    /// provided directory.
-    ///
-    /// ```ignore
-    /// EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
-    /// ```
-    ///
-    /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
-    /// JSON format.
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
@@ -264,32 +244,6 @@ impl Mollusk {
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
-
-        #[cfg(feature = "fuzz")]
-        {
-            if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES") {
-                let fixture = fuzz::build_fixture_from_mollusk_test(
-                    self,
-                    instruction,
-                    accounts,
-                    &result,
-                    checks,
-                );
-                fixture.dump_to_blob_file(&blob_dir);
-            }
-
-            if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON") {
-                let fixture = fuzz::build_fixture_from_mollusk_test(
-                    self,
-                    instruction,
-                    accounts,
-                    &result,
-                    checks,
-                );
-                fixture.dump_to_json_file(&json_dir);
-            }
-        }
-
         result.run_checks(checks);
         result
     }
@@ -304,9 +258,6 @@ impl Mollusk {
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction_chain(instructions, accounts);
-
-        // No fuzz support yet...
-
         result.run_checks(checks);
         result
     }

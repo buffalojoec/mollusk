@@ -103,7 +103,7 @@ fn process_instruction(
             }
 
             if first_info.is_writable != second_info.is_writable {
-                return Err(ProgramError::Immutable);
+                return Err(ProgramError::InvalidArgument);
             }
 
             if first_info.is_signer != second_info.is_signer {
