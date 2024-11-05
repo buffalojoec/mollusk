@@ -1607,6 +1607,7 @@ dependencies = [
 name = "mollusk-svm-keys"
 version = "0.0.6"
 dependencies = [
+ "mollusk-svm-error",
  "solana-sdk",
 ]
 
