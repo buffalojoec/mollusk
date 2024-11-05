@@ -21,63 +21,14 @@
 
 use {
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
+    mollusk_svm_keys::keys::KeyMap,
     solana_sdk::{
         account::{AccountSharedData, WritableAccount},
         instruction::Instruction,
         pubkey::Pubkey,
         transaction_context::{IndexOfAccount, InstructionAccount, TransactionAccount},
     },
-    std::collections::HashMap,
 };
-
-struct KeyMap(HashMap<Pubkey, (bool, bool)>);
-
-impl KeyMap {
-    fn compile(instruction: &Instruction) -> Self {
-        let mut map: HashMap<Pubkey, (bool, bool)> = HashMap::new();
-        map.entry(instruction.program_id).or_default();
-        for meta in instruction.accounts.iter() {
-            let entry = map.entry(meta.pubkey).or_default();
-            entry.0 |= meta.is_signer;
-            entry.1 |= meta.is_writable;
-        }
-        Self(map)
-    }
-
-    fn is_signer(&self, key: &Pubkey) -> bool {
-        self.0.get(key).map(|(s, _)| *s).unwrap_or(false)
-    }
-
-    fn is_writable(&self, key: &Pubkey) -> bool {
-        self.0.get(key).map(|(_, w)| *w).unwrap_or(false)
-    }
-}
-
-struct Keys<'a> {
-    keys: Vec<&'a Pubkey>,
-    key_map: &'a KeyMap,
-}
-
-impl<'a> Keys<'a> {
-    fn new(key_map: &'a KeyMap) -> Self {
-        Self {
-            keys: key_map.0.keys().collect(),
-            key_map,
-        }
-    }
-
-    fn position(&self, key: &Pubkey) -> u8 {
-        self.keys.iter().position(|k| *k == key).unwrap() as u8
-    }
-
-    fn is_signer(&self, index: usize) -> bool {
-        self.key_map.is_signer(self.keys[index])
-    }
-
-    fn is_writable(&self, index: usize) -> bool {
-        self.key_map.is_writable(self.keys[index])
-    }
-}
 
 // Helper struct so Mollusk doesn't have to clone instruction data.
 struct CompiledInstructionWithoutData {
@@ -96,15 +47,14 @@ pub fn compile_accounts(
     accounts: &[(Pubkey, AccountSharedData)],
     loader_key: Pubkey,
 ) -> CompiledAccounts {
-    let key_map = KeyMap::compile(instruction);
-    let keys = Keys::new(&key_map);
+    let key_map = KeyMap::compile_from_instruction(instruction);
 
     let compiled_instruction = CompiledInstructionWithoutData {
-        program_id_index: keys.position(&instruction.program_id),
+        program_id_index: key_map.position(&instruction.program_id).unwrap() as u8,
         accounts: instruction
             .accounts
             .iter()
-            .map(|account_meta| keys.position(&account_meta.pubkey))
+            .map(|account_meta| key_map.position(&account_meta.pubkey).unwrap() as u8)
             .collect(),
     };
 
@@ -125,25 +75,24 @@ pub fn compile_accounts(
                 index_in_transaction: index_in_transaction as IndexOfAccount,
                 index_in_caller: index_in_transaction as IndexOfAccount,
                 index_in_callee,
-                is_signer: keys.is_signer(index_in_transaction),
-                is_writable: keys.is_writable(index_in_transaction),
+                is_signer: key_map.is_signer_at_index(index_in_transaction),
+                is_writable: key_map.is_writable_at_index(index_in_transaction),
             }
         })
         .collect();
 
-    let transaction_accounts: Vec<TransactionAccount> = keys
-        .keys
-        .iter()
+    let transaction_accounts: Vec<TransactionAccount> = key_map
+        .keys()
         .map(|key| {
-            if *key == &instruction.program_id {
-                (**key, stub_out_program_account(loader_key))
+            if *key == instruction.program_id {
+                (*key, stub_out_program_account(loader_key))
             } else {
                 let account = accounts
                     .iter()
-                    .find(|(k, _)| k == *key)
+                    .find(|(k, _)| k == key)
                     .map(|(_, account)| account.clone())
                     .or_panic_with(MolluskError::AccountMissing(key));
-                (**key, account)
+                (*key, account)
             }
         })
         .collect();

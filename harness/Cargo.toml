@@ -16,6 +16,7 @@ fuzz = ["dep:mollusk-svm-fuzz-fixture"]
 bincode = { workspace = true }
 mollusk-svm-error = { workspace = true }
 mollusk-svm-fuzz-fixture = { workspace = true, optional = true }
+mollusk-svm-keys = { workspace = true }
 solana-bpf-loader-program = { workspace = true }
 solana-compute-budget = { workspace = true }
 solana-program-runtime = { workspace = true }

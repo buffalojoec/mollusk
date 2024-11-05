@@ -1560,6 +1560,7 @@ dependencies = [
  "criterion",
  "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
+ "mollusk-svm-keys",
  "solana-bpf-loader-program",
  "solana-compute-budget",
  "solana-logger",
@@ -1599,6 +1600,13 @@ dependencies = [
  "serde",
  "serde_json",
  "solana-compute-budget",
+ "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-svm-keys"
+version = "0.0.6"
+dependencies = [
  "solana-sdk",
 ]
 
