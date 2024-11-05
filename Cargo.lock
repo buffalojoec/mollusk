@@ -1558,6 +1558,7 @@ version = "0.0.6"
 dependencies = [
  "bincode",
  "criterion",
+ "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
  "solana-bpf-loader-program",
  "solana-compute-budget",
@@ -1565,7 +1566,6 @@ dependencies = [
  "solana-program-runtime",
  "solana-sdk",
  "solana-system-program",
- "thiserror",
 ]
 
 [[package]]
@@ -1578,6 +1578,14 @@ dependencies = [
  "serde_json",
  "solana-logger",
  "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-svm-error"
+version = "0.0.6"
+dependencies = [
+ "solana-sdk",
+ "thiserror",
 ]
 
 [[package]]

@@ -14,6 +14,7 @@ fuzz = ["dep:mollusk-svm-fuzz-fixture"]
 
 [dependencies]
 bincode = { workspace = true }
+mollusk-svm-error = { workspace = true }
 mollusk-svm-fuzz-fixture = { workspace = true, optional = true }
 solana-bpf-loader-program = { workspace = true }
 solana-compute-budget = { workspace = true }
@@ -21,7 +22,6 @@ solana-program-runtime = { workspace = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-logger = { workspace = true }
-thiserror = { workspace = true }
 
 [dev-dependencies]
 criterion = "0.5.1"

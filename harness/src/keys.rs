@@ -20,7 +20,7 @@
 //! <https://github.com/anza-xyz/agave/blob/c6e8239843af8e6301cd198e39d0a44add427bef/sdk/program/src/message/legacy.rs#L357>.
 
 use {
-    crate::error::{MolluskError, MolluskPanic},
+    mollusk_svm_error::error::{MolluskError, MolluskPanic},
     solana_sdk::{
         account::{AccountSharedData, WritableAccount},
         instruction::Instruction,
