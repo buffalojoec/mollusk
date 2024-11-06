@@ -1606,7 +1606,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "bincode",
  "criterion",
@@ -1624,7 +1624,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "chrono",
  "mollusk-svm",
@@ -1636,7 +1636,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-error"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "solana-sdk",
  "thiserror",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "bs58",
  "prost",
@@ -1658,7 +1658,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-keys"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "mollusk-svm-error",
  "solana-sdk",
