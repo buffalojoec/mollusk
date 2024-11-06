@@ -1813,7 +1813,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.6"
+version = "0.0.6-solana-1.18"
 dependencies = [
  "bincode",
  "criterion",
@@ -1827,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.6"
+version = "0.0.6-solana-1.18"
 dependencies = [
  "chrono",
  "mollusk-svm",
