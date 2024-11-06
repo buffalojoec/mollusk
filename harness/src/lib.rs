@@ -47,13 +47,13 @@ use {
     solana_program_runtime::{
         invoke_context::{EnvironmentConfig, InvokeContext},
         sysvar_cache::SysvarCache,
-        timings::ExecuteTimings,
     },
     solana_sdk::{
         account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
         fee::FeeStructure, hash::Hash, instruction::Instruction, pubkey::Pubkey,
         transaction_context::TransactionContext,
     },
+    solana_timings::ExecuteTimings,
     std::sync::Arc,
 };
 
