@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 env:
-  NIGHTLY_TOOLCHAIN: nightly-2023-10-05
-  SOLANA_VERSION: 2.0.0
+  NIGHTLY_TOOLCHAIN: nightly-2024-05-02
+  SOLANA_VERSION: 2.1.0
 
 jobs:
   rust_fmt:
