@@ -3,7 +3,10 @@
 use {
     mollusk_svm::{result::Check, Mollusk},
     mollusk_svm_fuzz_fixture::Fixture,
-    solana_sdk::{account::AccountSharedData, pubkey::Pubkey, system_instruction, system_program},
+    solana_sdk::{
+        account::AccountSharedData, feature_set::FeatureSet, pubkey::Pubkey, system_instruction,
+        system_program,
+    },
     std::path::Path,
 };
 
@@ -59,6 +62,14 @@ fn clear() {
     }
 }
 
+fn compare_feature_sets(from_fixture: &FeatureSet, from_mollusk: &FeatureSet) {
+    assert_eq!(from_fixture.active.len(), from_mollusk.active.len());
+    assert_eq!(from_fixture.inactive.len(), from_mollusk.inactive.len());
+    for f in from_fixture.active.keys() {
+        assert!(from_mollusk.active.contains_key(f));
+    }
+}
+
 #[test]
 fn test_dump() {
     clear();
@@ -100,7 +111,8 @@ fn test_dump() {
     let blob_fixture_path = find_fixture(&FileType::Blob).unwrap();
     let blob_fixture = Fixture::load_from_blob_file(&blob_fixture_path);
     assert_eq!(blob_fixture.input.compute_budget, mollusk.compute_budget);
-    assert_eq!(blob_fixture.input.feature_set, mollusk.feature_set);
+    // Feature set matches, but it can't guarantee sorting.
+    compare_feature_sets(&blob_fixture.input.feature_set, &mollusk.feature_set);
     assert_eq!(blob_fixture.input.sysvars.clock, mollusk.sysvars.clock);
     assert_eq!(blob_fixture.input.sysvars.rent, mollusk.sysvars.rent);
     assert_eq!(blob_fixture.input.program_id, instruction.program_id);
@@ -115,7 +127,8 @@ fn test_dump() {
     let json_fixture_path = find_fixture(&FileType::Json).unwrap();
     let json_fixture = Fixture::load_from_json_file(&json_fixture_path);
     assert_eq!(json_fixture.input.compute_budget, mollusk.compute_budget);
-    assert_eq!(json_fixture.input.feature_set, mollusk.feature_set);
+    // Feature set matches, but it can't guarantee sorting.
+    compare_feature_sets(&json_fixture.input.feature_set, &mollusk.feature_set);
     assert_eq!(json_fixture.input.sysvars.clock, mollusk.sysvars.clock);
     assert_eq!(json_fixture.input.sysvars.rent, mollusk.sysvars.rent);
     assert_eq!(json_fixture.input.program_id, instruction.program_id);

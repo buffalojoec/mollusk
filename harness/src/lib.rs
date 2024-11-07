@@ -79,9 +79,21 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
+        #[cfg(feature = "fuzz")]
+        let feature_set = {
+            // Omit "test features" (they have the same u64 ID).
+            let mut fs = FeatureSet::all_enabled();
+            fs.active
+                .remove(&solana_sdk::feature_set::disable_sbpf_v1_execution::id());
+            fs.active
+                .remove(&solana_sdk::feature_set::reenable_sbpf_v1_execution::id());
+            fs
+        };
+        #[cfg(not(feature = "fuzz"))]
+        let feature_set = FeatureSet::all_enabled();
         Self {
             compute_budget: ComputeBudget::default(),
-            feature_set: FeatureSet::all_enabled(),
+            feature_set,
             fee_structure: FeeStructure::default(),
             program_cache: ProgramCache::default(),
             sysvars: Sysvars::default(),
