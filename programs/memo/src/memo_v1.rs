@@ -5,7 +5,7 @@ use {
 
 pub const ID: Pubkey = solana_sdk::pubkey!("Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo");
 
-pub const MEMO_ELF: &'static [u8] = include_bytes!("elf/memo-v1.so");
+pub const MEMO_ELF: &[u8] = include_bytes!("elf/memo-v1.so");
 
 pub fn add_program(mollusk: &mut Mollusk) {
     //BPFLoader1111111111111111111111111111111111

@@ -5,7 +5,7 @@ use {
 
 pub const ID: Pubkey = solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
-pub const ASSOCIATED_TOKEN_ELF: &'static [u8] = include_bytes!("elf/associated_token.so");
+pub const ASSOCIATED_TOKEN_ELF: &[u8] = include_bytes!("elf/associated_token.so");
 
 pub fn add_program(mollusk: &mut Mollusk) {
     mollusk.add_program_with_elf_and_loader(
