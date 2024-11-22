@@ -2,13 +2,13 @@ name: Main
 
 on:
   push:
-    branches: [main]
+    branches: [main, solana-v1.18]
   pull_request:
-    branches: [main]
+    branches: [main, solana-v1.18]
 
 env:
   NIGHTLY_TOOLCHAIN: nightly-2023-10-05
-  SOLANA_VERSION: 2.0.0
+  SOLANA_VERSION: 1.18.18
 
 jobs:
   rust_fmt:
