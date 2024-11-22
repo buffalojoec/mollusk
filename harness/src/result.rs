@@ -49,6 +49,8 @@ pub struct InstructionResult {
     pub execution_time: u64,
     /// The result code of the program's execution.
     pub program_result: ProgramResult,
+    /// Blah blah blah.
+    pub raw_result: Result<(), InstructionError>,
     /// The resulting accounts after executing the instruction.
     ///
     /// This includes all accounts provided to the processor, in the order
@@ -63,6 +65,7 @@ impl Default for InstructionResult {
             compute_units_consumed: 0,
             execution_time: 0,
             program_result: ProgramResult::Success,
+            raw_result: Ok(()),
             resulting_accounts: vec![],
         }
     }

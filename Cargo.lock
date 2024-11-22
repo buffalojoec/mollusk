@@ -1612,6 +1612,7 @@ dependencies = [
  "criterion",
  "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
+ "mollusk-svm-fuzz-fixture-firedancer",
  "mollusk-svm-fuzz-fs",
  "mollusk-svm-keys",
  "solana-bpf-loader-program",
