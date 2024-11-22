@@ -1612,6 +1612,7 @@ dependencies = [
  "criterion",
  "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
+ "mollusk-svm-fuzz-fs",
  "mollusk-svm-keys",
  "solana-bpf-loader-program",
  "solana-compute-budget",
@@ -1646,12 +1647,10 @@ dependencies = [
 name = "mollusk-svm-fuzz-fixture"
 version = "0.0.8"
 dependencies = [
- "bs58",
+ "mollusk-svm-fuzz-fs",
  "prost",
  "prost-build",
- "prost-types",
  "serde",
- "serde_json",
  "solana-compute-budget",
  "solana-sdk",
 ]
@@ -1660,13 +1659,23 @@ dependencies = [
 name = "mollusk-svm-fuzz-fixture-firedancer"
 version = "0.0.8"
 dependencies = [
- "bs58",
+ "mollusk-svm-fuzz-fs",
  "prost",
  "prost-build",
- "prost-types",
  "serde",
  "serde_json",
  "solana-compute-budget",
+ "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-svm-fuzz-fs"
+version = "0.0.8"
+dependencies = [
+ "bs58",
+ "prost",
+ "serde",
+ "serde_json",
  "solana-sdk",
 ]
 

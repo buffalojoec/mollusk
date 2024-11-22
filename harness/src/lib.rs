@@ -35,6 +35,8 @@ pub mod program;
 pub mod result;
 pub mod sysvar;
 
+#[cfg(feature = "fuzz")]
+use mollusk_svm_fuzz_fs::FsHandler;
 use {
     crate::{
         program::ProgramCache,
@@ -278,7 +280,9 @@ impl Mollusk {
 
         #[cfg(feature = "fuzz")]
         {
-            if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES") {
+            if std::env::var("EJECT_FUZZ_FIXTURES").is_ok()
+                || std::env::var("EJECT_FUZZ_FIXTURES_JSON").is_ok()
+            {
                 let fixture = fuzz::build_fixture_from_mollusk_test(
                     self,
                     instruction,
@@ -286,18 +290,14 @@ impl Mollusk {
                     &result,
                     checks,
                 );
-                fixture.dump_to_blob_file(&blob_dir);
-            }
+                let handler = FsHandler::new(fixture);
+                if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES") {
+                    handler.dump_to_blob_file(&blob_dir);
+                }
 
-            if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON") {
-                let fixture = fuzz::build_fixture_from_mollusk_test(
-                    self,
-                    instruction,
-                    accounts,
-                    &result,
-                    checks,
-                );
-                fixture.dump_to_json_file(&json_dir);
+                if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON") {
+                    handler.dump_to_json_file(&json_dir);
+                }
             }
         }
 

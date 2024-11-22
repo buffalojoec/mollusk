@@ -9,9 +9,8 @@ edition = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
-bs58 = { workspace = true }
+mollusk-svm-fuzz-fs = { workspace = true }
 prost = { workspace = true }
-prost-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 solana-compute-budget = { workspace = true }
