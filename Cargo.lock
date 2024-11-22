@@ -1750,6 +1750,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk-svm-fuzz-fixture-firedancer"
+version = "0.0.7-solana-2.0"
+dependencies = [
+ "bs58",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "serde",
+ "serde_json",
+ "solana-compute-budget",
+ "solana-sdk",
+]
+
+[[package]]
 name = "mollusk-svm-keys"
 version = "0.0.7-solana-2.0"
 dependencies = [

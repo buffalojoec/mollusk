@@ -24,6 +24,7 @@ mollusk-svm = { path = "harness", version = "0.0.7-solana-2.0" }
 mollusk-svm-bencher = { path = "bencher", version = "0.0.7-solana-2.0" }
 mollusk-svm-error = { path = "error", version = "0.0.7-solana-2.0" }
 mollusk-svm-fuzz-fixture = { path = "fuzz/fixture", version = "0.0.7-solana-2.0" }
+mollusk-svm-fuzz-fixture-firedancer = { path = "fuzz/fixture-fd", version = "0.0.7-solana-2.0" }
 mollusk-svm-keys = { path = "keys", version = "0.0.7-solana-2.0" }
 num-format = "0.4.4"
 prost = "0.10"
