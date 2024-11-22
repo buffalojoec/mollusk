@@ -36,7 +36,8 @@ solana-sdk = { workspace = true }
 solana-timings = { workspace = true }
 
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = { workspace = true }
+serial_test = { workspace = true }
 
 [[bench]]
 name = "ips"
