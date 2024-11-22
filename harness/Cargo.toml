@@ -10,8 +10,13 @@ edition = { workspace = true }
 version = { workspace = true }
 
 [features]
+default = []
 fuzz = [
     "dep:mollusk-svm-fuzz-fixture",
+    "dep:mollusk-svm-fuzz-fs",
+]
+fuzz-fd = [
+    "dep:mollusk-svm-fuzz-fixture-firedancer",
     "dep:mollusk-svm-fuzz-fs",
 ]
 
@@ -19,6 +24,7 @@ fuzz = [
 bincode = { workspace = true }
 mollusk-svm-error = { workspace = true }
 mollusk-svm-fuzz-fixture = { workspace = true, optional = true }
+mollusk-svm-fuzz-fixture-firedancer = { workspace = true, optional = true }
 mollusk-svm-fuzz-fs = { workspace = true, optional = true }
 mollusk-svm-keys = { workspace = true }
 solana-bpf-loader-program = { workspace = true }
