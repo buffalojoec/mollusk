@@ -2,9 +2,9 @@ name: Main
 
 on:
   push:
-    branches: [main]
+    branches: [main, solana-v2.0]
   pull_request:
-    branches: [main]
+    branches: [main, solana-v2.0]
 
 env:
   NIGHTLY_TOOLCHAIN: nightly-2023-10-05
