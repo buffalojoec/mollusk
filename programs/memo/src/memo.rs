@@ -5,10 +5,12 @@ use {
 
 pub const ID: Pubkey = solana_sdk::pubkey!("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
+pub const MEMO_ELF: &'static [u8] = include_bytes!("elf/memo.so");
+
 pub fn add_program(mollusk: &mut Mollusk) {
     mollusk.add_program_with_elf_and_loader(
         &ID,
-        include_bytes!("elf/memo.so"),
+        MEMO_ELF,
         &mollusk_svm::program::loader_keys::LOADER_V2,
     );
 }
