@@ -1,4 +1,8 @@
-//! Mollusk SVM Fuzz: Mollusk-compatible fuzz fixture for SVM programs.
+//! Mollusk SVM Fuzz: Mollusk-compatible Firedancer fuzz fixture for SVM
+//! programs.
+//!
+//! Similar to the `mollusk-svm-fuzz-fixture` library, but built around
+//! Firedancer's protobuf layouts.
 //!
 //! Note: The fixtures defined in this library are compatible with Mollusk,
 //! which means developers can fuzz programs using the Mollusk harness.
@@ -6,17 +10,19 @@
 //! They can be used to fuzz a custom entrypoint of the developer's choice.
 
 pub mod account;
-pub mod compute_budget;
 pub mod context;
 pub mod effects;
 pub mod feature_set;
+pub mod instr_account;
+pub mod metadata;
 pub mod proto {
-    include!(concat!(env!("OUT_DIR"), "/org.mollusk.svm.rs"));
+    include!(concat!(env!("OUT_DIR"), "/org.solana.sealevel.v1.rs"));
 }
-pub mod sysvars;
 
 use {
-    crate::{context::Context, effects::Effects, proto::InstrFixture as ProtoFixture},
+    crate::{
+        context::Context, effects::Effects, metadata::Metadata, proto::InstrFixture as ProtoFixture,
+    },
     mollusk_svm_fuzz_fs::{FsHandler, IntoSerializableFixture, SerializableFixture},
 };
 
@@ -24,6 +30,8 @@ use {
 /// program runtime environment, for a given program.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Fixture {
+    /// The fixture metadata.
+    pub metadata: Option<Metadata>,
     /// The fixture inputs.
     pub input: Context,
     /// The fixture outputs.
@@ -51,6 +59,7 @@ impl From<ProtoFixture> for Fixture {
     fn from(value: ProtoFixture) -> Self {
         // All blobs should have an input and output.
         Self {
+            metadata: value.metadata.map(Into::into),
             input: value.input.unwrap().into(),
             output: value.output.unwrap().into(),
         }
@@ -60,6 +69,7 @@ impl From<ProtoFixture> for Fixture {
 impl From<Fixture> for ProtoFixture {
     fn from(value: Fixture) -> Self {
         Self {
+            metadata: value.metadata.map(Into::into),
             input: Some(value.input.into()),
             output: Some(value.output.into()),
         }

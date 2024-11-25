@@ -1,7 +1,7 @@
 [package]
-name = "mollusk-svm-fuzz-fixture"
-description = "Mollusk-compatible fuzz fixture for SVM programs."
-documentation = "https://docs.rs/mollusk-svm-fuzz-fixture"
+name = "mollusk-svm-fuzz-fixture-firedancer"
+description = "Mollusk-compatible Firedancer fuzz fixture for SVM programs."
+documentation = "https://docs.rs/mollusk-svm-fuzz-fixture-firedancer"
 authors = { workspace = true }
 repository = { workspace = true }
 license = { workspace = true }
@@ -12,6 +12,7 @@ version = { workspace = true }
 mollusk-svm-fuzz-fs = { workspace = true }
 prost = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 solana-compute-budget = { workspace = true }
 solana-sdk = { workspace = true }
 
