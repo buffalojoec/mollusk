@@ -18,6 +18,7 @@ pub mod sysvars;
 use {
     crate::{context::Context, effects::Effects, proto::InstrFixture as ProtoFixture},
     mollusk_svm_fuzz_fs::{FsHandler, IntoSerializableFixture, SerializableFixture},
+    solana_sdk::keccak::{Hash, Hasher},
 };
 
 /// A fixture for invoking a single instruction against a simulated SVM
@@ -66,12 +67,92 @@ impl From<Fixture> for ProtoFixture {
     }
 }
 
-impl SerializableFixture for ProtoFixture {}
+impl SerializableFixture for ProtoFixture {
+    // Manually implemented for deterministic hashes.
+    fn hash(&self) -> Hash {
+        let mut hasher = Hasher::default();
+        if let Some(input) = &self.input {
+            crate::context::hash_proto_context(&mut hasher, input);
+        }
+        if let Some(output) = &self.output {
+            crate::effects::hash_proto_effects(&mut hasher, output);
+        }
+        hasher.result()
+    }
+}
 
 impl IntoSerializableFixture for Fixture {
     type Fixture = ProtoFixture;
 
     fn into(self) -> Self::Fixture {
         Into::into(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::{proto::InstrFixture, Fixture},
+        crate::{context::Context, effects::Effects, sysvars::Sysvars},
+        mollusk_svm_fuzz_fs::SerializableFixture,
+        solana_compute_budget::compute_budget::ComputeBudget,
+        solana_sdk::{
+            account::AccountSharedData, feature_set::FeatureSet, instruction::AccountMeta,
+            keccak::Hash, pubkey::Pubkey,
+        },
+    };
+
+    fn produce_hash(fixture: &Fixture) -> Hash {
+        let proto_fixture: InstrFixture = fixture.clone().into();
+        proto_fixture.hash()
+    }
+
+    #[test]
+    fn test_consistent_hashing() {
+        const ITERATIONS: usize = 1000;
+
+        let compute_budget = ComputeBudget::default();
+        let feature_set = FeatureSet::all_enabled();
+        let sysvars = Sysvars::default();
+        let program_id = Pubkey::default();
+        let instruction_accounts = vec![
+            AccountMeta::new(Pubkey::new_unique(), false),
+            AccountMeta::new(Pubkey::new_unique(), false),
+            AccountMeta::new(Pubkey::new_unique(), false),
+            AccountMeta::new(Pubkey::new_unique(), false),
+        ];
+        let instruction_data = vec![4; 24];
+        let accounts = instruction_accounts
+            .iter()
+            .map(|meta| {
+                (
+                    meta.pubkey,
+                    AccountSharedData::new(42, 42, &Pubkey::default()),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let context = Context {
+            compute_budget,
+            feature_set,
+            sysvars,
+            program_id,
+            instruction_accounts,
+            instruction_data,
+            accounts,
+        };
+        let effects = Effects::default();
+
+        let fixture = Fixture {
+            input: context,
+            output: effects,
+        };
+
+        let mut last_hash = produce_hash(&fixture);
+        for _ in 0..ITERATIONS {
+            let new_hash = produce_hash(&fixture);
+            assert_eq!(last_hash, new_hash);
+            last_hash = new_hash;
+        }
     }
 }

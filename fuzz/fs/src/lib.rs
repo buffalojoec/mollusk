@@ -23,6 +23,9 @@ pub trait SerializableFixture: Default + DeserializeOwned + Message + Serialize 
         Message::encode(self, &mut buf).expect("Failed to encode fixture");
         buf
     }
+
+    /// Hash the fixture's contents into a Keccak hash.
+    fn hash(&self) -> solana_sdk::keccak::Hash;
 }
 
 /// Represents a fixture that can be converted into a serializable fixture.
@@ -36,7 +39,6 @@ pub struct FsHandler<SF>
 where
     SF: SerializableFixture,
 {
-    blob: Vec<u8>,
     serializable_fixture: SF,
 }
 
@@ -47,7 +49,6 @@ where
     pub fn new<T: IntoSerializableFixture<Fixture = SF>>(fix: T) -> Self {
         let serializable_fixture = fix.into();
         Self {
-            blob: SerializableFixture::encode(&serializable_fixture),
             serializable_fixture,
         }
     }
@@ -55,10 +56,12 @@ where
     /// Dumps the fixture to a protobuf binary blob file.
     /// The file name is a hash of the fixture with the `.fix` extension.
     pub fn dump_to_blob_file(&self, dir: &str) {
-        let hash = solana_sdk::hash::hash(&self.blob);
+        let blob = SerializableFixture::encode(&self.serializable_fixture);
+
+        let hash = self.serializable_fixture.hash();
         let file_name = format!("instr-{}.fix", bs58::encode(hash).into_string());
 
-        write_file(Path::new(dir), &file_name, &self.blob);
+        write_file(Path::new(dir), &file_name, &blob);
     }
 
     /// Dumps the fixture to a JSON file.
@@ -67,7 +70,7 @@ where
         let json = serde_json::to_string_pretty(&self.serializable_fixture)
             .expect("Failed to serialize fixture to JSON");
 
-        let hash = solana_sdk::hash::hash(&self.blob);
+        let hash = self.serializable_fixture.hash();
         let file_name = format!("instr-{}.json", bs58::encode(hash).into_string());
 
         write_file(Path::new(dir_path), &file_name, json.as_bytes());
