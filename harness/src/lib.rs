@@ -29,7 +29,7 @@
 
 mod accounts;
 pub mod file;
-#[cfg(feature = "fuzz")]
+#[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
 pub mod fuzz;
 pub mod program;
 pub mod result;
@@ -57,7 +57,7 @@ use {
     std::sync::Arc,
 };
 
-const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
+pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
 
 /// The Mollusk API, providing a simple interface for testing Solana programs.
 ///
@@ -217,7 +217,8 @@ impl Mollusk {
         InstructionResult {
             compute_units_consumed,
             execution_time: timings.details.execute_us,
-            program_result: invoke_result.into(),
+            program_result: invoke_result.clone().into(),
+            raw_result: invoke_result,
             resulting_accounts,
         }
     }
@@ -268,6 +269,12 @@ impl Mollusk {
     ///
     /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
     /// JSON format.
+    ///
+    /// The `fuzz-fd` feature works the same way, but the variables require
+    /// the `_FD` suffix, in case both features are active together
+    /// (ie. `EJECT_FUZZ_FIXTURES_FD`). This will generate Firedancer fuzzing
+    /// fixtures, which are structured a bit differently than Mollusk's own
+    /// protobuf layouts.
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
@@ -276,30 +283,8 @@ impl Mollusk {
     ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
 
-        #[cfg(feature = "fuzz")]
-        {
-            if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES") {
-                let fixture = fuzz::build_fixture_from_mollusk_test(
-                    self,
-                    instruction,
-                    accounts,
-                    &result,
-                    checks,
-                );
-                fixture.dump_to_blob_file(&blob_dir);
-            }
-
-            if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON") {
-                let fixture = fuzz::build_fixture_from_mollusk_test(
-                    self,
-                    instruction,
-                    accounts,
-                    &result,
-                    checks,
-                );
-                fixture.dump_to_json_file(&json_dir);
-            }
-        }
+        #[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
+        fuzz::generate_fixtures_from_mollusk_test(self, instruction, accounts, &result, checks);
 
         result.run_checks(checks);
         result

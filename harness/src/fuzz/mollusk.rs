@@ -40,9 +40,9 @@ impl From<&InstructionResult> for FuzzEffects {
         let execution_time = input.execution_time;
         let program_result = match &input.program_result {
             ProgramResult::Success => 0,
-            ProgramResult::Failure(e) => e.clone().into(),
-            ProgramResult::UnknownError(_) => u64::MAX, //TODO
-        } as u32; // Also TODO.
+            ProgramResult::Failure(e) => u64::from(e.clone()) as u32,
+            ProgramResult::UnknownError(_) => u32::MAX, //TODO
+        };
 
         let resulting_accounts = input
             .resulting_accounts
