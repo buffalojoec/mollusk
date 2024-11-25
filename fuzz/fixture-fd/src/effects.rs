@@ -3,7 +3,7 @@
 use {
     super::proto::InstrEffects as ProtoEffects,
     crate::account::SeedAddress,
-    solana_sdk::{account::AccountSharedData, pubkey::Pubkey},
+    solana_sdk::{account::AccountSharedData, keccak::Hasher, pubkey::Pubkey},
 };
 
 /// Represents the effects of a single instruction.
@@ -64,4 +64,12 @@ impl From<Effects> for ProtoEffects {
             return_data,
         }
     }
+}
+
+pub(crate) fn hash_proto_effects(hasher: &mut Hasher, effects: &ProtoEffects) {
+    hasher.hash(&effects.result.to_le_bytes());
+    hasher.hash(&effects.custom_err.to_le_bytes());
+    crate::account::hash_proto_accounts(hasher, &effects.modified_accounts);
+    hasher.hash(&effects.cu_avail.to_le_bytes());
+    hasher.hash(&effects.return_data);
 }

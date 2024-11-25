@@ -49,7 +49,7 @@ pub struct InstructionResult {
     pub execution_time: u64,
     /// The result code of the program's execution.
     pub program_result: ProgramResult,
-    /// Blah blah blah.
+    /// Program execution raw result.
     pub raw_result: Result<(), InstructionError>,
     /// The resulting accounts after executing the instruction.
     ///

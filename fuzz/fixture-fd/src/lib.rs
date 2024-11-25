@@ -24,6 +24,7 @@ use {
         context::Context, effects::Effects, metadata::Metadata, proto::InstrFixture as ProtoFixture,
     },
     mollusk_svm_fuzz_fs::{FsHandler, IntoSerializableFixture, SerializableFixture},
+    solana_sdk::keccak::{Hash, Hasher},
 };
 
 /// A fixture for invoking a single instruction against a simulated SVM
@@ -76,12 +77,121 @@ impl From<Fixture> for ProtoFixture {
     }
 }
 
-impl SerializableFixture for ProtoFixture {}
+impl SerializableFixture for ProtoFixture {
+    // Manually implemented for deterministic hashes.
+    fn hash(&self) -> Hash {
+        let mut hasher = Hasher::default();
+        if let Some(metadata) = &self.metadata {
+            crate::metadata::hash_proto_metadata(&mut hasher, metadata);
+        }
+        if let Some(input) = &self.input {
+            crate::context::hash_proto_context(&mut hasher, input);
+        }
+        if let Some(output) = &self.output {
+            crate::effects::hash_proto_effects(&mut hasher, output);
+        }
+        hasher.result()
+    }
+}
 
 impl IntoSerializableFixture for Fixture {
     type Fixture = ProtoFixture;
 
     fn into(self) -> Self::Fixture {
         Into::into(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::{proto::InstrFixture, Fixture},
+        crate::{
+            context::{Context, EpochContext, SlotContext},
+            effects::Effects,
+            metadata::Metadata,
+        },
+        mollusk_svm_fuzz_fs::SerializableFixture,
+        solana_sdk::{
+            account::AccountSharedData, feature_set::FeatureSet, keccak::Hash, pubkey::Pubkey,
+            transaction_context::InstructionAccount,
+        },
+    };
+
+    fn produce_hash(fixture: &Fixture) -> Hash {
+        let proto_fixture: InstrFixture = fixture.clone().into();
+        proto_fixture.hash()
+    }
+
+    #[test]
+    fn test_consistent_hashing() {
+        const ITERATIONS: usize = 1000;
+
+        let program_id = Pubkey::default();
+        let accounts = vec![
+            (
+                Pubkey::new_unique(),
+                AccountSharedData::new(42, 42, &Pubkey::default()),
+                None,
+            ),
+            (
+                Pubkey::new_unique(),
+                AccountSharedData::new(42, 42, &Pubkey::default()),
+                None,
+            ),
+            (
+                Pubkey::new_unique(),
+                AccountSharedData::new(42, 42, &Pubkey::default()),
+                None,
+            ),
+            (
+                Pubkey::new_unique(),
+                AccountSharedData::new(42, 42, &Pubkey::default()),
+                None,
+            ),
+        ];
+        let instruction_accounts = accounts
+            .iter()
+            .enumerate()
+            .map(|(i, _)| InstructionAccount {
+                index_in_transaction: i as u16,
+                index_in_caller: i as u16,
+                index_in_callee: i as u16,
+                is_signer: false,
+                is_writable: true,
+            })
+            .collect::<Vec<_>>();
+        let instruction_data = vec![4; 24];
+        let slot_context = SlotContext { slot: 42 };
+        let epoch_context = EpochContext {
+            feature_set: FeatureSet::all_enabled(),
+        };
+
+        let metadata = Metadata {
+            entrypoint: String::from("Hello, world!"),
+        };
+        let context = Context {
+            program_id,
+            accounts,
+            instruction_accounts,
+            instruction_data,
+            compute_units_available: 200_000,
+            slot_context,
+            epoch_context,
+        };
+        let effects = Effects::default();
+
+        let fixture = Fixture {
+            metadata: Some(metadata),
+            input: context,
+            output: effects,
+        };
+
+        let mut last_hash = produce_hash(&fixture);
+        for _ in 0..ITERATIONS {
+            let new_hash = produce_hash(&fixture);
+            assert_eq!(last_hash, new_hash);
+            last_hash = new_hash;
+        }
     }
 }

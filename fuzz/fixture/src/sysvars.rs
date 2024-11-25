@@ -13,6 +13,7 @@ use {
         epoch_rewards::EpochRewards,
         epoch_schedule::EpochSchedule,
         hash::Hash,
+        keccak::Hasher,
         rent::Rent,
         slot_hashes::{SlotHash, SlotHashes},
         stake_history::{StakeHistory, StakeHistoryEntry},
@@ -247,6 +248,61 @@ impl From<Sysvars> for ProtoSysvars {
             rent: Some(value.rent.into()),
             slot_hashes: Some(value.slot_hashes.into()),
             stake_history: Some(value.stake_history.into()),
+        }
+    }
+}
+
+pub(crate) fn hash_proto_sysvars(hasher: &mut Hasher, sysvars: &ProtoSysvars) {
+    // Clock
+    if let Some(clock) = &sysvars.clock {
+        hasher.hash(&clock.slot.to_le_bytes());
+        hasher.hash(&clock.epoch_start_timestamp.to_le_bytes());
+        hasher.hash(&clock.epoch.to_le_bytes());
+        hasher.hash(&clock.leader_schedule_epoch.to_le_bytes());
+        hasher.hash(&clock.unix_timestamp.to_le_bytes());
+    }
+    // EpochRewards
+    if let Some(epoch_rewards) = &sysvars.epoch_rewards {
+        hasher.hash(
+            &epoch_rewards
+                .distribution_starting_block_height
+                .to_le_bytes(),
+        );
+        hasher.hash(&epoch_rewards.num_partitions.to_le_bytes());
+        hasher.hash(&epoch_rewards.parent_blockhash);
+        hasher.hash(&epoch_rewards.total_points);
+        hasher.hash(&epoch_rewards.total_rewards.to_le_bytes());
+        hasher.hash(&epoch_rewards.distributed_rewards.to_le_bytes());
+        hasher.hash(&[epoch_rewards.active as u8]);
+    }
+    // EpochSchedule
+    if let Some(epoch_schedule) = &sysvars.epoch_schedule {
+        hasher.hash(&epoch_schedule.slots_per_epoch.to_le_bytes());
+        hasher.hash(&epoch_schedule.leader_schedule_slot_offset.to_le_bytes());
+        hasher.hash(&[epoch_schedule.warmup as u8]);
+        hasher.hash(&epoch_schedule.first_normal_epoch.to_le_bytes());
+        hasher.hash(&epoch_schedule.first_normal_slot.to_le_bytes());
+    }
+    // Rent
+    if let Some(rent) = &sysvars.rent {
+        hasher.hash(&rent.lamports_per_byte_year.to_le_bytes());
+        hasher.hash(&rent.exemption_threshold.to_le_bytes());
+        hasher.hash(&rent.burn_percent.to_le_bytes());
+    }
+    // SlotHashes
+    if let Some(slot_hashes) = &sysvars.slot_hashes {
+        for entry in &slot_hashes.slot_hashes {
+            hasher.hash(&entry.slot.to_le_bytes());
+            hasher.hash(&entry.hash);
+        }
+    }
+    // StakeHistory
+    if let Some(stake_history) = &sysvars.stake_history {
+        for entry in &stake_history.stake_history {
+            hasher.hash(&entry.epoch.to_le_bytes());
+            hasher.hash(&entry.effective.to_le_bytes());
+            hasher.hash(&entry.activating.to_le_bytes());
+            hasher.hash(&entry.deactivating.to_le_bytes());
         }
     }
 }

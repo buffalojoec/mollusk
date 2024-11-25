@@ -1,6 +1,6 @@
 //! Program invocation metadata.
 
-use super::proto::FixtureMetadata as ProtoFixtureMetadata;
+use {super::proto::FixtureMetadata as ProtoFixtureMetadata, solana_sdk::keccak::Hasher};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Metadata {
@@ -22,4 +22,8 @@ impl From<Metadata> for ProtoFixtureMetadata {
             fn_entrypoint: value.entrypoint,
         }
     }
+}
+
+pub(crate) fn hash_proto_metadata(hasher: &mut Hasher, metadata: &ProtoFixtureMetadata) {
+    hasher.hash(metadata.fn_entrypoint.as_bytes());
 }
