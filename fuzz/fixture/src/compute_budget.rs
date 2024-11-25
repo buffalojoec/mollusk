@@ -2,7 +2,7 @@
 
 use {
     super::proto::ComputeBudget as ProtoComputeBudget,
-    solana_compute_budget::compute_budget::ComputeBudget,
+    solana_compute_budget::compute_budget::ComputeBudget, solana_sdk::keccak::Hasher,
 };
 
 impl From<ProtoComputeBudget> for ComputeBudget {
@@ -203,4 +203,112 @@ impl From<ComputeBudget> for ProtoComputeBudget {
             alt_bn128_g2_decompress,
         }
     }
+}
+
+pub(crate) fn hash_proto_compute_budget(hasher: &mut Hasher, compute_budget: &ProtoComputeBudget) {
+    hasher.hash(&compute_budget.compute_unit_limit.to_le_bytes());
+    hasher.hash(&compute_budget.log_64_units.to_le_bytes());
+    hasher.hash(&compute_budget.create_program_address_units.to_le_bytes());
+    hasher.hash(&compute_budget.invoke_units.to_le_bytes());
+    hasher.hash(&compute_budget.max_instruction_stack_depth.to_le_bytes());
+    hasher.hash(&compute_budget.max_instruction_trace_length.to_le_bytes());
+    hasher.hash(&compute_budget.sha256_base_cost.to_le_bytes());
+    hasher.hash(&compute_budget.sha256_byte_cost.to_le_bytes());
+    hasher.hash(&compute_budget.sha256_max_slices.to_le_bytes());
+    hasher.hash(&compute_budget.max_call_depth.to_le_bytes());
+    hasher.hash(&compute_budget.stack_frame_size.to_le_bytes());
+    hasher.hash(&compute_budget.log_pubkey_units.to_le_bytes());
+    hasher.hash(&compute_budget.max_cpi_instruction_size.to_le_bytes());
+    hasher.hash(&compute_budget.cpi_bytes_per_unit.to_le_bytes());
+    hasher.hash(&compute_budget.sysvar_base_cost.to_le_bytes());
+    hasher.hash(&compute_budget.secp256k1_recover_cost.to_le_bytes());
+    hasher.hash(&compute_budget.syscall_base_cost.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .curve25519_edwards_validate_point_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(&compute_budget.curve25519_edwards_add_cost.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .curve25519_edwards_subtract_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_edwards_multiply_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_edwards_msm_base_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_edwards_msm_incremental_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_ristretto_validate_point_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(&compute_budget.curve25519_ristretto_add_cost.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .curve25519_ristretto_subtract_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_ristretto_multiply_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_ristretto_msm_base_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .curve25519_ristretto_msm_incremental_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(&compute_budget.heap_size.to_le_bytes());
+    hasher.hash(&compute_budget.heap_cost.to_le_bytes());
+    hasher.hash(&compute_budget.mem_op_base_cost.to_le_bytes());
+    hasher.hash(&compute_budget.alt_bn128_addition_cost.to_le_bytes());
+    hasher.hash(&compute_budget.alt_bn128_multiplication_cost.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .alt_bn128_pairing_one_pair_cost_first
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .alt_bn128_pairing_one_pair_cost_other
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .big_modular_exponentiation_base_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .big_modular_exponentiation_cost_divisor
+            .to_le_bytes(),
+    );
+    hasher.hash(&compute_budget.poseidon_cost_coefficient_a.to_le_bytes());
+    hasher.hash(&compute_budget.poseidon_cost_coefficient_c.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .get_remaining_compute_units_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(&compute_budget.alt_bn128_g1_compress.to_le_bytes());
+    hasher.hash(&compute_budget.alt_bn128_g1_decompress.to_le_bytes());
+    hasher.hash(&compute_budget.alt_bn128_g2_compress.to_le_bytes());
+    hasher.hash(&compute_budget.alt_bn128_g2_decompress.to_le_bytes());
 }

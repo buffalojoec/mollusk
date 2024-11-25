@@ -5,7 +5,7 @@ use {
     },
     crate::account::SeedAddress,
     solana_sdk::{
-        account::AccountSharedData, feature_set::FeatureSet, pubkey::Pubkey,
+        account::AccountSharedData, feature_set::FeatureSet, keccak::Hasher, pubkey::Pubkey,
         transaction_context::InstructionAccount,
     },
 };
@@ -115,6 +115,22 @@ impl From<Context> for ProtoContext {
             cu_avail: value.compute_units_available,
             slot_context: Some(value.slot_context.into()),
             epoch_context: Some(value.epoch_context.into()),
+        }
+    }
+}
+
+pub(crate) fn hash_proto_context(hasher: &mut Hasher, context: &ProtoContext) {
+    hasher.hash(&context.program_id);
+    crate::account::hash_proto_accounts(hasher, &context.accounts);
+    crate::instr_account::hash_proto_instr_accounts(hasher, &context.instr_accounts);
+    hasher.hash(&context.data);
+    hasher.hash(&context.cu_avail.to_le_bytes());
+    if let Some(slot_context) = &context.slot_context {
+        hasher.hash(&slot_context.slot.to_le_bytes());
+    }
+    if let Some(epoch_context) = &context.epoch_context {
+        if let Some(features) = &epoch_context.features {
+            crate::feature_set::hash_proto_feature_set(hasher, features);
         }
     }
 }

@@ -8,7 +8,7 @@ use {
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
         account::AccountSharedData, feature_set::FeatureSet, instruction::AccountMeta,
-        pubkey::Pubkey,
+        keccak::Hasher, pubkey::Pubkey,
     },
 };
 
@@ -112,4 +112,24 @@ impl From<Context> for ProtoContext {
             accounts,
         }
     }
+}
+
+pub(crate) fn hash_proto_context(hasher: &mut Hasher, context: &ProtoContext) {
+    if let Some(compute_budget) = &context.compute_budget {
+        crate::compute_budget::hash_proto_compute_budget(hasher, compute_budget);
+    }
+    if let Some(feature_set) = &context.feature_set {
+        crate::feature_set::hash_proto_feature_set(hasher, feature_set);
+    }
+    if let Some(sysvars) = &context.sysvars {
+        crate::sysvars::hash_proto_sysvars(hasher, sysvars);
+    }
+    hasher.hash(&context.program_id);
+    for account in context.instr_accounts.iter() {
+        hasher.hash(&account.index.to_le_bytes());
+        hasher.hash(&[account.is_signer as u8]);
+        hasher.hash(&[account.is_writable as u8]);
+    }
+    hasher.hash(&context.data);
+    crate::account::hash_proto_accounts(hasher, &context.accounts);
 }

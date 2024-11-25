@@ -2,7 +2,7 @@
 
 use {
     super::proto::InstrAcct as ProtoInstrAccount,
-    solana_sdk::transaction_context::InstructionAccount,
+    solana_sdk::{keccak::Hasher, transaction_context::InstructionAccount},
 };
 
 impl From<ProtoInstrAccount> for InstructionAccount {
@@ -35,5 +35,13 @@ impl From<InstructionAccount> for ProtoInstrAccount {
             is_signer,
             is_writable,
         }
+    }
+}
+
+pub(crate) fn hash_proto_instr_accounts(hasher: &mut Hasher, instr_accounts: &[ProtoInstrAccount]) {
+    for account in instr_accounts {
+        hasher.hash(&account.index.to_le_bytes());
+        hasher.hash(&[account.is_signer as u8]);
+        hasher.hash(&[account.is_writable as u8]);
     }
 }
