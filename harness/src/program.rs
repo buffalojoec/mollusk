@@ -162,6 +162,18 @@ pub fn keyed_account_for_bpf_loader_v3_program() -> (Pubkey, AccountSharedData) 
 
 /* ... */
 
+/// Create a BPF Loader 1 (deprecated) program account.
+pub fn create_program_account_loader_v1(elf: &[u8]) -> AccountSharedData {
+    let lamports = Rent::default().minimum_balance(elf.len());
+    AccountSharedData::from(Account {
+        lamports,
+        data: elf.to_vec(),
+        owner: loader_keys::LOADER_V1,
+        executable: true,
+        rent_epoch: 0,
+    })
+}
+
 /// Create a BPF Loader 2 program account.
 pub fn create_program_account_loader_v2(elf: &[u8]) -> AccountSharedData {
     let lamports = Rent::default().minimum_balance(elf.len());

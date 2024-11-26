@@ -8,7 +8,7 @@ pub const ID: Pubkey = solana_sdk::pubkey!("Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDw
 pub const ELF: &[u8] = include_bytes!("elf/memo-v1.so");
 
 pub fn add_program(mollusk: &mut Mollusk) {
-    //BPFLoader1111111111111111111111111111111111
+    // Loader v1
     mollusk.add_program_with_elf_and_loader(
         &ID,
         ELF,
@@ -17,7 +17,8 @@ pub fn add_program(mollusk: &mut Mollusk) {
 }
 
 pub fn account() -> AccountSharedData {
-    mollusk_svm::program::create_program_account_loader_v3(&ID)
+    // Loader v1
+    mollusk_svm::program::create_program_account_loader_v1(ELF)
 }
 
 /// Get the key and account for the SPL Memo program V1.

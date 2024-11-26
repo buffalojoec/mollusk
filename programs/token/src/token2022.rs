@@ -8,6 +8,7 @@ pub const ID: Pubkey = solana_sdk::pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCX
 pub const ELF: &[u8] = include_bytes!("elf/token_2022.so");
 
 pub fn add_program(mollusk: &mut Mollusk) {
+    // Loader v3
     mollusk.add_program_with_elf_and_loader(
         &ID,
         ELF,
@@ -16,6 +17,7 @@ pub fn add_program(mollusk: &mut Mollusk) {
 }
 
 pub fn account() -> AccountSharedData {
+    // Loader v3
     mollusk_svm::program::create_program_account_loader_v3(&ID)
 }
 
