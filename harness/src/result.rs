@@ -192,6 +192,38 @@ impl InstructionResult {
             }
         }
     }
+
+    /// Compare an `InstructionResult` against another `InstructionResult`,
+    /// panicking on any mismatches.
+    pub fn compare(&self, b: &Self) {
+        assert_eq!(
+            self.compute_units_consumed, b.compute_units_consumed,
+            "compute units consumed mismatch"
+        );
+        // TODO: Omitted for now.
+        // assert_eq!(
+        //     self.execution_time, b.execution_time,
+        //     "execution time mismatch"
+        // );
+        assert_eq!(
+            self.program_result, b.program_result,
+            "program result mismatch"
+        );
+        assert_eq!(self.raw_result, b.raw_result, "raw result mismatch");
+        assert_eq!(
+            self.resulting_accounts.len(),
+            b.resulting_accounts.len(),
+            "resulting accounts length mismatch"
+        );
+        for (a, b) in self
+            .resulting_accounts
+            .iter()
+            .zip(b.resulting_accounts.iter())
+        {
+            assert_eq!(a.0, b.0, "resulting account pubkey mismatch");
+            assert_eq!(a.1, b.1, "resulting account data mismatch");
+        }
+    }
 }
 
 enum CheckType<'a> {

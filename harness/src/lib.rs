@@ -306,4 +306,65 @@ impl Mollusk {
         result.run_checks(checks);
         result
     }
+
+    #[cfg(feature = "fuzz")]
+    /// Process a fuzz fixture using the minified Solana Virtual Machine (SVM)
+    /// environment.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_fixture(fixture: &mollusk_svm_fuzz_fixture::Fixture) -> InstructionResult {
+        let (mollusk, instruction, accounts, _) = fuzz::mollusk::load_fixture(fixture);
+        mollusk.process_instruction(&instruction, &accounts)
+    }
+
+    #[cfg(feature = "fuzz")]
+    /// Process a fuzz fixture using the minified Solana Virtual Machine (SVM)
+    /// environment and compare the result against the fixture's effects.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_and_validate_fixture(
+        fixture: &mollusk_svm_fuzz_fixture::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, result) = fuzz::mollusk::load_fixture(fixture);
+        let this_result = mollusk.process_instruction(&instruction, &accounts);
+        result.compare(&this_result);
+        this_result
+    }
+
+    #[cfg(feature = "fuzz-fd")]
+    /// Process a Firedancer fuzz fixture using the minified Solana Virtual
+    /// Machine (SVM) environment.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_firedancer_fixture(
+        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, _) =
+            fuzz::firedancer::load_firedancer_fixture(fixture);
+        mollusk.process_instruction(&instruction, &accounts)
+    }
+
+    #[cfg(feature = "fuzz-fd")]
+    /// Process a Firedancer fuzz fixture using the minified Solana Virtual
+    /// Machine (SVM) environment and compare the result against the
+    /// fixture's effects.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_and_validate_firedancer_fixture(
+        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, result) =
+            fuzz::firedancer::load_firedancer_fixture(fixture);
+        let this_result = mollusk.process_instruction(&instruction, &accounts);
+        result.compare(&this_result);
+        this_result
+    }
 }
