@@ -1838,6 +1838,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mollusk-svm-programs-memo"
+version = "0.0.6-solana-1.18"
+dependencies = [
+ "mollusk-svm",
+ "solana-sdk",
+]
+
+[[package]]
+name = "mollusk-svm-programs-token"
+version = "0.0.6-solana-1.18"
+dependencies = [
+ "mollusk-svm",
+ "solana-sdk",
+]
+
+[[package]]
 name = "num"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

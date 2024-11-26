@@ -120,6 +120,25 @@ impl Mollusk {
         );
     }
 
+    /// Add a program to the test environment using a provided ELF under a
+    /// specific loader.
+    ///
+    /// If you intend to CPI to a program, this is likely what you want to use.
+    pub fn add_program_with_elf_and_loader(
+        &mut self,
+        program_id: &Pubkey,
+        elf: &[u8],
+        loader_key: &Pubkey,
+    ) {
+        self.program_cache.add_program(
+            program_id,
+            loader_key,
+            elf,
+            &self.compute_budget,
+            &self.feature_set,
+        );
+    }
+
     /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: u64) {
         self.sysvars.warp_to_slot(slot)

@@ -2,6 +2,7 @@
 members = [
     "bencher",
     "harness",
+    "programs/*",
     "test-programs/*",
 ]
 resolver = "2"
@@ -19,6 +20,8 @@ bincode = "1.3.3"
 bs58 = "0.5.1"
 mollusk-svm = { path = "harness", version = "0.0.6-solana-1.18" }
 mollusk-svm-bencher = { path = "bencher", version = "0.0.6-solana-1.18" }
+mollusk-svm-programs-memo = { path = "programs/memo", version = "0.0.6-solana-1.18" }
+mollusk-svm-programs-token = { path = "programs/token", version = "0.0.6-solana-1.18" }
 num-format = "0.4.4"
 prost = "0.10"
 prost-build = "0.10"
