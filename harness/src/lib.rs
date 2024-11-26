@@ -187,18 +187,15 @@ impl Mollusk {
             )
         };
 
-        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = (0..transaction_context
-            .get_number_of_accounts())
-            .filter_map(|index| {
-                let key = transaction_context
-                    .get_key_of_account_at_index(index)
-                    .unwrap();
-                let account = transaction_context.get_account_at_index(index).unwrap();
-                if *key != instruction.program_id {
-                    Some((*key, account.take()))
-                } else {
-                    None
-                }
+        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
+            .iter()
+            .filter_map(|(pubkey, _)| {
+                transaction_context
+                    .find_index_of_account(pubkey)
+                    .map(|index| {
+                        let account = transaction_context.get_account_at_index(index).unwrap();
+                        (*pubkey, account.take())
+                    })
             })
             .collect();
 
@@ -232,7 +229,23 @@ impl Mollusk {
         };
 
         for instruction in instructions {
-            result.absorb(self.process_instruction(instruction, &result.resulting_accounts));
+            let this_result = self.process_instruction(instruction, &result.resulting_accounts);
+
+            result.compute_units_consumed += this_result.compute_units_consumed;
+            result.execution_time += this_result.execution_time;
+            result.program_result = this_result.program_result;
+            for resulting_account in this_result.resulting_accounts.into_iter() {
+                if let Some(pos) = result
+                    .resulting_accounts
+                    .iter()
+                    .position(|(key, _)| key == &resulting_account.0)
+                {
+                    result.resulting_accounts[pos].1 = resulting_account.1;
+                } else {
+                    result.resulting_accounts.push(resulting_account);
+                }
+            }
+
             if result.program_result.is_err() {
                 break;
             }
@@ -293,5 +306,66 @@ impl Mollusk {
 
         result.run_checks(checks);
         result
+    }
+
+    #[cfg(feature = "fuzz")]
+    /// Process a fuzz fixture using the minified Solana Virtual Machine (SVM)
+    /// environment.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_fixture(fixture: &mollusk_svm_fuzz_fixture::Fixture) -> InstructionResult {
+        let (mollusk, instruction, accounts, _) = fuzz::mollusk::load_fixture(fixture);
+        mollusk.process_instruction(&instruction, &accounts)
+    }
+
+    #[cfg(feature = "fuzz")]
+    /// Process a fuzz fixture using the minified Solana Virtual Machine (SVM)
+    /// environment and compare the result against the fixture's effects.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_and_validate_fixture(
+        fixture: &mollusk_svm_fuzz_fixture::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, result) = fuzz::mollusk::load_fixture(fixture);
+        let this_result = mollusk.process_instruction(&instruction, &accounts);
+        result.compare(&this_result);
+        this_result
+    }
+
+    #[cfg(feature = "fuzz-fd")]
+    /// Process a Firedancer fuzz fixture using the minified Solana Virtual
+    /// Machine (SVM) environment.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_firedancer_fixture(
+        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, _) =
+            fuzz::firedancer::load_firedancer_fixture(fixture);
+        mollusk.process_instruction(&instruction, &accounts)
+    }
+
+    #[cfg(feature = "fuzz-fd")]
+    /// Process a Firedancer fuzz fixture using the minified Solana Virtual
+    /// Machine (SVM) environment and compare the result against the
+    /// fixture's effects.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    pub fn process_and_validate_firedancer_fixture(
+        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+    ) -> InstructionResult {
+        let (mollusk, instruction, accounts, result) =
+            fuzz::firedancer::load_firedancer_fixture(fixture);
+        let this_result = mollusk.process_instruction(&instruction, &accounts);
+        result.compare(&this_result);
+        this_result
     }
 }

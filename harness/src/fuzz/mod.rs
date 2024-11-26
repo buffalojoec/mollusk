@@ -1,7 +1,7 @@
 #[cfg(feature = "fuzz-fd")]
-mod firedancer;
+pub mod firedancer;
 #[cfg(feature = "fuzz")]
-mod mollusk;
+pub mod mollusk;
 
 use {
     crate::{
