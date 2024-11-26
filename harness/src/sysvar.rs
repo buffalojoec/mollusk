@@ -3,7 +3,7 @@
 use {
     solana_program_runtime::sysvar_cache::SysvarCache,
     solana_sdk::{
-        account::AccountSharedData,
+        account::{AccountSharedData, ReadableAccount},
         clock::{Clock, Slot},
         epoch_rewards::EpochRewards,
         epoch_schedule::EpochSchedule,
@@ -59,6 +59,36 @@ impl Default for Sysvars {
 }
 
 impl Sysvars {
+    /// Create a `Sysvars` instance from a list of accounts. Any missing
+    /// sysvars will be filled with default values.
+    pub fn fill_from_accounts(accounts: &[(Pubkey, AccountSharedData)]) -> Self {
+        let mut me = Self::default();
+        for (key, account) in accounts {
+            if key == &Clock::id() {
+                me.clock = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &EpochRewards::id() {
+                me.epoch_rewards = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &EpochSchedule::id() {
+                me.epoch_schedule = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &LastRestartSlot::id() {
+                me.last_restart_slot = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &Rent::id() {
+                me.rent = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &SlotHashes::id() {
+                me.slot_hashes = bincode::deserialize(account.data()).unwrap();
+            }
+            if key == &StakeHistory::id() {
+                me.stake_history = bincode::deserialize(account.data()).unwrap();
+            }
+        }
+        me
+    }
+
     fn sysvar_account<T: SysvarId + Sysvar>(&self, sysvar: &T) -> (Pubkey, AccountSharedData) {
         let data = bincode::serialize::<T>(sysvar).unwrap();
         let space = data.len();
