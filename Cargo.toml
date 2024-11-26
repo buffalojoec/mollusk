@@ -5,6 +5,7 @@ members = [
     "fuzz/*",
     "harness",
     "keys",
+    "programs/*",
     "test-programs/*",
 ]
 resolver = "2"
@@ -28,6 +29,8 @@ mollusk-svm-fuzz-fixture = { path = "fuzz/fixture", version = "0.0.10" }
 mollusk-svm-fuzz-fixture-firedancer = { path = "fuzz/fixture-fd", version = "0.0.10" }
 mollusk-svm-fuzz-fs = { path = "fuzz/fs", version = "0.0.10" }
 mollusk-svm-keys = { path = "keys", version = "0.0.10" }
+mollusk-svm-programs-memo = { path = "programs/memo", version = "0.0.10" }
+mollusk-svm-programs-token = { path = "programs/token", version = "0.0.10" }
 num-format = "0.4.4"
 prost = "0.10"
 prost-build = "0.10"
