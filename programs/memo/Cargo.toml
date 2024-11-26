@@ -1,7 +1,7 @@
 [package]
 name = "mollusk-svm-programs-memo"
 description = "SVM program SPL Memo."
-documentation = "https://docs.rs/mollusk-svm"
+documentation = "https://docs.rs/mollusk-svm-programs-memo"
 authors = { workspace = true }
 repository = { workspace = true }
 readme = { workspace = true }
@@ -13,9 +13,6 @@ version = { workspace = true }
 default = ["memo", "memo-v1"]
 memo = []
 memo-v1 = []
-
-[lib]
-crate-type = ["lib"]
 
 [dependencies]
 mollusk-svm = { workspace = true }

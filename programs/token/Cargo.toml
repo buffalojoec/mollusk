@@ -1,7 +1,7 @@
 [package]
 name = "mollusk-svm-programs-token"
 description = "SVM program SPL Token."
-documentation = "https://docs.rs/mollusk-svm"
+documentation = "https://docs.rs/mollusk-svm-programs-token"
 authors = { workspace = true }
 repository = { workspace = true }
 readme = { workspace = true }
@@ -14,9 +14,6 @@ default = ["token", "associated-token", "token-2022"]
 token = []
 associated-token = []
 token-2022 = []
-
-[lib]
-crate-type = ["lib"]
 
 [dependencies]
 mollusk-svm = { workspace = true }

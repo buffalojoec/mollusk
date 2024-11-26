@@ -1733,7 +1733,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-memo"
-version = "0.0.8"
+version = "0.0.10"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
@@ -1741,7 +1741,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-token"
-version = "0.0.8"
+version = "0.0.10"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
