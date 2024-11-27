@@ -105,6 +105,8 @@ impl Sysvars {
 
     /// Warp the test environment to a slot by updating sysvars.
     pub fn warp_to_slot(&mut self, slot: Slot) {
+        let slot_delta = slot.saturating_sub(self.clock.slot);
+
         // First update `Clock`.
         let epoch = self.epoch_schedule.get_epoch(slot);
         let leader_schedule_epoch = self.epoch_schedule.get_leader_schedule_epoch(slot);
@@ -116,17 +118,28 @@ impl Sysvars {
         };
 
         // Then update `SlotHashes`.
-        let i = if let Some(most_recent_slot_hash) = self.slot_hashes.first() {
-            most_recent_slot_hash.0
+        if slot_delta > slot_hashes::MAX_ENTRIES as u64 {
+            let final_hash_slot = slot - slot_hashes::MAX_ENTRIES as u64;
+
+            let slot_hash_entries = (final_hash_slot..slot)
+                .rev()
+                .map(|slot| (slot, Hash::default()))
+                .collect::<Vec<_>>();
+
+            self.slot_hashes = SlotHashes::new(&slot_hash_entries);
         } else {
-            // By default, this zero is never used, but a user can overwrite
-            // `SlotHashes`.
-            0
-        };
-        // Don't include the target slot, since it will become the "current"
-        // slot.
-        for slot in i..slot {
-            self.slot_hashes.add(slot, Hash::default());
+            let i = if let Some(most_recent_slot_hash) = self.slot_hashes.first() {
+                most_recent_slot_hash.0
+            } else {
+                // By default, this zero is never used, but a user can overwrite
+                // `SlotHashes`.
+                0
+            };
+            // Don't include the target slot, since it will become the "current"
+            // slot.
+            for slot in i..slot {
+                self.slot_hashes.add(slot, Hash::default());
+            }
         }
     }
 }
