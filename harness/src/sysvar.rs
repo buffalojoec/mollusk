@@ -33,7 +33,7 @@ impl Default for Sysvars {
     fn default() -> Self {
         let clock = Clock::default();
         let epoch_rewards = EpochRewards::default();
-        let epoch_schedule = EpochSchedule::default();
+        let epoch_schedule = EpochSchedule::without_warmup();
         let last_restart_slot = LastRestartSlot::default();
         let rent = Rent::default();
 
