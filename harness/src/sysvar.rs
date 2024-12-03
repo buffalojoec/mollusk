@@ -44,7 +44,7 @@ impl Default for Sysvars {
         };
 
         let mut stake_history = StakeHistory::default();
-        stake_history.add(clock.slot, StakeHistoryEntry::default());
+        stake_history.add(clock.epoch, StakeHistoryEntry::default());
 
         Self {
             clock,
