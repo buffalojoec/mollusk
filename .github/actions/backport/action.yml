@@ -60,7 +60,7 @@ runs:
 
         git push origin $BACKPORT_BRANCH
 
-        gh pr create -v \
+        gh pr create \
           --base $BASE_BRANCH \
           --head $BACKPORT_BRANCH \
           --title "Backport PR #${{ env.PR_NUMBER }} to $BASE_BRANCH" \
