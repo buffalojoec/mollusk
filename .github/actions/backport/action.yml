@@ -12,9 +12,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Git Checkout
-      uses: actions/checkout@v4
-
     - name: Fetch pull request data
       env:
         GH_TOKEN: ${{ github.token }}
@@ -40,7 +37,8 @@ runs:
           echo "No backport detected."
         fi
     
-    - name: Git Checkout
+    - name: Checkout base branch
+      if : ${{ env.BACKPORT == 'true' }}
       uses: actions/checkout@v4
       with:
         ref: ${{ inputs.base_branch }}

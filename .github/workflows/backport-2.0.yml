@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        
       - name: Backport to v2.0
         uses: ./.github/actions/backport
         with:
