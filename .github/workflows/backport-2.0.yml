@@ -15,11 +15,6 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
-      
-      - name: Debug Permissions
-        run: gh auth status
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Backport to v2.0
         uses: ./.github/actions/backport
