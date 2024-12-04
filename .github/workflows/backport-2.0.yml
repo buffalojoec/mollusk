@@ -1,6 +1,8 @@
 name: Backport to solana-v2.0
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
 
@@ -8,12 +10,22 @@ jobs:
   backport:
     runs-on: ubuntu-latest
 
+    permissions:
+      pull-requests: write
+      contents: write
+
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
+      
+      - name: Debug Permissions
+        run: gh auth status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Backport to v2.0
         uses: ./.github/actions/backport
         with:
           label: v2.0
           base_branch: solana-v2.0
+          github_token: ${{ secrets.GITHUB_TOKEN }}
