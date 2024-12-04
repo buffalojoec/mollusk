@@ -8,13 +8,16 @@ inputs:
   base_branch:
     description: The base branch to backport to (i.e., solana-v2.0, solana-v1.18)
     required: true
+  github_token:
+    description: GitHub token for authentication
+    required: true
 
 runs:
   using: "composite"
   steps:
     - name: Fetch pull request data
       env:
-        GH_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
       run: |
         MERGE_COMMIT=${{ github.sha }}
@@ -36,30 +39,28 @@ runs:
         else
           echo "No backport detected."
         fi
-    
-    - name: Checkout base branch
-      if : ${{ env.BACKPORT == 'true' }}
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.base_branch }}
 
     - name: Backport changes
       if: ${{ env.BACKPORT == 'true' }}
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-        BACKPORT_BRANCH="backport-${{ env.PR_NUMBER }}-to-${{ inputs.base_branch }}"
+        git fetch --all
+
+        BASE_BRANCH="${{ inputs.base_branch }}"
+        BACKPORT_BRANCH="backport-${{ github.sha }}-to-${{ inputs.base_branch }}"
+        git checkout $BASE_BRANCH
         git checkout -b $BACKPORT_BRANCH
 
-        git cherry-pick $MERGE_COMMIT || (git cherry-pick --abort && exit 1)
+        git cherry-pick -X theirs --allow-empty $MERGE_COMMIT
 
         git push origin $BACKPORT_BRANCH
 
-        gh pr create \
+        gh pr create -v \
           --base $BASE_BRANCH \
           --head $BACKPORT_BRANCH \
           --title "Backport PR #${{ env.PR_NUMBER }} to $BASE_BRANCH" \

@@ -1,4 +1,4 @@
-name: Backport to solana-v2.0
+name: Backport to solana-v1.18
 
 on:
   push:
@@ -21,9 +21,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-      - name: Backport to v2.0
+      - name: Backport to v1.18
         uses: ./.github/actions/backport
         with:
-          label: v2.0
-          base_branch: solana-v2.0
+          label: v1.18
+          base_branch: solana-v1.18
           github_token: ${{ secrets.GITHUB_TOKEN }}
