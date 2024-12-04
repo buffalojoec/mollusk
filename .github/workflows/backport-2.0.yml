@@ -1,34 +1,19 @@
 name: Backport to solana-v2.0-tmp
 
 on:
-  push:
-    branches:
-      - tmp
+  pull_request:
+    branches: [tmp]
 
 jobs:
   backport:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Git Checkout
+        uses: actions/checkout@v4
 
-      - name: Fetch pull request data
-        id: pr_data
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get the latest commit hash on main
-          COMMIT_HASH=$(git rev-parse HEAD)
-          echo $COMMIT_HASH
-          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
-
-          # Find the pull request associated with the commit
-          PR_NUMBER=$(gh pr list --state merged --base main --json number,mergeCommit --jq ".[] | select(.mergeCommit == \"$COMMIT_HASH\").number")
-          echo $PR_NUMBER
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-
-          # Fetch the labels for the PR
-          LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
-          echo $LABELS
-          echo "LABELS=$LABELS" >> $GITHUB_ENV
+      - name: Backport to v2.0
+        uses: ./.github/actions/backport
+        with:
+          label: v2.0
+          base_branch: solana-v2.0
