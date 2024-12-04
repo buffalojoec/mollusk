@@ -20,8 +20,10 @@ runs:
         GH_TOKEN: ${{ github.token }}
       shell: bash
       run: |
-        # Find the pull request associated with the squashed merge commit.
         MERGE_COMMIT=${{ github.sha }}
+        echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
+
+        # Find the pull request associated with the squashed merge commit.
         echo "Looking for PR associated with commit $MERGE_COMMIT... with label ${{ inputs.label }}"
         PR=$(gh pr list --state merged --json number,title,headRefName,mergeCommit,labels \
             --jq ".[] | select(.mergeCommit.oid == \"$MERGE_COMMIT\" and (.labels[].name | contains(\"${{ inputs.label }}\")))")
@@ -29,8 +31,12 @@ runs:
         if [[ -n "$PR" ]]; then
           echo "Pull Request found:"
           echo "$PR"
-          echo "BACKPORT=true" >> $GITHUB_ENV
+
+          PR_NUMBER=$(echo $PR | jq -r '.number')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
           echo "Will backport to ${{ inputs.base_branch }}"
+          echo "BACKPORT=true" >> $GITHUB_ENV
         else
           echo "No backport detected."
         fi
