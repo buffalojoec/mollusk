@@ -77,22 +77,6 @@ impl InstructionResult {
             .map(|(_, a)| a)
     }
 
-    /// Absorb another `InstructionResult` into this one.
-    pub(crate) fn absorb(&mut self, other: Self) {
-        self.compute_units_consumed += other.compute_units_consumed;
-        self.execution_time += other.execution_time;
-        self.program_result = other.program_result;
-        for (key, account) in other.resulting_accounts {
-            if let Some((_, existing_account)) =
-                self.resulting_accounts.iter_mut().find(|(k, _)| k == &key)
-            {
-                *existing_account = account;
-            } else {
-                self.resulting_accounts.push((key, account));
-            }
-        }
-    }
-
     /// Perform checks on the instruction result, panicking if any checks fail.
     pub(crate) fn run_checks(&self, checks: &[Check]) {
         for check in checks {

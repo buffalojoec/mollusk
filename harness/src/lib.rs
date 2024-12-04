@@ -181,18 +181,17 @@ impl Mollusk {
             )
         };
 
-        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = (0..transaction_context
-            .get_number_of_accounts())
-            .filter_map(|index| {
-                let key = transaction_context
-                    .get_key_of_account_at_index(index)
-                    .unwrap();
-                let account = transaction_context.get_account_at_index(index).unwrap();
-                if *key != instruction.program_id {
-                    Some((*key, account.take()))
-                } else {
-                    None
-                }
+        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
+            .iter()
+            .map(|(pubkey, account)| {
+                transaction_context
+                    .find_index_of_account(pubkey)
+                    .map(|index| {
+                        let resulting_account =
+                            transaction_context.get_account_at_index(index).unwrap();
+                        (*pubkey, resulting_account.take())
+                    })
+                    .unwrap_or((*pubkey, account.clone()))
             })
             .collect();
 
@@ -225,7 +224,13 @@ impl Mollusk {
         };
 
         for instruction in instructions {
-            result.absorb(self.process_instruction(instruction, &result.resulting_accounts));
+            let this_result = self.process_instruction(instruction, &result.resulting_accounts);
+
+            result.compute_units_consumed += this_result.compute_units_consumed;
+            result.execution_time += this_result.execution_time;
+            result.program_result = this_result.program_result;
+            result.resulting_accounts = this_result.resulting_accounts;
+
             if result.program_result.is_err() {
                 break;
             }
