@@ -8,6 +8,7 @@ on:
 jobs:
   backport:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -17,8 +18,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_NUMBER=$(gh pr list --state merged --base main --json number --jq '.[0].number')
+          # Get the latest commit hash on main
+          COMMIT_HASH=$(git rev-parse HEAD)
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+
+          # Find the pull request associated with the commit
+          PR_NUMBER=$(gh pr list --state merged --base main --json number,mergeCommit --jq ".[] | select(.mergeCommit == \"$COMMIT_HASH\").number")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          # Fetch the labels for the PR
           LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
           echo "LABELS=$LABELS" >> $GITHUB_ENV
 
@@ -50,11 +58,8 @@ jobs:
           git checkout $TARGET_BRANCH
           git checkout -b $BACKPORT_BRANCH
 
-          # Cherry-pick all commits from the PR
-          COMMITS=$(gh pr view ${{ env.PR_NUMBER }} --json commits --jq '.commits[].oid')
-          for COMMIT in $COMMITS; do
-            git cherry-pick $COMMIT || (git cherry-pick --abort && exit 1)
-          done
+          # Cherry-pick the merge commit
+          git cherry-pick ${{ env.COMMIT_HASH }} || (git cherry-pick --abort && exit 1)
 
           # Push the new branch
           git push origin $BACKPORT_BRANCH
