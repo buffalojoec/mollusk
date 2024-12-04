@@ -38,6 +38,7 @@ runs:
       if: ${{ env.BACKPORT == 'true' }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
+      shell: bash
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
