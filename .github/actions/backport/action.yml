@@ -1,5 +1,6 @@
 name: Backport
 description: Backport changes to another release branch.
+
 inputs:
   label:
     description: The trigger label (i.e., v2.0, v1.18)
@@ -62,5 +63,3 @@ runs:
           --head $BACKPORT_BRANCH \
           --title "Backport PR #${{ env.PR_NUMBER }} to $BASE_BRANCH" \
           --body "This is an automated backport of PR #${{ env.PR_NUMBER }} to the $BASE_BRANCH branch."
-      outputs:
-        result: "Backport successful!"
