@@ -201,13 +201,15 @@ impl Mollusk {
 
         let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
             .iter()
-            .filter_map(|(pubkey, _)| {
+            .map(|(pubkey, account)| {
                 transaction_context
                     .find_index_of_account(pubkey)
                     .map(|index| {
-                        let account = transaction_context.get_account_at_index(index).unwrap();
-                        (*pubkey, account.take())
+                        let resulting_account =
+                            transaction_context.get_account_at_index(index).unwrap();
+                        (*pubkey, resulting_account.take())
                     })
+                    .unwrap_or((*pubkey, account.clone()))
             })
             .collect();
 
@@ -246,17 +248,8 @@ impl Mollusk {
             result.compute_units_consumed += this_result.compute_units_consumed;
             result.execution_time += this_result.execution_time;
             result.program_result = this_result.program_result;
-            for resulting_account in this_result.resulting_accounts.into_iter() {
-                if let Some(pos) = result
-                    .resulting_accounts
-                    .iter()
-                    .position(|(key, _)| key == &resulting_account.0)
-                {
-                    result.resulting_accounts[pos].1 = resulting_account.1;
-                } else {
-                    result.resulting_accounts.push(resulting_account);
-                }
-            }
+            result.raw_result = this_result.raw_result;
+            result.resulting_accounts = this_result.resulting_accounts;
 
             if result.program_result.is_err() {
                 break;
