@@ -1,0 +1,58 @@
+name: Backport to solana-v2.0
+
+on:
+  pull_request:
+    types:
+      - labeled
+      - closed
+
+jobs:
+  handle-backport:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install GitHub CLI
+        uses: actions/setup-node@v3
+
+      - name: Determine backport condition
+        id: determine
+        run: |
+          if [[ "${{ github.event.pull_request.merged }}" == "true" ]] && [[ "${{ github.event.label.name }}" == "v2.0" ]]; then
+            echo "create-backport=true" >> $GITHUB_ENV
+          elif [[ "${{ github.event.label.name }}" == "v2.0" ]]; then
+            echo "wait-for-merge=true" >> $GITHUB_ENV
+          fi
+
+      - name: Backport changes
+        if: ${{ env.create-backport == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Set up Git user
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch all branches
+          git fetch --all
+
+          # Create a new branch off solana-v2.0
+          TARGET_BRANCH="solana-v2.0"
+          BACKPORT_BRANCH="backport-${{ github.event.pull_request.number }}-to-v2.0"
+          git checkout $TARGET_BRANCH
+          git checkout -b $BACKPORT_BRANCH
+
+          # Cherry-pick all commits from the PR
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+          git cherry-pick $(git log --reverse --format=%H origin/$PR_BRANCH) || (git cherry-pick --abort && exit 1)
+
+          # Push the new branch
+          git push origin $BACKPORT_BRANCH
+
+          # Create a pull request
+          gh pr create \
+            --base $TARGET_BRANCH \
+            --head $BACKPORT_BRANCH \
+            --title "Backport PR #${{ github.event.pull_request.number }} to solana-v2.0" \
+            --body "This is an automated backport of PR #${{ github.event.pull_request.number }} to the solana-v2.0 branch."
