@@ -1,32 +1,39 @@
 name: Backport to solana-v2.0
 
 on:
-  pull_request:
-    types:
-      - labeled
-      - closed
+  push:
+    branches:
+      - main
 
 jobs:
-  handle-backport:
+  backport:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install GitHub CLI
-        uses: actions/setup-node@v3
-
-      - name: Determine backport condition
-        id: determine
+      - name: Fetch pull request data
+        id: pr_data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ "${{ github.event.pull_request.merged }}" == "true" ]] && [[ "${{ github.event.label.name }}" == "v2.0" ]]; then
-            echo "create-backport=true" >> $GITHUB_ENV
-          elif [[ "${{ github.event.label.name }}" == "v2.0" ]]; then
-            echo "wait-for-merge=true" >> $GITHUB_ENV
+          PR_NUMBER=$(gh pr list --state merged --base main --json number --jq '.[0].number')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
+          echo "LABELS=$LABELS" >> $GITHUB_ENV
+
+      - name: Check for v2.0 label
+        id: check_label
+        run: |
+          echo "Checking labels: $LABELS"
+          if echo "$LABELS" | grep -q "v2.0"; then
+            echo "BACKPORT=true" >> $GITHUB_ENV
+          else
+            echo "BACKPORT=false" >> $GITHUB_ENV
           fi
 
       - name: Backport changes
-        if: ${{ env.create-backport == 'true' }}
+        if: ${{ env.BACKPORT == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -39,13 +46,15 @@ jobs:
 
           # Create a new branch off solana-v2.0
           TARGET_BRANCH="solana-v2.0"
-          BACKPORT_BRANCH="backport-${{ github.event.pull_request.number }}-to-v2.0"
+          BACKPORT_BRANCH="backport-${{ env.PR_NUMBER }}-to-v2.0"
           git checkout $TARGET_BRANCH
           git checkout -b $BACKPORT_BRANCH
 
           # Cherry-pick all commits from the PR
-          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
-          git cherry-pick $(git log --reverse --format=%H origin/$PR_BRANCH) || (git cherry-pick --abort && exit 1)
+          COMMITS=$(gh pr view ${{ env.PR_NUMBER }} --json commits --jq '.commits[].oid')
+          for COMMIT in $COMMITS; do
+            git cherry-pick $COMMIT || (git cherry-pick --abort && exit 1)
+          done
 
           # Push the new branch
           git push origin $BACKPORT_BRANCH
@@ -54,5 +63,5 @@ jobs:
           gh pr create \
             --base $TARGET_BRANCH \
             --head $BACKPORT_BRANCH \
-            --title "Backport PR #${{ github.event.pull_request.number }} to solana-v2.0" \
-            --body "This is an automated backport of PR #${{ github.event.pull_request.number }} to the solana-v2.0 branch."
+            --title "Backport PR #${{ env.PR_NUMBER }} to solana-v2.0" \
+            --body "This is an automated backport of PR #${{ env.PR_NUMBER }} to the solana-v2.0 branch."
