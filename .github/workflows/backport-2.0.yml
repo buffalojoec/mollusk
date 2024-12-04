@@ -1,0 +1,19 @@
+name: Backport to solana-v2.0
+
+on:
+  push:
+    branches: [main, solana-v2.0]
+
+jobs:
+  backport:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Backport to v2.0
+        uses: ./.github/actions/backport
+        with:
+          label: v2.0
+          base_branch: solana-v2.0
