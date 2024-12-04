@@ -12,8 +12,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    - name: Git Checkout
+      uses: actions/checkout@v4
 
     - name: Fetch pull request data
       env:
@@ -39,6 +39,11 @@ runs:
         else
           echo "No backport detected."
         fi
+    
+    - name: Git Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.base_branch }}
 
     - name: Backport changes
       if: ${{ env.BACKPORT == 'true' }}
@@ -49,11 +54,7 @@ runs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
-        git fetch --all
-
-        BASE_BRANCH="${{ inputs.base_branch }}"
         BACKPORT_BRANCH="backport-${{ env.PR_NUMBER }}-to-${{ inputs.base_branch }}"
-        git checkout $BASE_BRANCH
         git checkout -b $BACKPORT_BRANCH
 
         git cherry-pick $MERGE_COMMIT || (git cherry-pick --abort && exit 1)
