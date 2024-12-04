@@ -23,7 +23,6 @@ runs:
         MERGE_COMMIT=${{ github.sha }}
         echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
 
-        # Find the pull request associated with the squashed merge commit.
         echo "Looking for PR associated with commit $MERGE_COMMIT... with label ${{ inputs.label }}"
         PR=$(gh pr list --state merged --json number,title,headRefName,mergeCommit,labels \
             --jq ".[] | select(.mergeCommit.oid == \"$MERGE_COMMIT\" and (.labels[].name | contains(\"${{ inputs.label }}\")))")
@@ -52,18 +51,15 @@ runs:
 
         git fetch --all
 
-        # Create a new branch off the specified base branch.
         BASE_BRANCH="${{ inputs.base_branch }}"
         BACKPORT_BRANCH="backport-${{ env.PR_NUMBER }}-to-${{ inputs.base_branch }}"
         git checkout $BASE_BRANCH
         git checkout -b $BACKPORT_BRANCH
 
-        # Cherry-pick the merge commit.
         git cherry-pick $MERGE_COMMIT || (git cherry-pick --abort && exit 1)
 
         git push origin $BACKPORT_BRANCH
 
-        # Create a pull request.
         gh pr create \
           --base $BASE_BRANCH \
           --head $BACKPORT_BRANCH \
