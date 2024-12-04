@@ -5,3 +5,5 @@ mollusk-svm-fuzz-fixture
 mollusk-svm-fuzz-fixture-firedancer
 mollusk-svm
 mollusk-svm-bencher
+mollusk-svm-programs-memo
+mollusk-svm-programs-token
