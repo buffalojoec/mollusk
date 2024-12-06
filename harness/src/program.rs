@@ -142,6 +142,11 @@ static BUILTINS: &[Builtin] = &[
         name: "solana_bpf_loader_upgradeable_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
+    Builtin {
+        program_id: solana_sdk::stake::program::id(),
+        name: "solana_stake_program",
+        entrypoint: solana_stake_program::stake_instruction::Entrypoint::vm,
+    },
     /* ... */
 ];
 
