@@ -59,34 +59,32 @@ impl Default for Sysvars {
 }
 
 impl Sysvars {
-    /// Create a `Sysvars` instance from a list of accounts. Any missing
-    /// sysvars will be filled with default values.
-    pub fn fill_from_accounts(accounts: &[(Pubkey, AccountSharedData)]) -> Self {
-        let mut me = Self::default();
+    /// Update a `Sysvars` instance from a list of accounts. Any sysvars not
+    /// in the account list will retain their existing values.
+    pub fn fill_from_accounts(&mut self, accounts: &[(Pubkey, AccountSharedData)]) {
         for (key, account) in accounts {
             if key == &Clock::id() {
-                me.clock = bincode::deserialize(account.data()).unwrap();
+                self.clock = bincode::deserialize(account.data()).unwrap();
             }
             if key == &EpochRewards::id() {
-                me.epoch_rewards = bincode::deserialize(account.data()).unwrap();
+                self.epoch_rewards = bincode::deserialize(account.data()).unwrap();
             }
             if key == &EpochSchedule::id() {
-                me.epoch_schedule = bincode::deserialize(account.data()).unwrap();
+                self.epoch_schedule = bincode::deserialize(account.data()).unwrap();
             }
             if key == &LastRestartSlot::id() {
-                me.last_restart_slot = bincode::deserialize(account.data()).unwrap();
+                self.last_restart_slot = bincode::deserialize(account.data()).unwrap();
             }
             if key == &Rent::id() {
-                me.rent = bincode::deserialize(account.data()).unwrap();
+                self.rent = bincode::deserialize(account.data()).unwrap();
             }
             if key == &SlotHashes::id() {
-                me.slot_hashes = bincode::deserialize(account.data()).unwrap();
+                self.slot_hashes = bincode::deserialize(account.data()).unwrap();
             }
             if key == &StakeHistory::id() {
-                me.stake_history = bincode::deserialize(account.data()).unwrap();
+                self.stake_history = bincode::deserialize(account.data()).unwrap();
             }
         }
-        me
     }
 
     fn sysvar_account<T: SysvarId + Sysvar>(&self, sysvar: &T) -> (Pubkey, AccountSharedData) {

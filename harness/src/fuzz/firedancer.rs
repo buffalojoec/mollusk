@@ -133,10 +133,13 @@ fn parse_fixture_context(
         .map(|(key, acct, _)| (*key, acct.clone()))
         .collect::<Vec<_>>();
 
+    let mut sysvars = Sysvars::default();
+    sysvars.fill_from_accounts(&accounts);
+
     let mollusk = Mollusk {
         compute_budget,
         feature_set: epoch_context.feature_set.clone(),
-        sysvars: Sysvars::fill_from_accounts(&accounts),
+        sysvars,
         ..Default::default()
     };
 
