@@ -155,6 +155,9 @@ impl Mollusk {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
 
+        let mut sysvars = self.sysvars.clone();
+        sysvars.fill_from_accounts(accounts);
+
         let loader_key = self
             .program_cache
             .load_program(&instruction.program_id)
@@ -169,7 +172,7 @@ impl Mollusk {
 
         let mut transaction_context = TransactionContext::new(
             transaction_accounts,
-            self.sysvars.rent.clone(),
+            sysvars.rent.clone(),
             self.compute_budget.max_instruction_stack_depth,
             self.compute_budget.max_instruction_trace_length,
         );
@@ -185,7 +188,7 @@ impl Mollusk {
                     None,
                     Arc::new(self.feature_set.clone()),
                     self.fee_structure.lamports_per_signature,
-                    &SysvarCache::from(&self.sysvars),
+                    &SysvarCache::from(&sysvars),
                 ),
                 None,
                 self.compute_budget,
