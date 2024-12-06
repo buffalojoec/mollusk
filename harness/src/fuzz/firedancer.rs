@@ -232,6 +232,7 @@ fn parse_fixture_effects(
             .compute_budget
             .compute_unit_limit
             .saturating_sub(effects.compute_units_available),
+        return_data: None, // TODO: Omitted for now.
         resulting_accounts,
     }
 }

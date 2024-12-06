@@ -94,6 +94,7 @@ impl From<&FuzzEffects> for InstructionResult {
             execution_time,
             program_result,
             raw_result,
+            return_data: None, // TODO: Omitted for now.
             resulting_accounts,
         }
     }
