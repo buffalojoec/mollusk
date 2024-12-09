@@ -37,6 +37,7 @@ solana-timings = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
+rayon = { workspace = true }
 serial_test = { workspace = true }
 
 [[bench]]

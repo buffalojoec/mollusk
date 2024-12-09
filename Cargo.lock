@@ -1657,6 +1657,7 @@ dependencies = [
  "mollusk-svm-fuzz-fixture-firedancer",
  "mollusk-svm-fuzz-fs",
  "mollusk-svm-keys",
+ "rayon",
  "serial_test",
  "solana-bpf-loader-program",
  "solana-compute-budget",
