@@ -68,6 +68,8 @@ pub struct Mollusk {
     pub fee_structure: FeeStructure,
     pub program_cache: ProgramCache,
     pub sysvars: Sysvars,
+    #[cfg(feature = "fuzz-fd")]
+    pub slot: u64,
 }
 
 impl Default for Mollusk {
@@ -84,6 +86,8 @@ impl Default for Mollusk {
             fee_structure: FeeStructure::default(),
             program_cache: ProgramCache::default(),
             sysvars: Sysvars::default(),
+            #[cfg(feature = "fuzz-fd")]
+            slot: 0,
         }
     }
 }

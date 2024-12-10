@@ -73,7 +73,7 @@ fn build_fixture_context(
     let Mollusk {
         compute_budget,
         feature_set,
-        sysvars,
+        slot, // FD-Fuzz feature only.
         ..
     } = mollusk;
 
@@ -100,9 +100,7 @@ fn build_fixture_context(
         instruction_accounts,
         instruction_data: instruction.data.clone(),
         compute_units_available: compute_budget.compute_unit_limit,
-        slot_context: FuzzSlotContext {
-            slot: sysvars.clock.slot,
-        },
+        slot_context: FuzzSlotContext { slot: *slot },
         epoch_context: FuzzEpochContext {
             feature_set: feature_set.clone(),
         },
@@ -119,7 +117,7 @@ fn parse_fixture_context(
         instruction_data,
         compute_units_available,
         epoch_context,
-        ..
+        slot_context,
     } = context;
 
     let compute_budget = ComputeBudget {
@@ -135,6 +133,7 @@ fn parse_fixture_context(
     let mollusk = Mollusk {
         compute_budget,
         feature_set: epoch_context.feature_set.clone(),
+        slot: slot_context.slot,
         ..Default::default()
     };
 
