@@ -142,6 +142,7 @@ static BUILTINS: &[Builtin] = &[
         name: "solana_bpf_loader_upgradeable_program",
         entrypoint: solana_bpf_loader_program::Entrypoint::vm,
     },
+    #[cfg(feature = "all-builtins")]
     Builtin {
         program_id: solana_sdk::stake::program::id(),
         name: "solana_stake_program",

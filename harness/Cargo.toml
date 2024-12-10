@@ -11,6 +11,9 @@ version = { workspace = true }
 
 [features]
 default = []
+all-builtins = [
+    "dep:solana-stake-program",
+]
 fuzz = [
     "dep:mollusk-svm-fuzz-fixture",
     "dep:mollusk-svm-fuzz-fs",
@@ -31,7 +34,7 @@ solana-bpf-loader-program = { workspace = true }
 solana-compute-budget = { workspace = true }
 solana-logger = { workspace = true }
 solana-program-runtime = { workspace = true }
-solana-stake-program = { workspace = true }
+solana-stake-program = { workspace = true, optional = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-timings = { workspace = true }
