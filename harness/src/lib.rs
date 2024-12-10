@@ -46,7 +46,6 @@ use {
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::{
         invoke_context::{EnvironmentConfig, InvokeContext},
-        sysvar_cache::SysvarCache,
         timings::ExecuteTimings,
     },
     solana_sdk::{
