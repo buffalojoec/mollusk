@@ -5,7 +5,6 @@ use solana_sdk::{
     instruction::InstructionError,
     program_error::ProgramError,
     pubkey::Pubkey,
-    transaction_context::TransactionReturnData,
 };
 
 /// The result code of the program's execution.
@@ -53,7 +52,7 @@ pub struct InstructionResult {
     /// The raw result of the program's execution.
     pub raw_result: Result<(), InstructionError>,
     /// The return data produced by the instruction, if any.
-    pub return_data: Option<TransactionReturnData>,
+    pub return_data: Vec<u8>,
     /// The resulting accounts after executing the instruction.
     ///
     /// This includes all accounts provided to the processor, in the order
@@ -69,7 +68,7 @@ impl Default for InstructionResult {
             execution_time: 0,
             program_result: ProgramResult::Success,
             raw_result: Ok(()),
-            return_data: None,
+            return_data: vec![],
             resulting_accounts: vec![],
         }
     }
@@ -117,12 +116,7 @@ impl InstructionResult {
                 }
                 CheckType::ReturnData(return_data) => {
                     let check_return_data = return_data;
-                    let Some(actual_return_data) = &self.return_data else {
-                        panic!(
-                            "CHECK: return data: got None, expected {:?}",
-                            check_return_data,
-                        );
-                    };
+                    let actual_return_data = &self.return_data;
                     assert_eq!(
                         actual_return_data, check_return_data,
                         "CHECK: return_data: got {:?}, expected {:?}",
@@ -237,7 +231,7 @@ enum CheckType<'a> {
     /// Check the result code of the program's execution.
     ProgramResult(ProgramResult),
     /// Check the return data produced by executing the instruction.
-    ReturnData(TransactionReturnData),
+    ReturnData(Vec<u8>),
     /// Check a resulting account after executing the instruction.
     ResultingAccount(AccountCheck<'a>),
 }
@@ -277,7 +271,7 @@ impl<'a> Check<'a> {
     }
 
     /// Check the return data produced by executing the instruction.
-    pub fn return_data(return_data: TransactionReturnData) -> Self {
+    pub fn return_data(return_data: Vec<u8>) -> Self {
         Check::new(CheckType::ReturnData(return_data))
     }
 

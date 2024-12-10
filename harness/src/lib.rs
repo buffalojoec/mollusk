@@ -46,15 +46,9 @@ use {
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
-        account::AccountSharedData,
-        bpf_loader_upgradeable,
-        feature_set::FeatureSet,
-        fee::FeeStructure,
-        hash::Hash,
-        instruction::Instruction,
-        precompiles::get_precompile,
-        pubkey::Pubkey,
-        transaction_context::{TransactionContext, TransactionReturnData},
+        account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
+        fee::FeeStructure, hash::Hash, instruction::Instruction, precompiles::get_precompile,
+        pubkey::Pubkey, transaction_context::TransactionContext,
     },
     solana_timings::ExecuteTimings,
     std::sync::Arc,
@@ -223,13 +217,7 @@ impl Mollusk {
             }
         };
 
-        let return_data = match transaction_context.get_return_data() {
-            (program_id, data) if !data.is_empty() => Some(TransactionReturnData {
-                program_id: *program_id,
-                data: data.to_vec(),
-            }),
-            _ => None,
-        };
+        let return_data = transaction_context.get_return_data().1.to_vec();
 
         let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
             .iter()
