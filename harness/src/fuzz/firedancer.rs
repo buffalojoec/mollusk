@@ -8,7 +8,6 @@ use {
     crate::{
         accounts::{compile_accounts, CompiledAccounts},
         result::{Check, InstructionResult},
-        sysvar::Sysvars,
         Mollusk, DEFAULT_LOADER_KEY,
     },
     mollusk_svm_fuzz_fixture_firedancer::{
@@ -136,7 +135,6 @@ fn parse_fixture_context(
     let mollusk = Mollusk {
         compute_budget,
         feature_set: epoch_context.feature_set.clone(),
-        sysvars: Sysvars::fill_from_accounts(&accounts),
         ..Default::default()
     };
 
