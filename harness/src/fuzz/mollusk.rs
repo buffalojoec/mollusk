@@ -56,6 +56,7 @@ impl From<&InstructionResult> for FuzzEffects {
     fn from(input: &InstructionResult) -> Self {
         let compute_units_consumed = input.compute_units_consumed;
         let execution_time = input.execution_time;
+        let return_data = input.return_data.clone();
 
         let program_result = match &input.program_result {
             ProgramResult::Success => 0,
@@ -69,6 +70,7 @@ impl From<&InstructionResult> for FuzzEffects {
             compute_units_consumed,
             execution_time,
             program_result,
+            return_data,
             resulting_accounts,
         }
     }
@@ -78,6 +80,7 @@ impl From<&FuzzEffects> for InstructionResult {
     fn from(input: &FuzzEffects) -> Self {
         let compute_units_consumed = input.compute_units_consumed;
         let execution_time = input.execution_time;
+        let return_data = input.return_data.clone();
 
         let raw_result = if input.program_result == 0 {
             Ok(())
@@ -94,7 +97,7 @@ impl From<&FuzzEffects> for InstructionResult {
             execution_time,
             program_result,
             raw_result,
-            return_data: None, // TODO: Omitted for now.
+            return_data,
             resulting_accounts,
         }
     }

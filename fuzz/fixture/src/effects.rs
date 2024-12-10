@@ -2,7 +2,10 @@
 
 use {
     super::proto::{AcctState as ProtoAccount, InstrEffects as ProtoEffects},
-    solana_sdk::{account::AccountSharedData, keccak::Hasher, pubkey::Pubkey},
+    solana_sdk::{
+        account::AccountSharedData, keccak::Hasher, pubkey::Pubkey,
+        transaction_context::TransactionReturnData,
+    },
 };
 
 /// Represents the effects of a single instruction.
@@ -14,6 +17,7 @@ pub struct Effects {
     pub execution_time: u64,
     // Program return code. Zero is success, errors are non-zero.
     pub program_result: u32,
+    pub return_data: Option<TransactionReturnData>,
     /// Resulting accounts with state, to be checked post-simulation.
     pub resulting_accounts: Vec<(Pubkey, AccountSharedData)>,
 }
@@ -34,6 +38,7 @@ impl From<ProtoEffects> for Effects {
             compute_units_consumed,
             execution_time,
             program_result,
+            return_data: None, // TODO
             resulting_accounts,
         }
     }
@@ -45,6 +50,7 @@ impl From<Effects> for ProtoEffects {
             compute_units_consumed,
             execution_time,
             program_result,
+            return_data: _, // TODO
             resulting_accounts,
         } = value;
 
