@@ -5,8 +5,8 @@ SVM program test harness.
 ## Harness
 
 The harness is designed to directly invoke the loaded executable program using
-the BPF Loader, bypassing any transaction sanitization and runtime checks, and
-instead directly processing the instruction with the BPF Loader.
+the rBPF VM, bypassing any transaction sanitization and runtime checks, and
+instead directly processing the instruction with the VM.
 
 ```rust
 let program_id = Pubkey::new_unique();
@@ -23,8 +23,8 @@ let instruction = Instruction::new_with_bytes(
 );
 
 let accounts = vec![
-    (key1, AccountSharedData::new(10_000, 0, &system_program::id())),
-    (key2, AccountSharedData::new(10_000, 0, &system_program::id())),
+    (key1, AccountSharedData::default()),
+    (key2, AccountSharedData::default()),
 ];
 
 let mollusk = Mollusk::new(program_id, "my_program");
@@ -32,13 +32,10 @@ let mollusk = Mollusk::new(program_id, "my_program");
 let result = mollusk.process_instruction(&instruction, &accounts);
 ```
 
-You can also use the `Checks` API provided by Mollusk for easy post-execution
+You can also use the `Check` API provided by Mollusk for easy post-execution
 checks, rather than writing them manually. The API method
 `process_and_validate_instruction` will still return the result, allowing you
 to perform further checks if you desire.
-
-> Note: `Mollusk::default()` will use the System program as the program to
-> invoke.
 
 ```rust
 let sender = Pubkey::new_unique();
@@ -69,10 +66,14 @@ let checks = vec![
         .build(),
 ];
 
-Mollusk::default().process_and_validate_instruction(&instruction, &accounts, &checks);
+Mollusk::default().process_and_validate_instruction(
+    &instruction,
+    &accounts,
+    &checks,
+);
 ```
 
-## Bencher
+## Compute Unit Bencher
 
 Mollusk also offers a compute unit usage bencher for profiling a program's
 compute unit usage.
