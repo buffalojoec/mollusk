@@ -217,6 +217,7 @@ impl InstructionResult {
             b.resulting_accounts.len(),
             "resulting accounts length mismatch"
         );
+        assert_eq!(self.return_data, b.return_data, "return data mismatch");
         for (a, b) in self
             .resulting_accounts
             .iter()
