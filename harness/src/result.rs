@@ -49,6 +49,8 @@ pub struct InstructionResult {
     pub execution_time: u64,
     /// The result code of the program's execution.
     pub program_result: ProgramResult,
+    /// The return data produced by the instruction, if any.
+    pub return_data: Vec<u8>,
     /// The resulting accounts after executing the instruction.
     ///
     /// This includes all accounts provided to the processor, in the order
@@ -63,6 +65,7 @@ impl Default for InstructionResult {
             compute_units_consumed: 0,
             execution_time: 0,
             program_result: ProgramResult::Success,
+            return_data: vec![],
             resulting_accounts: vec![],
         }
     }
@@ -106,6 +109,15 @@ impl InstructionResult {
                         actual_result, check_result,
                         "CHECK: program result: got {:?}, expected {:?}",
                         actual_result, check_result,
+                    );
+                }
+                CheckType::ReturnData(return_data) => {
+                    let check_return_data = return_data;
+                    let actual_return_data = &self.return_data;
+                    assert_eq!(
+                        actual_return_data, check_return_data,
+                        "CHECK: return_data: got {:?}, expected {:?}",
+                        actual_return_data, check_return_data,
                     );
                 }
                 CheckType::ResultingAccount(account) => {
@@ -182,6 +194,8 @@ enum CheckType<'a> {
     ExecutionTime(u64),
     /// Check the result code of the program's execution.
     ProgramResult(ProgramResult),
+    /// Check the return data produced by executing the instruction.
+    ReturnData(Vec<u8>),
     /// Check a resulting account after executing the instruction.
     ResultingAccount(AccountCheck<'a>),
 }
@@ -218,6 +232,11 @@ impl<'a> Check<'a> {
     /// Assert that the instruction returned an error.
     pub fn instruction_err(error: InstructionError) -> Self {
         Check::new(CheckType::ProgramResult(ProgramResult::UnknownError(error)))
+    }
+
+    /// Check the return data produced by executing the instruction.
+    pub fn return_data(return_data: Vec<u8>) -> Self {
+        Check::new(CheckType::ReturnData(return_data))
     }
 
     /// Check a resulting account after executing the instruction.

@@ -54,6 +54,7 @@ impl From<&InstructionResult> for FuzzEffects {
             compute_units_consumed,
             execution_time,
             program_result,
+            return_data,
             resulting_accounts,
         }
     }
