@@ -9,10 +9,17 @@ license = { workspace = true }
 edition = { workspace = true }
 version = { workspace = true }
 
+[features]
+default = []
+all-builtins = [
+    "dep:solana-stake-program",
+]
+
 [dependencies]
 bincode = { workspace = true }
 solana-bpf-loader-program = { workspace = true }
 solana-program-runtime = { workspace = true }
+solana-stake-program = { workspace = true, optional = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
 solana-logger = { workspace = true }
