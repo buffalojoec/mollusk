@@ -58,7 +58,7 @@ runs:
         BACKPORT_BRANCH="backport-${{ github.sha }}-to-${{ inputs.base_branch }}"
         git checkout -b $BACKPORT_BRANCH
 
-        git cherry-pick -X ours --allow-empty $MERGE_COMMIT
+        git cherry-pick $MERGE_COMMIT
 
         git push origin $BACKPORT_BRANCH
 
