@@ -1,0 +1,69 @@
+name: Backport
+description: Backport changes to another release branch.
+
+inputs:
+  label:
+    description: The trigger label (i.e., v2.0, v1.18)
+    required: true
+  base_branch:
+    description: The base branch to backport to (i.e., solana-v2.0, solana-v1.18)
+    required: true
+  github_token:
+    description: GitHub token for authentication
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Fetch pull request data
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      shell: bash
+      run: |
+        MERGE_COMMIT=${{ github.sha }}
+        echo "MERGE_COMMIT=$MERGE_COMMIT" >> $GITHUB_ENV
+
+        echo "Looking for PR associated with commit $MERGE_COMMIT... with label ${{ inputs.label }}"
+        PR=$(gh pr list --state merged --json number,title,headRefName,mergeCommit,labels \
+            --jq ".[] | select(.mergeCommit.oid == \"$MERGE_COMMIT\" and (.labels[].name | contains(\"${{ inputs.label }}\")))")
+        
+        if [[ -n "$PR" ]]; then
+          echo "Pull Request found:"
+          echo "$PR"
+
+          PR_NUMBER=$(echo $PR | jq -r '.number')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+          echo "Will backport to ${{ inputs.base_branch }}"
+          echo "BACKPORT=true" >> $GITHUB_ENV
+        else
+          echo "No backport detected."
+        fi
+
+    - name: Git Checkout
+      if: ${{ env.BACKPORT == 'true' }}
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.base_branch }}
+
+    - name: Backport changes
+      if: ${{ env.BACKPORT == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        BACKPORT_BRANCH="backport-${{ github.sha }}-to-${{ inputs.base_branch }}"
+        git checkout -b $BACKPORT_BRANCH
+
+        git cherry-pick -X ours --allow-empty $MERGE_COMMIT
+
+        git push origin $BACKPORT_BRANCH
+
+        gh pr create \
+          --base ${{ inputs.base_branch }} \
+          --head $BACKPORT_BRANCH \
+          --title "Backport PR #${{ env.PR_NUMBER }} to ${{ inputs.base_branch }}" \
+          --body "This is an automated backport of PR #${{ env.PR_NUMBER }} to the ${{ inputs.base_branch }} branch."
