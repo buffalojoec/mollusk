@@ -39,12 +39,13 @@ message ComputeBudget {
     uint64 alt_bn128_multiplication_cost = 34;
     uint64 alt_bn128_pairing_one_pair_cost_first = 35;
     uint64 alt_bn128_pairing_one_pair_cost_other = 36;
-    uint64 big_modular_exponentiation_cost = 37;
-    uint64 poseidon_cost_coefficient_a = 38;
-    uint64 poseidon_cost_coefficient_c = 39;
-    uint64 get_remaining_compute_units_cost = 40;
-    uint64 alt_bn128_g1_compress = 41;
-    uint64 alt_bn128_g1_decompress = 42;
-    uint64 alt_bn128_g2_compress = 43;
-    uint64 alt_bn128_g2_decompress = 44;
+    uint64 big_modular_exponentiation_base_cost = 37;
+    uint64 big_modular_exponentiation_cost_divisor = 38;
+    uint64 poseidon_cost_coefficient_a = 39;
+    uint64 poseidon_cost_coefficient_c = 40;
+    uint64 get_remaining_compute_units_cost = 41;
+    uint64 alt_bn128_g1_compress = 42;
+    uint64 alt_bn128_g1_decompress = 43;
+    uint64 alt_bn128_g2_compress = 44;
+    uint64 alt_bn128_g2_decompress = 45;
 }

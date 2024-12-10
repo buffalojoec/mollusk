@@ -2,13 +2,22 @@
 
 use {
     super::proto::FeatureSet as ProtoFeatureSet,
-    solana_sdk::{feature_set::FeatureSet, keccak::Hasher},
+    solana_sdk::{feature_set::FeatureSet, keccak::Hasher, pubkey::Pubkey},
 };
+
+// Omit "test features" (they have the same u64 ID).
+pub static OMITTED_FEATURES: &[Pubkey] = &[
+    solana_sdk::feature_set::disable_sbpf_v1_execution::id(),
+    solana_sdk::feature_set::reenable_sbpf_v1_execution::id(),
+];
 
 impl From<ProtoFeatureSet> for FeatureSet {
     fn from(value: ProtoFeatureSet) -> Self {
         let mut feature_set = Self::default();
-        let inactive = std::mem::take(&mut feature_set.inactive);
+        let mut inactive = std::mem::take(&mut feature_set.inactive);
+        OMITTED_FEATURES.iter().for_each(|f| {
+            inactive.remove(f);
+        });
 
         value.features.iter().for_each(|int_id| {
             let discriminator = int_id.to_le_bytes();
@@ -29,9 +38,13 @@ impl From<FeatureSet> for ProtoFeatureSet {
         let features = value
             .active
             .keys()
-            .map(|feature_id| {
+            .filter_map(|feature_id| {
+                if OMITTED_FEATURES.contains(feature_id) {
+                    return None;
+                }
                 let discriminator = &feature_id.to_bytes()[0..8];
-                u64::from_le_bytes(discriminator.try_into().unwrap())
+                let int_id = u64::from_le_bytes(discriminator.try_into().unwrap());
+                Some(int_id)
             })
             .collect();
 

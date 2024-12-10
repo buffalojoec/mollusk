@@ -44,7 +44,8 @@ impl From<ProtoComputeBudget> for ComputeBudget {
             alt_bn128_multiplication_cost,
             alt_bn128_pairing_one_pair_cost_first,
             alt_bn128_pairing_one_pair_cost_other,
-            big_modular_exponentiation_cost,
+            big_modular_exponentiation_base_cost,
+            big_modular_exponentiation_cost_divisor,
             poseidon_cost_coefficient_a,
             poseidon_cost_coefficient_c,
             get_remaining_compute_units_cost,
@@ -91,7 +92,8 @@ impl From<ProtoComputeBudget> for ComputeBudget {
             alt_bn128_multiplication_cost,
             alt_bn128_pairing_one_pair_cost_first,
             alt_bn128_pairing_one_pair_cost_other,
-            big_modular_exponentiation_cost,
+            big_modular_exponentiation_base_cost,
+            big_modular_exponentiation_cost_divisor,
             poseidon_cost_coefficient_a,
             poseidon_cost_coefficient_c,
             get_remaining_compute_units_cost,
@@ -142,7 +144,8 @@ impl From<ComputeBudget> for ProtoComputeBudget {
             alt_bn128_multiplication_cost,
             alt_bn128_pairing_one_pair_cost_first,
             alt_bn128_pairing_one_pair_cost_other,
-            big_modular_exponentiation_cost,
+            big_modular_exponentiation_base_cost,
+            big_modular_exponentiation_cost_divisor,
             poseidon_cost_coefficient_a,
             poseidon_cost_coefficient_c,
             get_remaining_compute_units_cost,
@@ -189,7 +192,8 @@ impl From<ComputeBudget> for ProtoComputeBudget {
             alt_bn128_multiplication_cost,
             alt_bn128_pairing_one_pair_cost_first,
             alt_bn128_pairing_one_pair_cost_other,
-            big_modular_exponentiation_cost,
+            big_modular_exponentiation_base_cost,
+            big_modular_exponentiation_cost_divisor,
             poseidon_cost_coefficient_a,
             poseidon_cost_coefficient_c,
             get_remaining_compute_units_cost,
@@ -286,7 +290,16 @@ pub(crate) fn hash_proto_compute_budget(hasher: &mut Hasher, compute_budget: &Pr
             .alt_bn128_pairing_one_pair_cost_other
             .to_le_bytes(),
     );
-    hasher.hash(&compute_budget.big_modular_exponentiation_cost.to_le_bytes());
+    hasher.hash(
+        &compute_budget
+            .big_modular_exponentiation_base_cost
+            .to_le_bytes(),
+    );
+    hasher.hash(
+        &compute_budget
+            .big_modular_exponentiation_cost_divisor
+            .to_le_bytes(),
+    );
     hasher.hash(&compute_budget.poseidon_cost_coefficient_a.to_le_bytes());
     hasher.hash(&compute_budget.poseidon_cost_coefficient_c.to_le_bytes());
     hasher.hash(

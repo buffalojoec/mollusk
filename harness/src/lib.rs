@@ -44,16 +44,13 @@ use {
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
     solana_compute_budget::compute_budget::ComputeBudget,
-    solana_program_runtime::{
-        invoke_context::{EnvironmentConfig, InvokeContext},
-        sysvar_cache::SysvarCache,
-        timings::ExecuteTimings,
-    },
+    solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
         account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
         fee::FeeStructure, hash::Hash, instruction::Instruction, pubkey::Pubkey,
         transaction_context::TransactionContext,
     },
+    solana_timings::ExecuteTimings,
     std::sync::Arc,
 };
 
@@ -79,9 +76,21 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
+        #[cfg(feature = "fuzz")]
+        let feature_set = {
+            // Omit "test features" (they have the same u64 ID).
+            let mut fs = FeatureSet::all_enabled();
+            fs.active
+                .remove(&solana_sdk::feature_set::disable_sbpf_v1_execution::id());
+            fs.active
+                .remove(&solana_sdk::feature_set::reenable_sbpf_v1_execution::id());
+            fs
+        };
+        #[cfg(not(feature = "fuzz"))]
+        let feature_set = FeatureSet::all_enabled();
         Self {
             compute_budget: ComputeBudget::default(),
-            feature_set: FeatureSet::all_enabled(),
+            feature_set,
             fee_structure: FeeStructure::default(),
             program_cache: ProgramCache::default(),
             sysvars: Sysvars::default(),
@@ -163,17 +172,18 @@ impl Mollusk {
         );
 
         let invoke_result = {
-            let mut cache = self.program_cache.cache().write().unwrap();
+            let mut program_cache = self.program_cache.cache().write().unwrap();
+            let sysvar_cache = self.sysvars.setup_sysvar_cache(accounts);
             InvokeContext::new(
                 &mut transaction_context,
-                &mut cache,
+                &mut program_cache,
                 EnvironmentConfig::new(
                     Hash::default(),
                     None,
                     None,
                     Arc::new(self.feature_set.clone()),
                     self.fee_structure.lamports_per_signature,
-                    &SysvarCache::from(&self.sysvars),
+                    &sysvar_cache,
                 ),
                 None,
                 self.compute_budget,
