@@ -521,6 +521,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-targets 0.52.6",
 ]
@@ -1763,6 +1764,7 @@ dependencies = [
  "solana-logger",
  "solana-program-runtime",
  "solana-sdk",
+ "solana-stake-program",
  "solana-system-program",
 ]
 
@@ -2744,6 +2746,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-config-program"
+version = "2.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92bbca6f0351b8bf3de4472a6cdc4e5f94ddd8eb571230eb6c57ed42bda10553"
+dependencies = [
+ "bincode",
+ "chrono",
+ "serde",
+ "serde_derive",
+ "solana-program-runtime",
+ "solana-sdk",
+]
+
+[[package]]
 name = "solana-curve25519"
 version = "2.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2941,6 +2957,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-stake-program"
+version = "2.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f5873ec93dca602781f9192cf3aeffa61ae590eb4994405356bb584bc276c77"
+dependencies = [
+ "bincode",
+ "log",
+ "rustc_version",
+ "solana-config-program",
+ "solana-program-runtime",
+ "solana-sdk",
+ "solana-type-overrides",
+ "solana-vote-program",
+]
+
+[[package]]
 name = "solana-system-program"
 version = "2.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2976,6 +3008,26 @@ dependencies = [
  "rustc_version",
  "serde",
  "serde_derive",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
+name = "solana-vote-program"
+version = "2.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd00cd5515020cb6c0c5167f1d173fddeae5e1f7ffd77909ea43bece86f38cc9"
+dependencies = [
+ "bincode",
+ "log",
+ "num-derive",
+ "num-traits",
+ "rustc_version",
+ "serde",
+ "serde_derive",
+ "solana-metrics",
+ "solana-program",
+ "solana-program-runtime",
  "solana-sdk",
  "thiserror",
 ]
