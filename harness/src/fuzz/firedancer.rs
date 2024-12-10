@@ -169,6 +169,8 @@ fn build_fixture_effects(context: &FuzzContext, result: &InstructionResult) -> F
         }
     };
 
+    let return_data = result.return_data.clone();
+
     let modified_accounts = context
         .accounts
         .iter()
@@ -191,7 +193,7 @@ fn build_fixture_effects(context: &FuzzContext, result: &InstructionResult) -> F
         compute_units_available: context
             .compute_units_available
             .saturating_sub(result.compute_units_consumed),
-        return_data: Vec::new(), // TODO: Mollusk doesn't capture return data.
+        return_data,
     }
 }
 
@@ -210,6 +212,7 @@ fn parse_fixture_effects(
     };
 
     let program_result = raw_result.clone().into();
+    let return_data = effects.return_data.clone();
 
     let resulting_accounts = accounts
         .iter()
@@ -232,6 +235,7 @@ fn parse_fixture_effects(
             .compute_budget
             .compute_unit_limit
             .saturating_sub(effects.compute_units_available),
+        return_data,
         resulting_accounts,
     }
 }

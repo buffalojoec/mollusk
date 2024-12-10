@@ -191,6 +191,8 @@ impl Mollusk {
             )
         };
 
+        let return_data = transaction_context.get_return_data().1.to_vec();
+
         let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
             .iter()
             .map(|(pubkey, account)| {
@@ -210,6 +212,7 @@ impl Mollusk {
             execution_time: timings.details.execute_us,
             program_result: invoke_result.clone().into(),
             raw_result: invoke_result,
+            return_data,
             resulting_accounts,
         }
     }

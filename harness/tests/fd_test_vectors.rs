@@ -106,10 +106,10 @@ fn test_load_firedancer_fixtures() {
                         loaded_fixture.output.compute_units_available,
                         generated_fixture.output.compute_units_available,
                     );
-                    // assert_eq!(
-                    //     loaded_fixture.output.return_data,
-                    //     generated_fixture.output.return_data,
-                    // );
+                    assert_eq!(
+                        loaded_fixture.output.return_data,
+                        generated_fixture.output.return_data,
+                    );
                 }
             });
     });
