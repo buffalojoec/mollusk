@@ -64,10 +64,13 @@ message InstrEffects {
     // Program return code. Zero is success, errors are non-zero.
     uint32 program_result = 3;
 
+    // The instruction return data.
+    bytes return_data = 4;
+
     // Copies of accounts that were provided to the instruction. May be in an
     // arbitrary order. The pubkey of each account is unique in this list. Each
     // account address must also be in the InstrContext.
-    repeated AcctState resulting_accounts = 4;
+    repeated AcctState resulting_accounts = 5;
 }
 
 // An instruction processing test fixture.
