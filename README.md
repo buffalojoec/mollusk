@@ -5,8 +5,8 @@ SVM program test harness.
 ## Harness
 
 The harness is designed to directly invoke the loaded executable program using
-the BPF Loader, bypassing any transaction sanitization and runtime checks, and
-instead directly processing the instruction with the BPF Loader.
+the rBPF VM, bypassing any transaction sanitization and runtime checks, and
+instead directly processing the instruction with the VM.
 
 ```rust
 let program_id = Pubkey::new_unique();
@@ -23,8 +23,8 @@ let instruction = Instruction::new_with_bytes(
 );
 
 let accounts = vec![
-    (key1, AccountSharedData::new(10_000, 0, &system_program::id())),
-    (key2, AccountSharedData::new(10_000, 0, &system_program::id())),
+    (key1, AccountSharedData::default()),
+    (key2, AccountSharedData::default()),
 ];
 
 let mollusk = Mollusk::new(program_id, "my_program");
@@ -32,13 +32,10 @@ let mollusk = Mollusk::new(program_id, "my_program");
 let result = mollusk.process_instruction(&instruction, &accounts);
 ```
 
-You can also use the `Checks` API provided by Mollusk for easy post-execution
+You can also use the `Check` API provided by Mollusk for easy post-execution
 checks, rather than writing them manually. The API method
 `process_and_validate_instruction` will still return the result, allowing you
 to perform further checks if you desire.
-
-> Note: `Mollusk::default()` will use the System program as the program to
-> invoke.
 
 ```rust
 let sender = Pubkey::new_unique();
@@ -69,10 +66,14 @@ let checks = vec![
         .build(),
 ];
 
-Mollusk::default().process_and_validate_instruction(&instruction, &accounts, &checks);
+Mollusk::default().process_and_validate_instruction(
+    &instruction,
+    &accounts,
+    &checks,
+);
 ```
 
-## Bencher
+## Compute Unit Bencher
 
 Mollusk also offers a compute unit usage bencher for profiling a program's
 compute unit usage.
@@ -119,3 +120,41 @@ Mollusk will output bench details to the output directory in Markdown.
 | bench1 | 579 | -129 |
 | bench2 | 1,204 | +754 |
 | bench3 | 2,811 | +2,361 |
+
+## Fuzz Fixture Support
+
+Mollusk also has first-class support for generating fixtures from tests, which
+can be used for things like fuzzing.
+
+There are two protobuf layouts supported by Mollusk:
+* [`org.mollusk.svm`](./fuzz/fixture/proto): The protobuf layouts defined by
+  the Mollusk library, which map directly to the structure of a Mollusk unit
+  test.
+* [`org.solana.sealevel.v1`](./fuzz/fixture-fd/proto): The protobuf layouts
+  defined by Firedancer and used to test program instructions between targets
+  on Firedancer and Agave.
+
+Each protobuf layout has its own corresponding crate for all of the binding
+support: `mollusk-svm-fuzz-fixture` and `mollusk-svm-fuzz-fixture-firedancer` 
+respectively.
+
+The base library itself (`mollusk-svm`) provides support for working with
+fixtures directly from a Mollusk instance, via the `fuzz` and `fuzz-fd` feature
+flags, which can be used standalone or together.
+
+When either fuzz-fixture feature flag is enabled, Mollusk can do the following:
+* Generate a fixture from a unit test.
+* Process a given fixture as a unit test.
+* Convert to and from fixtures to Mollusk tests and results.
+
+To generate a fuzz fixture from a Mollusk unit test, provide the necessary
+environment variables alongside your call to `cargo test-sbf`, like so:
+
+```
+EJECT_FUZZ_FIXTURES="my/fixtures/dir" cargo test-sbf ...
+```
+
+JSON versions of fixtures are also supported.
+
+See the documentation in [`harness/src/lib.rs`](./harness/src/lib.rs) for more
+information.
