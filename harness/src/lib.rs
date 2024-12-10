@@ -47,8 +47,8 @@ use {
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
         account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
-        fee::FeeStructure, hash::Hash, instruction::Instruction, pubkey::Pubkey,
-        transaction_context::TransactionContext,
+        fee::FeeStructure, hash::Hash, instruction::Instruction, precompiles::get_precompile,
+        pubkey::Pubkey, transaction_context::TransactionContext,
     },
     solana_timings::ExecuteTimings,
     std::sync::Arc,
@@ -156,11 +156,15 @@ impl Mollusk {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
 
-        let loader_key = self
-            .program_cache
-            .load_program(&instruction.program_id)
-            .or_panic_with(MolluskError::ProgramNotCached(&instruction.program_id))
-            .account_owner();
+        let loader_key = if crate::program::precompile_keys::is_precompile(&instruction.program_id)
+        {
+            crate::program::loader_keys::NATIVE_LOADER
+        } else {
+            self.program_cache
+                .load_program(&instruction.program_id)
+                .or_panic_with(MolluskError::ProgramNotCached(&instruction.program_id))
+                .account_owner()
+        };
 
         let CompiledAccounts {
             program_id_index,
@@ -178,7 +182,7 @@ impl Mollusk {
         let invoke_result = {
             let mut program_cache = self.program_cache.cache().write().unwrap();
             let sysvar_cache = self.sysvars.setup_sysvar_cache(accounts);
-            InvokeContext::new(
+            let mut invoke_context = InvokeContext::new(
                 &mut transaction_context,
                 &mut program_cache,
                 EnvironmentConfig::new(
@@ -191,14 +195,26 @@ impl Mollusk {
                 ),
                 None,
                 self.compute_budget,
-            )
-            .process_instruction(
-                &instruction.data,
-                &instruction_accounts,
-                &[program_id_index],
-                &mut compute_units_consumed,
-                &mut timings,
-            )
+            );
+            if let Some(precompile) = get_precompile(&instruction.program_id, |feature_id| {
+                invoke_context.get_feature_set().is_active(feature_id)
+            }) {
+                invoke_context.process_precompile(
+                    precompile,
+                    &instruction.data,
+                    &instruction_accounts,
+                    &[program_id_index],
+                    std::iter::once(instruction.data.as_ref()),
+                )
+            } else {
+                invoke_context.process_instruction(
+                    &instruction.data,
+                    &instruction_accounts,
+                    &[program_id_index],
+                    &mut compute_units_consumed,
+                    &mut timings,
+                )
+            }
         };
 
         let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts

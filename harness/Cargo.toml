@@ -37,6 +37,9 @@ solana-timings = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
+ed25519-dalek = { workspace = true }
+libsecp256k1 = { workspace = true }
+rand0-7 = { workspace = true }
 rayon = { workspace = true }
 serial_test = { workspace = true }
 
