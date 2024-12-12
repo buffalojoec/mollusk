@@ -1748,7 +1748,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "bincode",
  "criterion",
@@ -1770,7 +1770,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "chrono",
  "mollusk-svm",
@@ -1782,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-error"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "solana-sdk",
  "thiserror",
@@ -1790,7 +1790,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "mollusk-svm-fuzz-fs",
  "prost",
@@ -1802,7 +1802,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture-firedancer"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "mollusk-svm-fuzz-fs",
  "prost",
@@ -1815,7 +1815,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-fuzz-fs"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "bs58",
  "prost",
@@ -1826,7 +1826,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-keys"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "mollusk-svm-error",
  "solana-sdk",
@@ -1834,7 +1834,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-memo"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
@@ -1842,7 +1842,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-token"
-version = "0.0.12-solana-2.0"
+version = "0.0.13-solana-2.0"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
