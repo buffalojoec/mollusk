@@ -188,8 +188,11 @@ impl InstructionResult {
                         let actual_data = resulting_account.data();
                         assert!(
                             offset + check_data_slice.len() <= actual_data.len(),
-                            "CHECK: account data slice: offset {} + slice length {} exceeds account data length {}",
-                            offset, check_data_slice.len(), actual_data.len(),
+                            "CHECK: account data slice: offset {} + slice length {} exceeds \
+                             account data length {}",
+                            offset,
+                            check_data_slice.len(),
+                            actual_data.len(),
                         );
                         let actual_data_slice =
                             &actual_data[offset..offset + check_data_slice.len()];
