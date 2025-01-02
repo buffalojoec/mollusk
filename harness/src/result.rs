@@ -184,6 +184,24 @@ impl InstructionResult {
                             }
                         }
                     }
+                    if let Some((offset, check_data_slice)) = account.check_data_slice {
+                        let actual_data = resulting_account.data();
+                        assert!(
+                            offset + check_data_slice.len() <= actual_data.len(),
+                            "CHECK: account data slice: offset {} + slice length {} exceeds \
+                             account data length {}",
+                            offset,
+                            check_data_slice.len(),
+                            actual_data.len(),
+                        );
+                        let actual_data_slice =
+                            &actual_data[offset..offset + check_data_slice.len()];
+                        assert_eq!(
+                            actual_data_slice, check_data_slice,
+                            "CHECK: account data slice: got {:?}, expected {:?}",
+                            actual_data_slice, check_data_slice,
+                        );
+                    }
                 }
             }
         }
@@ -293,6 +311,7 @@ struct AccountCheck<'a> {
     check_owner: Option<&'a Pubkey>,
     check_space: Option<usize>,
     check_state: Option<AccountStateCheck>,
+    check_data_slice: Option<(usize, &'a [u8])>,
 }
 
 impl AccountCheck<'_> {
@@ -305,6 +324,7 @@ impl AccountCheck<'_> {
             check_owner: None,
             check_space: None,
             check_state: None,
+            check_data_slice: None,
         }
     }
 }
@@ -347,6 +367,11 @@ impl<'a> AccountCheckBuilder<'a> {
 
     pub fn space(mut self, space: usize) -> Self {
         self.check.check_space = Some(space);
+        self
+    }
+
+    pub fn data_slice(mut self, offset: usize, data: &'a [u8]) -> Self {
+        self.check.check_data_slice = Some((offset, data));
         self
     }
 
