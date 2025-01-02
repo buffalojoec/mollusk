@@ -35,7 +35,8 @@ runs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
           echo "Will backport to ${{ inputs.base_branch }}"
-          echo "BACKPORT=true" >> $GITHUB_ENV
+          # No-op for now (WIP).
+          # echo "BACKPORT=true" >> $GITHUB_ENV
         else
           echo "No backport detected."
         fi
