@@ -12,7 +12,8 @@ use {
 };
 
 const TEST_VECTORS_PATH: &str = "tests/test-vectors";
-const TEST_VECTORS_REPOSITORY: &str = "https://github.com/firedancer-io/test-vectors.git";
+const TEST_VECTORS_REPOSITORY: &str = "https://github.com/buffalojoec/test-vectors.git";
+const TEST_VECTORS_BRANCH: &str = "mollusk-tests";
 const TEST_VECTORS_TO_TEST: &[&str] = &[
     "instr/fixtures/address-lookup-table",
     "instr/fixtures/config",
@@ -25,17 +26,12 @@ fn test_load_firedancer_fixtures() {
     let test_vectors_out_dir = Path::new(TEST_VECTORS_PATH);
 
     // Fetch the test vectors.
-    if test_vectors_out_dir.exists() {
-        Command::new("git")
-            .arg("-C")
-            .arg(test_vectors_out_dir)
-            .arg("fetch")
-            .status()
-            .expect("Failed to execute git pull");
-    } else {
+    if !test_vectors_out_dir.exists() {
         Command::new("git")
             .arg("clone")
             .arg("--depth=1")
+            .arg("--branch")
+            .arg(TEST_VECTORS_BRANCH)
             .arg(TEST_VECTORS_REPOSITORY)
             .arg(test_vectors_out_dir)
             .status()
