@@ -24,6 +24,22 @@ pub enum MolluskError<'a> {
     /// Program targeted by the instruction is missing from the cache.
     #[error("    [MOLLUSK]: Program targeted by the instruction is missing from the cache: {0}")]
     ProgramNotCached(&'a Pubkey),
+    /// Chain check index is invalid.
+    #[error(
+        "    [MOLLUSK]: Instruction chain check index is out of range. Index: {0}, chain length: \
+         {1}"
+    )]
+    InstructionChainCheckIndexInvalid(usize, usize),
+}
+
+impl MolluskError<'_> {
+    pub fn panic(&self) -> ! {
+        panic!("{}", self)
+    }
+
+    fn panic_and_display<E: Display>(&self, err: E) -> ! {
+        panic!("{}: {}", self, err)
+    }
 }
 
 pub trait MolluskPanic<T> {
@@ -35,12 +51,12 @@ where
     E: Display,
 {
     fn or_panic_with(self, mollusk_err: MolluskError) -> T {
-        self.unwrap_or_else(|err| panic!("{}: {}", mollusk_err, err))
+        self.unwrap_or_else(|err| mollusk_err.panic_and_display(err))
     }
 }
 
 impl<T> MolluskPanic<T> for Option<T> {
     fn or_panic_with(self, mollusk_err: MolluskError) -> T {
-        self.unwrap_or_else(|| panic!("{}", mollusk_err))
+        self.unwrap_or_else(|| mollusk_err.panic())
     }
 }

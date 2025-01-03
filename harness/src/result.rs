@@ -1,10 +1,14 @@
 //! Results of Mollusk program execution.
 
-use solana_sdk::{
-    account::{AccountSharedData, ReadableAccount},
-    instruction::InstructionError,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+use {
+    mollusk_svm_error::error::MolluskError,
+    solana_sdk::{
+        account::{AccountSharedData, ReadableAccount},
+        instruction::InstructionError,
+        program_error::ProgramError,
+        pubkey::Pubkey,
+    },
+    std::collections::BTreeMap,
 };
 
 /// The result code of the program's execution.
@@ -207,6 +211,15 @@ impl InstructionResult {
         }
     }
 
+    pub(crate) fn absorb(&mut self, other: Self) {
+        self.compute_units_consumed += other.compute_units_consumed;
+        self.execution_time += other.execution_time;
+        self.program_result = other.program_result;
+        self.raw_result = other.raw_result;
+        self.return_data = other.return_data;
+        self.resulting_accounts = other.resulting_accounts;
+    }
+
     /// Compare an `InstructionResult` against another `InstructionResult`,
     /// panicking on any mismatches.
     pub fn compare(&self, b: &Self) {
@@ -378,4 +391,41 @@ impl<'a> AccountCheckBuilder<'a> {
     pub fn build(self) -> Check<'a> {
         Check::new(CheckType::ResultingAccount(self.check))
     }
+}
+
+pub enum ChainChecks<'a> {
+    First(&'a [Check<'a>]),
+    At(usize, &'a [Check<'a>]),
+    Last(&'a [Check<'a>]),
+}
+
+impl ChainChecks<'_> {
+    pub(crate) fn index(&self, chain_len: usize) -> usize {
+        match self {
+            Self::First(_) => 0,
+            Self::At(i, _) => {
+                if i >= &chain_len {
+                    MolluskError::InstructionChainCheckIndexInvalid(*i, chain_len).panic();
+                }
+                *i
+            }
+            Self::Last(_) => chain_len,
+        }
+    }
+}
+
+pub(crate) fn collect_chain_checks<'a>(
+    chain_checks: &[ChainChecks<'a>],
+    chain_len: usize,
+) -> BTreeMap<usize, &'a [Check<'a>]> {
+    let mut map = BTreeMap::new();
+    for chain_check in chain_checks {
+        let index = chain_check.index(chain_len);
+        match chain_check {
+            ChainChecks::First(checks) | ChainChecks::At(_, checks) | ChainChecks::Last(checks) => {
+                map.insert(index, *checks);
+            }
+        }
+    }
+    map
 }
