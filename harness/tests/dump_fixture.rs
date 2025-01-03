@@ -205,7 +205,7 @@ fn test_dump_mollusk() {
             setup.instruction.clone(),
         ],
         &setup.accounts,
-        &[&[], &[], &[]],
+        &[],
     );
 
     // Ensure there are three of each fixture type in the target directory.
@@ -274,7 +274,7 @@ fn test_dump_firedancer() {
             setup.instruction.clone(),
         ],
         &setup.accounts,
-        &[&[], &[], &[]],
+        &[],
     );
 
     // Ensure there are three of each fixture type in the target directory.
