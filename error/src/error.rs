@@ -24,12 +24,12 @@ pub enum MolluskError<'a> {
     /// Program targeted by the instruction is missing from the cache.
     #[error("    [MOLLUSK]: Program targeted by the instruction is missing from the cache: {0}")]
     ProgramNotCached(&'a Pubkey),
-    /// Instruction chain has too many groups of checks.
+    /// Chain check index is invalid.
     #[error(
-        "    [MOLLUSK]: Instruction chain has too many groups of checks. Instructions: {0}, check \
-         groups: {1}"
+        "    [MOLLUSK]: Instruction chain check index is out of range. Index: {0}, chain length: \
+         {1}"
     )]
-    TooManyCheckGroupsForInstructionChain(usize, usize),
+    InstructionChainCheckIndexInvalid(usize, usize),
 }
 
 impl MolluskError<'_> {

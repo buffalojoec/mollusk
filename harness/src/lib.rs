@@ -48,6 +48,7 @@ use {
     },
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
+    result::ChainChecks,
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
@@ -353,26 +354,20 @@ impl Mollusk {
         &self,
         instructions: &[Instruction],
         accounts: &[(Pubkey, Account)],
-        check_groups: &[&[Check]],
+        chain_checks: &[ChainChecks],
     ) -> InstructionResult {
-        if check_groups.len() > instructions.len() {
-            MolluskError::TooManyCheckGroupsForInstructionChain(
-                instructions.len(),
-                check_groups.len(),
-            )
-            .panic()
-        }
-
         let mut result = InstructionResult {
             resulting_accounts: accounts.to_vec(),
             ..Default::default()
         };
 
+        let chain_check_map = result::collect_chain_checks(chain_checks, instructions.len());
+
         for (i, instruction) in instructions.iter().enumerate() {
             let this_result = self.process_and_validate_instruction(
                 instruction,
                 &result.resulting_accounts,
-                check_groups.get(i).unwrap_or(&&[][..]),
+                chain_check_map.get(&i).unwrap_or(&&[][..]),
             );
 
             result.absorb(this_result);

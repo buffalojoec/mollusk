@@ -1,5 +1,9 @@
 use {
-    mollusk_svm::{program::keyed_account_for_system_program, result::Check, Mollusk},
+    mollusk_svm::{
+        program::keyed_account_for_system_program,
+        result::{ChainChecks, Check},
+        Mollusk,
+    },
     solana_sdk::{
         account::Account,
         incinerator,
@@ -41,54 +45,60 @@ fn test_transfers() {
             (dave, system_account_with_lamports(starting_lamports)),
         ],
         &[
-            // 0: Alice to Bob
-            &[
-                Check::success(),
-                Check::account(&alice)
-                    .lamports(starting_lamports - alice_to_bob) // Alice pays
-                    .build(),
-                Check::account(&bob)
-                    .lamports(starting_lamports + alice_to_bob) // Bob receives
-                    .build(),
-                Check::account(&carol)
-                    .lamports(starting_lamports) // Unchanged
-                    .build(),
-                Check::account(&dave)
-                    .lamports(starting_lamports) // Unchanged
-                    .build(),
-            ],
-            // 1: Bob to Carol
-            &[
-                Check::success(),
-                Check::account(&alice)
-                    .lamports(starting_lamports - alice_to_bob) // Unchanged
-                    .build(),
-                Check::account(&bob)
-                    .lamports(starting_lamports + alice_to_bob - bob_to_carol) // Bob pays
-                    .build(),
-                Check::account(&carol)
-                    .lamports(starting_lamports + bob_to_carol) // Carol receives
-                    .build(),
-                Check::account(&dave)
-                    .lamports(starting_lamports) // Unchanged
-                    .build(),
-            ],
-            // 2: Bob to Dave
-            &[
-                Check::success(),
-                Check::account(&alice)
-                    .lamports(starting_lamports - alice_to_bob) // Unchanged
-                    .build(),
-                Check::account(&bob)
-                    .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave) // Bob pays
-                    .build(),
-                Check::account(&carol)
-                    .lamports(starting_lamports + bob_to_carol) // Unchanged
-                    .build(),
-                Check::account(&dave)
-                    .lamports(starting_lamports + bob_to_dave) // Dave receives
-                    .build(),
-            ],
+            ChainChecks::At(
+                0, // 0: Alice to Bob
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Alice pays
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob) // Bob receives
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                ],
+            ),
+            ChainChecks::At(
+                1, // 1: Bob to Carol
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Unchanged
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob - bob_to_carol) // Bob pays
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports + bob_to_carol) // Carol receives
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                ],
+            ),
+            ChainChecks::At(
+                2, // 2: Bob to Dave
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Unchanged
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave) // Bob pays
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports + bob_to_carol) // Unchanged
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports + bob_to_dave) // Dave receives
+                        .build(),
+                ],
+            ),
         ],
     );
 }
@@ -169,24 +179,14 @@ fn test_mixed() {
             (incinerator::id(), Account::default()),
             keyed_account_for_system_program(),
         ],
-        &[
-            &[],
-            &[],
-            &[],
-            &[],
-            &[],
-            &[],
-            &[],
-            &[], // Yuck!
-            &[
-                Check::success(),
-                Check::account(&target1).closed().build(),
-                Check::account(&target2)
-                    .data(data)
-                    .lamports(lamports)
-                    .owner(&program_id)
-                    .build(),
-            ],
-        ],
+        &[ChainChecks::Last(&[
+            Check::success(),
+            Check::account(&target1).closed().build(),
+            Check::account(&target2)
+                .data(data)
+                .lamports(lamports)
+                .owner(&program_id)
+                .build(),
+        ])],
     );
 }
