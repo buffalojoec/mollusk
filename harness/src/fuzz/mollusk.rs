@@ -60,8 +60,8 @@ impl From<&InstructionResult> for FuzzEffects {
 
         let program_result = match &input.program_result {
             ProgramResult::Success => 0,
-            ProgramResult::Failure(e) => u64::from(e.clone()) as u32,
-            ProgramResult::UnknownError(_) => u32::MAX, //TODO
+            ProgramResult::Failure(e) => u64::from(e.clone()),
+            ProgramResult::UnknownError(_) => u64::MAX, //TODO
         };
 
         let resulting_accounts = input.resulting_accounts.clone();
