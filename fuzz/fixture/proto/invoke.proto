@@ -62,7 +62,7 @@ message InstrEffects {
     uint64 execution_time = 2;
 
     // Program return code. Zero is success, errors are non-zero.
-    uint32 program_result = 3;
+    uint64 program_result = 3;
 
     // The instruction return data.
     bytes return_data = 4;
