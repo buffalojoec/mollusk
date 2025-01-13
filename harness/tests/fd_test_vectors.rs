@@ -1,7 +1,12 @@
 #![cfg(feature = "fuzz-fd")]
 
 use {
-    mollusk_svm::fuzz::firedancer::{build_fixture_from_mollusk_test, load_firedancer_fixture},
+    mollusk_svm::{
+        fuzz::firedancer::{
+            build_fixture_from_mollusk_test, load_firedancer_fixture, ParsedFixtureContext,
+        },
+        Mollusk,
+    },
     mollusk_svm_fuzz_fixture_firedancer::{account::SeedAddress, Fixture},
     rayon::prelude::*,
     solana_sdk::{
@@ -47,8 +52,22 @@ fn test_load_firedancer_fixtures() {
                 let path = entry.unwrap().path();
                 if path.is_file() && path.extension().is_some_and(|ext| ext == "fix") {
                     let loaded_fixture = Fixture::load_from_blob_file(path.to_str().unwrap());
-                    let (mollusk, instruction, accounts, result) =
-                        load_firedancer_fixture(&loaded_fixture);
+                    let (
+                        ParsedFixtureContext {
+                            accounts,
+                            compute_budget,
+                            feature_set,
+                            instruction,
+                            slot,
+                        },
+                        result,
+                    ) = load_firedancer_fixture(&loaded_fixture);
+                    let mollusk = Mollusk {
+                        compute_budget,
+                        feature_set,
+                        slot,
+                        ..Default::default()
+                    };
                     let generated_fixture = build_fixture_from_mollusk_test(
                         &mollusk,
                         &instruction,

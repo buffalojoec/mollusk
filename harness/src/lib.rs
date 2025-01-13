@@ -396,8 +396,17 @@ impl Mollusk {
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
-        let (mollusk, instruction, accounts, _) = fuzz::mollusk::load_fixture(fixture);
-        mollusk.process_instruction(&instruction, &accounts)
+        let fuzz::mollusk::ParsedFixtureContext {
+            accounts,
+            compute_budget,
+            feature_set,
+            instruction,
+            sysvars,
+        } = fuzz::mollusk::parse_fixture_context(&fixture.input);
+        self.compute_budget = compute_budget;
+        self.feature_set = feature_set;
+        self.sysvars = sysvars;
+        self.process_instruction(&instruction, &accounts)
     }
 
     #[cfg(feature = "fuzz")]
@@ -420,10 +429,9 @@ impl Mollusk {
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
-        let (mollusk, instruction, accounts, result) = fuzz::mollusk::load_fixture(fixture);
-        let this_result = mollusk.process_instruction(&instruction, &accounts);
-        result.compare(&this_result);
-        this_result
+        let result = self.process_fixture(fixture);
+        InstructionResult::from(&fixture.output).compare(&result);
+        result
     }
 
     #[cfg(feature = "fuzz-fd")]
@@ -445,9 +453,17 @@ impl Mollusk {
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
     ) -> InstructionResult {
-        let (mollusk, instruction, accounts, _) =
-            fuzz::firedancer::load_firedancer_fixture(fixture);
-        mollusk.process_instruction(&instruction, &accounts)
+        let fuzz::firedancer::ParsedFixtureContext {
+            accounts,
+            compute_budget,
+            feature_set,
+            instruction,
+            slot,
+        } = fuzz::firedancer::parse_fixture_context(&fixture.input);
+        self.compute_budget = compute_budget;
+        self.feature_set = feature_set;
+        self.slot = slot;
+        self.process_instruction(&instruction, &accounts)
     }
 
     #[cfg(feature = "fuzz-fd")]
@@ -471,10 +487,25 @@ impl Mollusk {
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
     ) -> InstructionResult {
-        let (mollusk, instruction, accounts, result) =
-            fuzz::firedancer::load_firedancer_fixture(fixture);
-        let this_result = mollusk.process_instruction(&instruction, &accounts);
-        result.compare(&this_result);
-        this_result
+        let fuzz::firedancer::ParsedFixtureContext {
+            accounts,
+            compute_budget,
+            feature_set,
+            instruction,
+            slot,
+        } = fuzz::firedancer::parse_fixture_context(&fixture.input);
+        self.compute_budget = compute_budget;
+        self.feature_set = feature_set;
+        self.slot = slot;
+
+        let result = self.process_instruction(&instruction, &accounts);
+        let expected_result = fuzz::firedancer::parse_fixture_effects(
+            &accounts,
+            self.compute_budget.compute_unit_limit,
+            &fixture.output,
+        );
+
+        expected_result.compare(&result);
+        result
     }
 }
