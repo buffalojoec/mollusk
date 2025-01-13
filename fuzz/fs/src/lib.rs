@@ -13,7 +13,6 @@ pub trait SerializableFixture: Default + DeserializeOwned + Message + Serialize 
     /// Decode a `Protobuf` blob into a fixture.
     fn decode(blob: &[u8]) -> Self {
         <Self as Message>::decode(blob)
-            .map(Into::into)
             .unwrap_or_else(|err| panic!("Failed to decode fixture: {}", err))
     }
 
