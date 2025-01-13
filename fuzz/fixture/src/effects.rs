@@ -13,7 +13,7 @@ pub struct Effects {
     /// Execution time for instruction.
     pub execution_time: u64,
     // Program return code. Zero is success, errors are non-zero.
-    pub program_result: u32,
+    pub program_result: u64,
     pub return_data: Vec<u8>,
     /// Resulting accounts with state, to be checked post-simulation.
     pub resulting_accounts: Vec<(Pubkey, AccountSharedData)>,
