@@ -52,3 +52,10 @@ solana-system-program = "=2.1.0"
 solana-sdk = "2.1"
 solana-timings = "=2.1.0"
 thiserror = "1.0.64"
+
+[workspace.lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = [
+    'cfg(feature, values("custom-heap", "custom-panic"))',
+    'cfg(target_os, values("solana"))',
+]
