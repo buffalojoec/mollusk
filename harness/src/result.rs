@@ -8,7 +8,7 @@ use solana_sdk::{
 };
 
 /// The result code of the program's execution.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProgramResult {
     /// The program executed successfully.
     Success,
@@ -258,7 +258,7 @@ enum CheckType<'a> {
     /// Check the result code of the program's execution.
     ProgramResult(ProgramResult),
     /// Check the return data produced by executing the instruction.
-    ReturnData(Vec<u8>),
+    ReturnData(&'a [u8]),
     /// Check a resulting account after executing the instruction.
     ResultingAccount(AccountCheck<'a>),
 }
@@ -297,8 +297,13 @@ impl<'a> Check<'a> {
         Check::new(CheckType::ProgramResult(ProgramResult::UnknownError(error)))
     }
 
+    /// Assert that the instruction returned the provided result.
+    pub fn program_result(result: ProgramResult) -> Self {
+        Check::new(CheckType::ProgramResult(result))
+    }
+
     /// Check the return data produced by executing the instruction.
-    pub fn return_data(return_data: Vec<u8>) -> Self {
+    pub fn return_data(return_data: &'a [u8]) -> Self {
         Check::new(CheckType::ReturnData(return_data))
     }
 

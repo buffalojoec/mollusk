@@ -1,3 +1,5 @@
+#[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
+pub mod check;
 #[cfg(feature = "fuzz-fd")]
 pub mod firedancer;
 #[cfg(feature = "fuzz")]

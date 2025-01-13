@@ -425,12 +425,53 @@ impl Mollusk {
     /// Therefore, developers can provision a `Mollusk` instance, set up their
     /// desired program cache, and then run a series of fixtures against that
     /// `Mollusk` instance (and cache).
+    ///
+    /// Note: To compare the result against the entire fixture effects, pass
+    /// `&[FixtureCheck::All]` for `checks`.
     pub fn process_and_validate_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
         InstructionResult::from(&fixture.output).compare(&result);
+        result
+    }
+
+    #[cfg(feature = "fuzz")]
+    /// a specific set of checks.
+    ///
+    /// This is useful for when you may not want to compare the entire effects,
+    /// such as omitting comparisons of compute units consumed.
+    /// Process a fuzz fixture using the minified Solana Virtual Machine (SVM)
+    /// environment and compare the result against the fixture's effects using
+    /// a specific set of checks.
+    ///
+    /// This is useful for when you may not want to compare the entire effects,
+    /// such as omitting comparisons of compute units consumed.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    ///
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
+    ///
+    /// Note: To compare the result against the entire fixture effects, pass
+    /// `&[FixtureCheck::All]` for `checks`.
+    pub fn process_and_partially_validate_fixture(
+        &mut self,
+        fixture: &mollusk_svm_fuzz_fixture::Fixture,
+        checks: &[fuzz::check::FixtureCheck],
+    ) -> InstructionResult {
+        let result = self.process_fixture(fixture);
+        let expected = InstructionResult::from(&fixture.output);
+        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
         result
     }
 
@@ -483,6 +524,9 @@ impl Mollusk {
     /// Therefore, developers can provision a `Mollusk` instance, set up their
     /// desired program cache, and then run a series of fixtures against that
     /// `Mollusk` instance (and cache).
+    ///
+    /// Note: To compare the result against the entire fixture effects, pass
+    /// `&[FixtureCheck::All]` for `checks`.
     pub fn process_and_validate_firedancer_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
@@ -506,6 +550,56 @@ impl Mollusk {
         );
 
         expected_result.compare(&result);
+        result
+    }
+
+    #[cfg(feature = "fuzz-fd")]
+    /// Process a Firedancer fuzz fixture using the minified Solana Virtual
+    /// Machine (SVM) environment and compare the result against the
+    /// fixture's effects using a specific set of checks.
+    ///
+    /// This is useful for when you may not want to compare the entire effects,
+    /// such as omitting comparisons of compute units consumed.
+    ///
+    /// Fixtures provide an API to `decode` a raw blob, as well as read
+    /// fixtures from files. Those fixtures can then be provided to this
+    /// function to process them and get a Mollusk result.
+    ///
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
+    ///
+    /// Note: To compare the result against the entire fixture effects, pass
+    /// `&[FixtureCheck::All]` for `checks`.
+    pub fn process_and_partially_validate_firedancer_fixture(
+        &mut self,
+        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+        checks: &[fuzz::check::FixtureCheck],
+    ) -> InstructionResult {
+        let fuzz::firedancer::ParsedFixtureContext {
+            accounts,
+            compute_budget,
+            feature_set,
+            instruction,
+            slot,
+        } = fuzz::firedancer::parse_fixture_context(&fixture.input);
+        self.compute_budget = compute_budget;
+        self.feature_set = feature_set;
+        self.slot = slot;
+
+        let result = self.process_instruction(&instruction, &accounts);
+        let expected = fuzz::firedancer::parse_fixture_effects(
+            &accounts,
+            self.compute_budget.compute_unit_limit,
+            &fixture.output,
+        );
+
+        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
         result
     }
 }
