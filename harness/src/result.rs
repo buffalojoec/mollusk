@@ -207,6 +207,15 @@ impl InstructionResult {
         }
     }
 
+    pub(crate) fn absorb(&mut self, other: Self) {
+        self.compute_units_consumed += other.compute_units_consumed;
+        self.execution_time += other.execution_time;
+        self.program_result = other.program_result;
+        self.raw_result = other.raw_result;
+        self.return_data = other.return_data;
+        self.resulting_accounts = other.resulting_accounts;
+    }
+
     /// Compare an `InstructionResult` against another `InstructionResult`,
     /// panicking on any mismatches.
     pub fn compare(&self, b: &Self) {

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 agave-install init 2.0.9
 rm -rf target
 cargo build
