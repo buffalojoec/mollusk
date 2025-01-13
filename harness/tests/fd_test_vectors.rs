@@ -68,13 +68,8 @@ fn test_load_firedancer_fixtures() {
                         slot,
                         ..Default::default()
                     };
-                    let generated_fixture = build_fixture_from_mollusk_test(
-                        &mollusk,
-                        &instruction,
-                        &accounts,
-                        &result,
-                        /* checks */ &[],
-                    );
+                    let generated_fixture =
+                        build_fixture_from_mollusk_test(&mollusk, &instruction, &accounts, &result);
 
                     assert_eq!(loaded_fixture.metadata, generated_fixture.metadata);
                     assert_eq!(

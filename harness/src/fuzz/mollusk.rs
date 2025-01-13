@@ -6,7 +6,7 @@
 
 use {
     crate::{
-        result::{Check, InstructionResult, ProgramResult},
+        result::{InstructionResult, ProgramResult},
         sysvar::Sysvars,
         Mollusk,
     },
@@ -163,7 +163,6 @@ pub fn build_fixture_from_mollusk_test(
     instruction: &Instruction,
     accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
-    _checks: &[Check],
 ) -> FuzzFixture {
     let input = build_fixture_context(
         accounts,

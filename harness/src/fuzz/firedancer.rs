@@ -7,7 +7,7 @@
 use {
     crate::{
         accounts::{compile_accounts, CompiledAccounts},
-        result::{Check, InstructionResult},
+        result::InstructionResult,
         Mollusk, DEFAULT_LOADER_KEY,
     },
     mollusk_svm_fuzz_fixture_firedancer::{
@@ -250,7 +250,6 @@ pub fn build_fixture_from_mollusk_test(
     instruction: &Instruction,
     accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
-    _checks: &[Check],
 ) -> FuzzFixture {
     let input = build_fixture_context(
         accounts,

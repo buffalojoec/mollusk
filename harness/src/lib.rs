@@ -320,7 +320,7 @@ impl Mollusk {
         let result = self.process_instruction(instruction, accounts);
 
         #[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
-        fuzz::generate_fixtures_from_mollusk_test(self, instruction, accounts, &result, checks);
+        fuzz::generate_fixtures_from_mollusk_test(self, instruction, accounts, &result);
 
         result.run_checks(checks);
         result

@@ -38,7 +38,6 @@ fn test_process_mollusk() {
         &instruction,
         &accounts,
         &result,
-        &[],
     );
 
     mollusk.process_and_validate_fixture(&fixture);
@@ -52,7 +51,6 @@ fn test_process_mollusk() {
         &instruction,
         &accounts,
         &result,
-        &[],
     );
 
     mollusk.process_and_validate_fixture(&fixture);
@@ -89,7 +87,6 @@ fn test_process_firedancer() {
         &instruction,
         &accounts,
         &result,
-        &[],
     );
 
     mollusk.process_and_validate_firedancer_fixture(&fixture);
@@ -103,7 +100,6 @@ fn test_process_firedancer() {
         &instruction,
         &accounts,
         &result,
-        &[],
     );
 
     mollusk.process_and_validate_firedancer_fixture(&fixture);
