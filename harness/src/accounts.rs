@@ -10,7 +10,7 @@ use {
         keys::KeyMap,
     },
     solana_sdk::{
-        account::{AccountSharedData, WritableAccount},
+        account::{Account, WritableAccount},
         instruction::Instruction,
         pubkey::Pubkey,
         transaction_context::{InstructionAccount, TransactionAccount},
@@ -25,11 +25,11 @@ pub struct CompiledAccounts {
 
 pub fn compile_accounts(
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
     loader_key: Pubkey,
 ) -> CompiledAccounts {
     let stub_out_program_account = move || {
-        let mut program_account = AccountSharedData::default();
+        let mut program_account = Account::default();
         program_account.set_owner(loader_key);
         program_account.set_executable(true);
         program_account

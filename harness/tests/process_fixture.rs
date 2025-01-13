@@ -2,7 +2,7 @@
 
 use {
     mollusk_svm::Mollusk,
-    solana_sdk::{account::AccountSharedData, pubkey::Pubkey, system_instruction, system_program},
+    solana_sdk::{account::Account, pubkey::Pubkey, system_instruction, system_program},
 };
 
 const BASE_LAMPORTS: u64 = 100_000_000;
@@ -21,11 +21,11 @@ fn test_process_mollusk() {
     let accounts = vec![
         (
             sender,
-            AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+            Account::new(BASE_LAMPORTS, 0, &system_program::id()),
         ),
         (
             recipient,
-            AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+            Account::new(BASE_LAMPORTS, 0, &system_program::id()),
         ),
     ];
 
@@ -72,11 +72,11 @@ fn test_process_firedancer() {
     let accounts = vec![
         (
             sender,
-            AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+            Account::new(BASE_LAMPORTS, 0, &system_program::id()),
         ),
         (
             recipient,
-            AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+            Account::new(BASE_LAMPORTS, 0, &system_program::id()),
         ),
     ];
 

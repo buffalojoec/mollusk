@@ -49,8 +49,8 @@ use {
         timings::ExecuteTimings,
     },
     solana_sdk::{
-        account::AccountSharedData, bpf_loader_upgradeable, feature_set::FeatureSet,
-        fee::FeeStructure, hash::Hash, instruction::Instruction, pubkey::Pubkey,
+        account::Account, bpf_loader_upgradeable, feature_set::FeatureSet, fee::FeeStructure,
+        hash::Hash, instruction::Instruction, pubkey::Pubkey,
         transaction_context::TransactionContext,
     },
     std::sync::Arc,
@@ -141,7 +141,7 @@ impl Mollusk {
     pub fn process_instruction(
         &self,
         instruction: &Instruction,
-        accounts: &[(Pubkey, AccountSharedData)],
+        accounts: &[(Pubkey, Account)],
     ) -> InstructionResult {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
@@ -193,19 +193,26 @@ impl Mollusk {
 
         let return_data = transaction_context.get_return_data().1.to_vec();
 
-        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> = accounts
-            .iter()
-            .map(|(pubkey, account)| {
-                transaction_context
-                    .find_index_of_account(pubkey)
-                    .map(|index| {
-                        let resulting_account =
-                            transaction_context.get_account_at_index(index).unwrap();
-                        (*pubkey, resulting_account.take())
-                    })
-                    .unwrap_or((*pubkey, account.clone()))
-            })
-            .collect();
+        let resulting_accounts: Vec<(Pubkey, Account)> = if invoke_result.is_ok() {
+            accounts
+                .iter()
+                .map(|(pubkey, account)| {
+                    transaction_context
+                        .find_index_of_account(pubkey)
+                        .map(|index| {
+                            let resulting_account = transaction_context
+                                .get_account_at_index(index)
+                                .unwrap()
+                                .take()
+                                .into();
+                            (*pubkey, resulting_account)
+                        })
+                        .unwrap_or((*pubkey, account.clone()))
+                })
+                .collect()
+        } else {
+            accounts.to_vec()
+        };
 
         InstructionResult {
             compute_units_consumed,
@@ -230,7 +237,7 @@ impl Mollusk {
     pub fn process_instruction_chain(
         &self,
         instructions: &[Instruction],
-        accounts: &[(Pubkey, AccountSharedData)],
+        accounts: &[(Pubkey, Account)],
     ) -> InstructionResult {
         let mut result = InstructionResult {
             resulting_accounts: accounts.to_vec(),
@@ -279,7 +286,7 @@ impl Mollusk {
     pub fn process_and_validate_instruction(
         &self,
         instruction: &Instruction,
-        accounts: &[(Pubkey, AccountSharedData)],
+        accounts: &[(Pubkey, Account)],
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction(instruction, accounts);
@@ -297,7 +304,7 @@ impl Mollusk {
     pub fn process_and_validate_instruction_chain(
         &self,
         instructions: &[Instruction],
-        accounts: &[(Pubkey, AccountSharedData)],
+        accounts: &[(Pubkey, Account)],
         checks: &[Check],
     ) -> InstructionResult {
         let result = self.process_instruction_chain(instructions, accounts);

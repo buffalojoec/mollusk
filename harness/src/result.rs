@@ -1,7 +1,7 @@
 //! Results of Mollusk program execution.
 
 use solana_sdk::{
-    account::{AccountSharedData, ReadableAccount},
+    account::{Account, ReadableAccount},
     instruction::InstructionError,
     program_error::ProgramError,
     pubkey::Pubkey,
@@ -58,7 +58,7 @@ pub struct InstructionResult {
     /// This includes all accounts provided to the processor, in the order
     /// they were provided. Any accounts that were modified will maintain
     /// their original position in this list, but with updated state.
-    pub resulting_accounts: Vec<(Pubkey, AccountSharedData)>,
+    pub resulting_accounts: Vec<(Pubkey, Account)>,
 }
 
 impl Default for InstructionResult {
@@ -76,7 +76,7 @@ impl Default for InstructionResult {
 
 impl InstructionResult {
     /// Get an account from the resulting accounts by its pubkey.
-    pub fn get_account(&self, pubkey: &Pubkey) -> Option<&AccountSharedData> {
+    pub fn get_account(&self, pubkey: &Pubkey) -> Option<&Account> {
         self.resulting_accounts
             .iter()
             .find(|(k, _)| k == pubkey)
@@ -177,7 +177,7 @@ impl InstructionResult {
                         match check_state {
                             AccountStateCheck::Closed => {
                                 assert_eq!(
-                                    &AccountSharedData::default(),
+                                    &Account::default(),
                                     resulting_account,
                                     "CHECK: account closed: got false, expected true"
                                 );

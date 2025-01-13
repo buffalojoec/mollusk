@@ -113,7 +113,7 @@ mod tests {
         },
         mollusk_svm_fuzz_fs::SerializableFixture,
         solana_sdk::{
-            account::AccountSharedData, feature_set::FeatureSet, keccak::Hash, pubkey::Pubkey,
+            account::Account, feature_set::FeatureSet, keccak::Hash, pubkey::Pubkey,
             transaction_context::InstructionAccount,
         },
     };
@@ -131,22 +131,22 @@ mod tests {
         let accounts = vec![
             (
                 Pubkey::new_unique(),
-                AccountSharedData::new(42, 42, &Pubkey::default()),
+                Account::new(42, 42, &Pubkey::default()),
                 None,
             ),
             (
                 Pubkey::new_unique(),
-                AccountSharedData::new(42, 42, &Pubkey::default()),
+                Account::new(42, 42, &Pubkey::default()),
                 None,
             ),
             (
                 Pubkey::new_unique(),
-                AccountSharedData::new(42, 42, &Pubkey::default()),
+                Account::new(42, 42, &Pubkey::default()),
                 None,
             ),
             (
                 Pubkey::new_unique(),
-                AccountSharedData::new(42, 42, &Pubkey::default()),
+                Account::new(42, 42, &Pubkey::default()),
                 None,
             ),
         ];

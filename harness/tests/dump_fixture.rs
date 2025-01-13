@@ -4,8 +4,8 @@ use {
     mollusk_svm::{result::Check, Mollusk},
     serial_test::serial,
     solana_sdk::{
-        account::AccountSharedData, feature_set::FeatureSet, instruction::Instruction,
-        pubkey::Pubkey, system_instruction, system_program,
+        account::Account, feature_set::FeatureSet, instruction::Instruction, pubkey::Pubkey,
+        system_instruction, system_program,
     },
     std::path::Path,
 };
@@ -73,7 +73,7 @@ const TRANSFER_AMOUNT: u64 = 42_000;
 struct TestSetup<'a> {
     mollusk: Mollusk,
     instruction: Instruction,
-    accounts: Vec<(Pubkey, AccountSharedData)>,
+    accounts: Vec<(Pubkey, Account)>,
     checks: Vec<Check<'a>>,
 }
 
@@ -85,11 +85,11 @@ impl<'a> TestSetup<'a> {
         let accounts = vec![
             (
                 *sender,
-                AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+                Account::new(BASE_LAMPORTS, 0, &system_program::id()),
             ),
             (
                 *recipient,
-                AccountSharedData::new(BASE_LAMPORTS, 0, &system_program::id()),
+                Account::new(BASE_LAMPORTS, 0, &system_program::id()),
             ),
         ];
         let checks = vec![

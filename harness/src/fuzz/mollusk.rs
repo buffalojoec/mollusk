@@ -15,7 +15,7 @@ use {
         sysvars::Sysvars as FuzzSysvars, Fixture as FuzzFixture,
     },
     solana_sdk::{
-        account::AccountSharedData,
+        account::Account,
         instruction::{Instruction, InstructionError},
         pubkey::Pubkey,
         slot_hashes::SlotHashes,
@@ -106,7 +106,7 @@ impl From<&FuzzEffects> for InstructionResult {
 fn build_fixture_context(
     mollusk: &Mollusk,
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
 ) -> FuzzContext {
     let Mollusk {
         compute_budget,
@@ -130,9 +130,7 @@ fn build_fixture_context(
     }
 }
 
-fn parse_fixture_context(
-    context: &FuzzContext,
-) -> (Mollusk, Instruction, Vec<(Pubkey, AccountSharedData)>) {
+fn parse_fixture_context(context: &FuzzContext) -> (Mollusk, Instruction, Vec<(Pubkey, Account)>) {
     let FuzzContext {
         compute_budget,
         feature_set,
@@ -161,7 +159,7 @@ fn parse_fixture_context(
 pub fn build_fixture_from_mollusk_test(
     mollusk: &Mollusk,
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
     _checks: &[Check],
 ) -> FuzzFixture {
@@ -177,7 +175,7 @@ pub fn load_fixture(
 ) -> (
     Mollusk,
     Instruction,
-    Vec<(Pubkey, AccountSharedData)>,
+    Vec<(Pubkey, Account)>,
     InstructionResult,
 ) {
     let (mollusk, instruction, accounts) = parse_fixture_context(&fixture.input);

@@ -5,7 +5,7 @@ use {
     mollusk_svm_fuzz_fixture_firedancer::{account::SeedAddress, Fixture},
     rayon::prelude::*,
     solana_sdk::{
-        account::AccountSharedData, feature_set::FeatureSet, pubkey::Pubkey,
+        account::Account, feature_set::FeatureSet, pubkey::Pubkey,
         transaction_context::InstructionAccount,
     },
     std::{assert_eq, fs, path::Path, process::Command},
@@ -112,8 +112,8 @@ fn test_load_firedancer_fixtures() {
 }
 
 fn compare_accounts(
-    a: &[(Pubkey, AccountSharedData, Option<SeedAddress>)],
-    b: &[(Pubkey, AccountSharedData, Option<SeedAddress>)],
+    a: &[(Pubkey, Account, Option<SeedAddress>)],
+    b: &[(Pubkey, Account, Option<SeedAddress>)],
 ) -> bool {
     if a.len() != b.len() {
         return false;
