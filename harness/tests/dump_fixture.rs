@@ -195,6 +195,34 @@ fn test_dump_mollusk() {
     // Ensure both files have the same name.
     assert_filenames_match(&blob_fixture_path, &json_fixture_path);
 
+    // Now check instruction chains.
+    clear(EJECT_FUZZ_FIXTURES);
+
+    setup.mollusk.process_and_validate_instruction_chain(
+        &[
+            (&setup.instruction, &[]),
+            (&setup.instruction, &[]),
+            (&setup.instruction, &[]),
+        ],
+        &setup.accounts,
+    );
+
+    // Ensure there are three of each fixture type in the target directory.
+    let dir = std::fs::read_dir(EJECT_FUZZ_FIXTURES).unwrap();
+    let mut count_blob = 0;
+    let mut count_json = 0;
+    for entry in dir {
+        let path = entry.unwrap().path();
+        if is_fixture_file(&path, &FileType::Blob) {
+            count_blob += 1;
+        }
+        if is_fixture_file(&path, &FileType::Json) {
+            count_json += 1;
+        }
+    }
+    assert_eq!(count_blob, 3);
+    assert_eq!(count_json, 3);
+
     std::env::remove_var("EJECT_FUZZ_FIXTURES");
     std::env::remove_var("EJECT_FUZZ_FIXTURES_JSON");
     clear(EJECT_FUZZ_FIXTURES);
@@ -234,6 +262,34 @@ fn test_dump_firedancer() {
 
     // Ensure both files have the same name.
     assert_filenames_match(&blob_fixture_path, &json_fixture_path);
+
+    // Now check instruction chains.
+    clear(EJECT_FUZZ_FIXTURES_FD);
+
+    setup.mollusk.process_and_validate_instruction_chain(
+        &[
+            (&setup.instruction, &[]),
+            (&setup.instruction, &[]),
+            (&setup.instruction, &[]),
+        ],
+        &setup.accounts,
+    );
+
+    // Ensure there are three of each fixture type in the target directory.
+    let dir = std::fs::read_dir(EJECT_FUZZ_FIXTURES_FD).unwrap();
+    let mut count_blob = 0;
+    let mut count_json = 0;
+    for entry in dir {
+        let path = entry.unwrap().path();
+        if is_fixture_file(&path, &FileType::Blob) {
+            count_blob += 1;
+        }
+        if is_fixture_file(&path, &FileType::Json) {
+            count_json += 1;
+        }
+    }
+    assert_eq!(count_blob, 3);
+    assert_eq!(count_json, 3);
 
     std::env::remove_var("EJECT_FUZZ_FIXTURES_FD");
     std::env::remove_var("EJECT_FUZZ_FIXTURES_JSON_FD");
