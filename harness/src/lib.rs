@@ -26,6 +26,11 @@
 //! * `process_instruction`: Process an instruction and return the result.
 //! * `process_and_validate_instruction`: Process an instruction and perform a
 //!   series of checks on the result, panicking if any checks fail.
+//! * `process_instruction_chain`: Process a chain of instructions and return
+//!   the result.
+//! * `process_and_validate_instruction_chain`: Process a chain of instructions
+//!   and perform a series of checks on each result, panicking if any checks
+//!   fail.
 
 mod accounts;
 pub mod file;
@@ -273,11 +278,7 @@ impl Mollusk {
         for instruction in instructions {
             let this_result = self.process_instruction(instruction, &result.resulting_accounts);
 
-            result.compute_units_consumed += this_result.compute_units_consumed;
-            result.execution_time += this_result.execution_time;
-            result.program_result = this_result.program_result;
-            result.raw_result = this_result.raw_result;
-            result.resulting_accounts = this_result.resulting_accounts;
+            result.absorb(this_result);
 
             if result.program_result.is_err() {
                 break;
@@ -327,17 +328,51 @@ impl Mollusk {
     /// Process a chain of instructions using the minified Solana Virtual
     /// Machine (SVM) environment, then perform checks on the result.
     /// Panics if any checks fail.
+    ///
+    /// For `fuzz` feature only:
+    ///
+    /// Similar to `process_and_validate_instruction`, if the
+    /// `EJECT_FUZZ_FIXTURES` environment variable is set, this function will
+    /// convert the provided test to a set of fuzz fixtures - each of which
+    /// corresponds to a single instruction in the chain - and write them to
+    /// the provided directory.
+    ///
+    /// ```ignore
+    /// EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
+    /// ```
+    ///
+    /// You can also provide `EJECT_FUZZ_FIXTURES_JSON` to write the fixture in
+    /// JSON format.
+    ///
+    /// The `fuzz-fd` feature works the same way, but the variables require
+    /// the `_FD` suffix, in case both features are active together
+    /// (ie. `EJECT_FUZZ_FIXTURES_FD`). This will generate Firedancer fuzzing
+    /// fixtures, which are structured a bit differently than Mollusk's own
+    /// protobuf layouts.
     pub fn process_and_validate_instruction_chain(
         &self,
-        instructions: &[Instruction],
+        instructions: &[(&Instruction, &[Check])],
         accounts: &[(Pubkey, Account)],
-        checks: &[Check],
     ) -> InstructionResult {
-        let result = self.process_instruction_chain(instructions, accounts);
+        let mut result = InstructionResult {
+            resulting_accounts: accounts.to_vec(),
+            ..Default::default()
+        };
 
-        // No fuzz support yet...
+        for (instruction, checks) in instructions.iter() {
+            let this_result = self.process_and_validate_instruction(
+                instruction,
+                &result.resulting_accounts,
+                checks,
+            );
 
-        result.run_checks(checks);
+            result.absorb(this_result);
+
+            if result.program_result.is_err() {
+                break;
+            }
+        }
+
         result
     }
 

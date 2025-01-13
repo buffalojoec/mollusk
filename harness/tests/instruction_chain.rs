@@ -30,30 +30,69 @@ fn test_transfers() {
 
     mollusk.process_and_validate_instruction_chain(
         &[
-            system_instruction::transfer(&alice, &bob, alice_to_bob),
-            system_instruction::transfer(&bob, &carol, bob_to_carol),
-            system_instruction::transfer(&bob, &dave, bob_to_dave),
+            (
+                // 0: Alice to Bob
+                &system_instruction::transfer(&alice, &bob, alice_to_bob),
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Alice pays
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob) // Bob receives
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                ],
+            ),
+            (
+                // 1: Bob to Carol
+                &system_instruction::transfer(&bob, &carol, bob_to_carol),
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Unchanged
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob - bob_to_carol) // Bob pays
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports + bob_to_carol) // Carol receives
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports) // Unchanged
+                        .build(),
+                ],
+            ),
+            (
+                // 2: Bob to Dave
+                &system_instruction::transfer(&bob, &dave, bob_to_dave),
+                &[
+                    Check::success(),
+                    Check::account(&alice)
+                        .lamports(starting_lamports - alice_to_bob) // Unchanged
+                        .build(),
+                    Check::account(&bob)
+                        .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave) // Bob pays
+                        .build(),
+                    Check::account(&carol)
+                        .lamports(starting_lamports + bob_to_carol) // Unchanged
+                        .build(),
+                    Check::account(&dave)
+                        .lamports(starting_lamports + bob_to_dave) // Dave receives
+                        .build(),
+                ],
+            ),
         ],
         &[
             (alice, system_account_with_lamports(starting_lamports)),
             (bob, system_account_with_lamports(starting_lamports)),
             (carol, system_account_with_lamports(starting_lamports)),
             (dave, system_account_with_lamports(starting_lamports)),
-        ],
-        &[
-            Check::success(),
-            Check::account(&alice)
-                .lamports(starting_lamports - alice_to_bob)
-                .build(),
-            Check::account(&bob)
-                .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave)
-                .build(),
-            Check::account(&carol)
-                .lamports(starting_lamports + bob_to_carol)
-                .build(),
-            Check::account(&dave)
-                .lamports(starting_lamports + bob_to_dave)
-                .build(),
         ],
     );
 }
@@ -117,15 +156,27 @@ fn test_mixed() {
 
     mollusk.process_and_validate_instruction_chain(
         &[
-            ix_transfer_to_1,
-            ix_transfer_to_2,
-            ix_allocate_1,
-            ix_allocate_2,
-            ix_assign_1,
-            ix_assign_2,
-            ix_write_data_to_1,
-            ix_write_data_to_2,
-            ix_close_1,
+            (&ix_transfer_to_1, &[]),
+            (&ix_transfer_to_2, &[]),
+            (&ix_allocate_1, &[]),
+            (&ix_allocate_2, &[]),
+            (&ix_assign_1, &[]),
+            (&ix_assign_2, &[]),
+            (&ix_write_data_to_1, &[]),
+            (&ix_write_data_to_2, &[]),
+            (
+                &ix_close_1,
+                // Just check the final result.
+                &[
+                    Check::success(),
+                    Check::account(&target1).closed().build(),
+                    Check::account(&target2)
+                        .data(data)
+                        .lamports(lamports)
+                        .owner(&program_id)
+                        .build(),
+                ],
+            ),
         ],
         &[
             (payer, system_account_with_lamports(lamports * 4)),
@@ -133,15 +184,6 @@ fn test_mixed() {
             (target2, Account::default()),
             (incinerator::id(), Account::default()),
             keyed_account_for_system_program(),
-        ],
-        &[
-            Check::success(),
-            Check::account(&target1).closed().build(),
-            Check::account(&target2)
-                .data(data)
-                .lamports(lamports)
-                .owner(&program_id)
-                .build(),
         ],
     );
 }
