@@ -13,7 +13,7 @@ fn test_process_mollusk() {
     let ok_transfer_amount = 42_000;
     let too_much = BASE_LAMPORTS + 1;
 
-    let mollusk = Mollusk::default();
+    let mut mollusk = Mollusk::default();
 
     let sender = Pubkey::new_unique();
     let recipient = Pubkey::new_unique();
@@ -41,7 +41,7 @@ fn test_process_mollusk() {
         &[],
     );
 
-    Mollusk::process_and_validate_fixture(&fixture);
+    mollusk.process_and_validate_fixture(&fixture);
 
     // Now the error case.
     let instruction = system_instruction::transfer(&sender, &recipient, too_much);
@@ -55,7 +55,7 @@ fn test_process_mollusk() {
         &[],
     );
 
-    Mollusk::process_and_validate_fixture(&fixture);
+    mollusk.process_and_validate_fixture(&fixture);
 }
 
 #[cfg(feature = "fuzz-fd")]
@@ -64,7 +64,7 @@ fn test_process_firedancer() {
     let ok_transfer_amount = 42_000;
     let too_much = BASE_LAMPORTS + 1;
 
-    let mollusk = Mollusk::default();
+    let mut mollusk = Mollusk::default();
 
     let sender = Pubkey::new_unique();
     let recipient = Pubkey::new_unique();
@@ -92,7 +92,7 @@ fn test_process_firedancer() {
         &[],
     );
 
-    Mollusk::process_and_validate_firedancer_fixture(&fixture);
+    mollusk.process_and_validate_firedancer_fixture(&fixture);
 
     // Now the error case.
     let instruction = system_instruction::transfer(&sender, &recipient, too_much);
@@ -106,5 +106,5 @@ fn test_process_firedancer() {
         &[],
     );
 
-    Mollusk::process_and_validate_firedancer_fixture(&fixture);
+    mollusk.process_and_validate_firedancer_fixture(&fixture);
 }

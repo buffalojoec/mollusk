@@ -384,7 +384,18 @@ impl Mollusk {
     /// Fixtures provide an API to `decode` a raw blob, as well as read
     /// fixtures from files. Those fixtures can then be provided to this
     /// function to process them and get a Mollusk result.
-    pub fn process_fixture(fixture: &mollusk_svm_fuzz_fixture::Fixture) -> InstructionResult {
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
+    pub fn process_fixture(
+        &mut self,
+        fixture: &mollusk_svm_fuzz_fixture::Fixture,
+    ) -> InstructionResult {
         let (mollusk, instruction, accounts, _) = fuzz::mollusk::load_fixture(fixture);
         mollusk.process_instruction(&instruction, &accounts)
     }
@@ -396,7 +407,17 @@ impl Mollusk {
     /// Fixtures provide an API to `decode` a raw blob, as well as read
     /// fixtures from files. Those fixtures can then be provided to this
     /// function to process them and get a Mollusk result.
+    ///
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
     pub fn process_and_validate_fixture(
+        &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
         let (mollusk, instruction, accounts, result) = fuzz::mollusk::load_fixture(fixture);
@@ -412,7 +433,16 @@ impl Mollusk {
     /// Fixtures provide an API to `decode` a raw blob, as well as read
     /// fixtures from files. Those fixtures can then be provided to this
     /// function to process them and get a Mollusk result.
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
     pub fn process_firedancer_fixture(
+        &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
     ) -> InstructionResult {
         let (mollusk, instruction, accounts, _) =
@@ -428,7 +458,17 @@ impl Mollusk {
     /// Fixtures provide an API to `decode` a raw blob, as well as read
     /// fixtures from files. Those fixtures can then be provided to this
     /// function to process them and get a Mollusk result.
+    ///
+    ///
+    /// Note: This is a mutable method on `Mollusk`, since loading a fixture
+    /// into the test environment will alter `Mollusk` values, such as compute
+    /// budget and sysvars. However, the program cache remains unchanged.
+    ///
+    /// Therefore, developers can provision a `Mollusk` instance, set up their
+    /// desired program cache, and then run a series of fixtures against that
+    /// `Mollusk` instance (and cache).
     pub fn process_and_validate_firedancer_fixture(
+        &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
     ) -> InstructionResult {
         let (mollusk, instruction, accounts, result) =
