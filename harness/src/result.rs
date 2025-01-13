@@ -84,7 +84,7 @@ impl InstructionResult {
     }
 
     /// Perform checks on the instruction result, panicking if any checks fail.
-    pub(crate) fn run_checks(&self, checks: &[Check]) {
+    pub fn run_checks(&self, checks: &[Check]) {
         for check in checks {
             match &check.check {
                 CheckType::ComputeUnitsConsumed(units) => {
