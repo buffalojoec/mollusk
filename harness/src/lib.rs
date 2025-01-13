@@ -219,22 +219,26 @@ impl Mollusk {
 
         let return_data = transaction_context.get_return_data().1.to_vec();
 
-        let resulting_accounts: Vec<(Pubkey, Account)> = accounts
-            .iter()
-            .map(|(pubkey, account)| {
-                transaction_context
-                    .find_index_of_account(pubkey)
-                    .map(|index| {
-                        let resulting_account = transaction_context
-                            .get_account_at_index(index)
-                            .unwrap()
-                            .take()
-                            .into();
-                        (*pubkey, resulting_account)
-                    })
-                    .unwrap_or((*pubkey, account.clone()))
-            })
-            .collect();
+        let resulting_accounts: Vec<(Pubkey, Account)> = if invoke_result.is_ok() {
+            accounts
+                .iter()
+                .map(|(pubkey, account)| {
+                    transaction_context
+                        .find_index_of_account(pubkey)
+                        .map(|index| {
+                            let resulting_account = transaction_context
+                                .get_account_at_index(index)
+                                .unwrap()
+                                .take()
+                                .into();
+                            (*pubkey, resulting_account)
+                        })
+                        .unwrap_or((*pubkey, account.clone()))
+                })
+                .collect()
+        } else {
+            accounts.to_vec()
+        };
 
         InstructionResult {
             compute_units_consumed,
