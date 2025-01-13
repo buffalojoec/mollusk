@@ -3,8 +3,8 @@ use {
     criterion::{criterion_group, criterion_main, Criterion, Throughput},
     mollusk_svm::{result::Check, Mollusk},
     solana_sdk::{
-        account::AccountSharedData, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
-        system_instruction, system_program,
+        account::Account, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, system_instruction,
+        system_program,
     },
     solana_system_program::system_processor::DEFAULT_COMPUTE_UNITS,
 };
@@ -20,11 +20,11 @@ fn transfer_checked_unchecked(c: &mut Criterion) {
     let accounts = vec![
         (
             sender,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
         (
             recipient,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
     ];
     let checks = vec![

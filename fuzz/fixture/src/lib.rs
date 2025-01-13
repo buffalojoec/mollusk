@@ -97,8 +97,8 @@ mod tests {
         mollusk_svm_fuzz_fs::SerializableFixture,
         solana_compute_budget::compute_budget::ComputeBudget,
         solana_sdk::{
-            account::AccountSharedData, feature_set::FeatureSet, instruction::AccountMeta,
-            keccak::Hash, pubkey::Pubkey,
+            account::Account, feature_set::FeatureSet, instruction::AccountMeta, keccak::Hash,
+            pubkey::Pubkey,
         },
     };
 
@@ -124,12 +124,7 @@ mod tests {
         let instruction_data = vec![4; 24];
         let accounts = instruction_accounts
             .iter()
-            .map(|meta| {
-                (
-                    meta.pubkey,
-                    AccountSharedData::new(42, 42, &Pubkey::default()),
-                )
-            })
+            .map(|meta| (meta.pubkey, Account::new(42, 42, &Pubkey::default())))
             .collect::<Vec<_>>();
 
         let context = Context {

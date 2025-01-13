@@ -7,8 +7,8 @@ use {
     },
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
-        account::AccountSharedData, feature_set::FeatureSet, instruction::AccountMeta,
-        keccak::Hasher, pubkey::Pubkey,
+        account::Account, feature_set::FeatureSet, instruction::AccountMeta, keccak::Hasher,
+        pubkey::Pubkey,
     },
 };
 
@@ -28,7 +28,7 @@ pub struct Context {
     /// The instruction data.
     pub instruction_data: Vec<u8>,
     /// Input accounts with state.
-    pub accounts: Vec<(Pubkey, AccountSharedData)>,
+    pub accounts: Vec<(Pubkey, Account)>,
 }
 
 impl From<ProtoContext> for Context {
@@ -39,8 +39,7 @@ impl From<ProtoContext> for Context {
             .expect("Invalid bytes for program ID");
         let program_id = Pubkey::new_from_array(program_id_bytes);
 
-        let accounts: Vec<(Pubkey, AccountSharedData)> =
-            value.accounts.into_iter().map(Into::into).collect();
+        let accounts: Vec<(Pubkey, Account)> = value.accounts.into_iter().map(Into::into).collect();
 
         let instruction_accounts: Vec<AccountMeta> = value
             .instr_accounts

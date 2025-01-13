@@ -3,7 +3,7 @@
 use {
     super::proto::InstrEffects as ProtoEffects,
     crate::account::SeedAddress,
-    solana_sdk::{account::AccountSharedData, keccak::Hasher, pubkey::Pubkey},
+    solana_sdk::{account::Account, keccak::Hasher, pubkey::Pubkey},
 };
 
 /// Represents the effects of a single instruction.
@@ -14,7 +14,7 @@ pub struct Effects {
     // Custom error code, also non-zero if any.
     pub program_custom_code: u32,
     /// Copies of accounts that were changed.
-    pub modified_accounts: Vec<(Pubkey, AccountSharedData, Option<SeedAddress>)>,
+    pub modified_accounts: Vec<(Pubkey, Account, Option<SeedAddress>)>,
     /// Compute units available after executing the instruction.
     pub compute_units_available: u64,
     /// Instruction return data.
@@ -31,7 +31,7 @@ impl From<ProtoEffects> for Effects {
             return_data,
         } = value;
 
-        let modified_accounts: Vec<(Pubkey, AccountSharedData, Option<SeedAddress>)> =
+        let modified_accounts: Vec<(Pubkey, Account, Option<SeedAddress>)> =
             modified_accounts.into_iter().map(Into::into).collect();
 
         Self {

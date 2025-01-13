@@ -3,7 +3,7 @@
 use {
     solana_program_runtime::sysvar_cache::SysvarCache,
     solana_sdk::{
-        account::{AccountSharedData, ReadableAccount},
+        account::{Account, ReadableAccount},
         clock::{Clock, Slot},
         epoch_rewards::EpochRewards,
         epoch_schedule::EpochSchedule,
@@ -59,47 +59,52 @@ impl Default for Sysvars {
 }
 
 impl Sysvars {
-    fn sysvar_account<T: SysvarId + Sysvar>(&self, sysvar: &T) -> (Pubkey, AccountSharedData) {
+    fn sysvar_account<T: SysvarId + Sysvar>(&self, sysvar: &T) -> (Pubkey, Account) {
         let data = bincode::serialize::<T>(sysvar).unwrap();
         let space = data.len();
         let lamports = self.rent.minimum_balance(space);
-        let mut account = AccountSharedData::new(lamports, space, &sysvar::id());
-        account.set_data_from_slice(&data);
+        let account = Account {
+            lamports,
+            data,
+            owner: sysvar::id(),
+            executable: false,
+            ..Default::default()
+        };
         (T::id(), account)
     }
 
     /// Get the key and account for the clock sysvar.
-    pub fn keyed_account_for_clock_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_clock_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.clock)
     }
 
     /// Get the key and account for the epoch rewards sysvar.
-    pub fn keyed_account_for_epoch_rewards_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_epoch_rewards_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.epoch_rewards)
     }
 
     /// Get the key and account for the epoch schedule sysvar.
-    pub fn keyed_account_for_epoch_schedule_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_epoch_schedule_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.epoch_schedule)
     }
 
     /// Get the key and account for the last restart slot sysvar.
-    pub fn keyed_account_for_last_restart_slot_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_last_restart_slot_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.last_restart_slot)
     }
 
     /// Get the key and account for the rent sysvar.
-    pub fn keyed_account_for_rent_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_rent_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.rent)
     }
 
     /// Get the key and account for the slot hashes sysvar.
-    pub fn keyed_account_for_slot_hashes_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_slot_hashes_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.slot_hashes)
     }
 
     /// Get the key and account for the stake history sysvar.
-    pub fn keyed_account_for_stake_history_sysvar(&self) -> (Pubkey, AccountSharedData) {
+    pub fn keyed_account_for_stake_history_sysvar(&self) -> (Pubkey, Account) {
         self.sysvar_account(&self.stake_history)
     }
 
@@ -143,10 +148,7 @@ impl Sysvars {
         }
     }
 
-    pub(crate) fn setup_sysvar_cache(
-        &self,
-        accounts: &[(Pubkey, AccountSharedData)],
-    ) -> SysvarCache {
+    pub(crate) fn setup_sysvar_cache(&self, accounts: &[(Pubkey, Account)]) -> SysvarCache {
         let mut sysvar_cache = SysvarCache::default();
 
         // First fill any sysvar cache entries from the provided accounts.

@@ -5,7 +5,7 @@ use {
     },
     crate::account::SeedAddress,
     solana_sdk::{
-        account::AccountSharedData, feature_set::FeatureSet, keccak::Hasher, pubkey::Pubkey,
+        account::Account, feature_set::FeatureSet, keccak::Hasher, pubkey::Pubkey,
         transaction_context::InstructionAccount,
     },
 };
@@ -58,7 +58,7 @@ pub struct Context {
     /// The program ID of the program being invoked.
     pub program_id: Pubkey,
     /// Input accounts with state.
-    pub accounts: Vec<(Pubkey, AccountSharedData, Option<SeedAddress>)>,
+    pub accounts: Vec<(Pubkey, Account, Option<SeedAddress>)>,
     /// Accounts to pass to the instruction.
     pub instruction_accounts: Vec<InstructionAccount>,
     /// The instruction data.
@@ -79,7 +79,7 @@ impl From<ProtoContext> for Context {
             .expect("Invalid bytes for program ID");
         let program_id = Pubkey::new_from_array(program_id_bytes);
 
-        let accounts: Vec<(Pubkey, AccountSharedData, Option<SeedAddress>)> =
+        let accounts: Vec<(Pubkey, Account, Option<SeedAddress>)> =
             value.accounts.into_iter().map(Into::into).collect();
 
         let instruction_accounts: Vec<InstructionAccount> =

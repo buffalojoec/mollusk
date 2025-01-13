@@ -2,7 +2,7 @@
 
 use {
     super::proto::{AcctState as ProtoAccount, InstrEffects as ProtoEffects},
-    solana_sdk::{account::AccountSharedData, keccak::Hasher, pubkey::Pubkey},
+    solana_sdk::{account::Account, keccak::Hasher, pubkey::Pubkey},
 };
 
 /// Represents the effects of a single instruction.
@@ -16,7 +16,7 @@ pub struct Effects {
     pub program_result: u64,
     pub return_data: Vec<u8>,
     /// Resulting accounts with state, to be checked post-simulation.
-    pub resulting_accounts: Vec<(Pubkey, AccountSharedData)>,
+    pub resulting_accounts: Vec<(Pubkey, Account)>,
 }
 
 impl From<ProtoEffects> for Effects {
@@ -29,7 +29,7 @@ impl From<ProtoEffects> for Effects {
             resulting_accounts,
         } = value;
 
-        let resulting_accounts: Vec<(Pubkey, AccountSharedData)> =
+        let resulting_accounts: Vec<(Pubkey, Account)> =
             resulting_accounts.into_iter().map(Into::into).collect();
 
         Self {

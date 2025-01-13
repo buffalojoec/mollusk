@@ -5,7 +5,7 @@ use {
         Mollusk,
     },
     solana_sdk::{
-        account::AccountSharedData,
+        account::Account,
         incinerator,
         instruction::{AccountMeta, Instruction, InstructionError},
         program_error::ProgramError,
@@ -28,7 +28,7 @@ fn test_write_data() {
     let lamports = mollusk.sysvars.rent.minimum_balance(space);
 
     let key = Pubkey::new_unique();
-    let account = AccountSharedData::new(lamports, space, &program_id);
+    let account = Account::new(lamports, space, &program_id);
 
     let instruction = {
         let mut instruction_data = vec![1];
@@ -91,11 +91,11 @@ fn test_transfer() {
 
     let payer = Pubkey::new_unique();
     let payer_lamports = 100_000_000;
-    let payer_account = AccountSharedData::new(payer_lamports, 0, &system_program::id());
+    let payer_account = Account::new(payer_lamports, 0, &system_program::id());
 
     let recipient = Pubkey::new_unique();
     let recipient_lamports = 0;
-    let recipient_account = AccountSharedData::new(recipient_lamports, 0, &system_program::id());
+    let recipient_account = Account::new(recipient_lamports, 0, &system_program::id());
 
     let transfer_amount = 2_000_000_u64;
 
@@ -134,7 +134,7 @@ fn test_transfer() {
         mollusk.process_and_validate_instruction(
             &instruction,
             &[
-                (payer, AccountSharedData::default()),
+                (payer, Account::default()),
                 (recipient, recipient_account.clone()),
                 keyed_account_for_system_program(),
             ],
@@ -174,7 +174,7 @@ fn test_close_account() {
     let mollusk = Mollusk::new(&program_id, "test_program_primary");
 
     let key = Pubkey::new_unique();
-    let account = AccountSharedData::new(50_000_000, 50, &program_id);
+    let account = Account::new(50_000_000, 50, &program_id);
 
     let instruction = Instruction::new_with_bytes(
         program_id,
@@ -195,7 +195,7 @@ fn test_close_account() {
             &account_not_signer_ix,
             &[
                 (key, account.clone()),
-                (incinerator::id(), AccountSharedData::default()),
+                (incinerator::id(), Account::default()),
                 keyed_account_for_system_program(),
             ],
             &[Check::err(ProgramError::MissingRequiredSignature)],
@@ -207,7 +207,7 @@ fn test_close_account() {
         &instruction,
         &[
             (key, account.clone()),
-            (incinerator::id(), AccountSharedData::default()),
+            (incinerator::id(), Account::default()),
             keyed_account_for_system_program(),
         ],
         &[
@@ -238,7 +238,7 @@ fn test_cpi() {
     let lamports = mollusk.sysvars.rent.minimum_balance(space);
 
     let key = Pubkey::new_unique();
-    let account = AccountSharedData::new(lamports, space, &cpi_target_program_id);
+    let account = Account::new(lamports, space, &cpi_target_program_id);
 
     let instruction = {
         let mut instruction_data = vec![4];
@@ -365,10 +365,7 @@ fn test_account_dedupe() {
         );
         mollusk.process_and_validate_instruction(
             &instruction,
-            &[
-                (key, AccountSharedData::default()),
-                (key, AccountSharedData::default()),
-            ],
+            &[(key, Account::default()), (key, Account::default())],
             &[Check::success()],
         );
     }
@@ -385,10 +382,7 @@ fn test_account_dedupe() {
         );
         mollusk.process_and_validate_instruction(
             &instruction,
-            &[
-                (key, AccountSharedData::default()),
-                (key, AccountSharedData::default()),
-            ],
+            &[(key, Account::default()), (key, Account::default())],
             &[Check::success()],
         );
     }
@@ -405,10 +399,7 @@ fn test_account_dedupe() {
         );
         mollusk.process_and_validate_instruction(
             &instruction,
-            &[
-                (key, AccountSharedData::default()),
-                (key, AccountSharedData::default()),
-            ],
+            &[(key, Account::default()), (key, Account::default())],
             &[Check::success()],
         );
     }
