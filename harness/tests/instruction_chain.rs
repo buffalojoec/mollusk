@@ -1,7 +1,7 @@
 use {
     mollusk_svm::{program::keyed_account_for_system_program, result::Check, Mollusk},
     solana_sdk::{
-        account::AccountSharedData,
+        account::Account,
         incinerator,
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
@@ -9,8 +9,8 @@ use {
     },
 };
 
-fn system_account_with_lamports(lamports: u64) -> AccountSharedData {
-    AccountSharedData::new(lamports, 0, &system_program::id())
+fn system_account_with_lamports(lamports: u64) -> Account {
+    Account::new(lamports, 0, &system_program::id())
 }
 
 #[test]
@@ -129,9 +129,9 @@ fn test_mixed() {
         ],
         &[
             (payer, system_account_with_lamports(lamports * 4)),
-            (target1, AccountSharedData::default()),
-            (target2, AccountSharedData::default()),
-            (incinerator::id(), AccountSharedData::default()),
+            (target1, Account::default()),
+            (target2, Account::default()),
+            (incinerator::id(), Account::default()),
             keyed_account_for_system_program(),
         ],
         &[

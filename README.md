@@ -23,8 +23,8 @@ let instruction = Instruction::new_with_bytes(
 );
 
 let accounts = vec![
-    (key1, AccountSharedData::default()),
-    (key2, AccountSharedData::default()),
+    (key1, Account::default()),
+    (key2, Account::default()),
 ];
 
 let mollusk = Mollusk::new(program_id, "my_program");
@@ -48,11 +48,11 @@ let instruction = system_instruction::transfer(&sender, &recipient, transfer_amo
 let accounts = [
     (
         sender,
-        AccountSharedData::new(base_lamports, 0, &system_program::id()),
+        Account::new(base_lamports, 0, &system_program::id()),
     ),
     (
         recipient,
-        AccountSharedData::new(base_lamports, 0, &system_program::id()),
+        Account::new(base_lamports, 0, &system_program::id()),
     ),
 ];
 let checks = vec![

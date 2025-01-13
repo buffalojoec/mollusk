@@ -1,6 +1,6 @@
 use {
     mollusk_svm::Mollusk,
-    solana_sdk::{account::AccountSharedData, pubkey::Pubkey},
+    solana_sdk::{account::Account, pubkey::Pubkey},
 };
 
 pub const ID: Pubkey = solana_sdk::pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
@@ -16,12 +16,12 @@ pub fn add_program(mollusk: &mut Mollusk) {
     );
 }
 
-pub fn account() -> AccountSharedData {
+pub fn account() -> Account {
     // Loader v3
     mollusk_svm::program::create_program_account_loader_v3(&ID)
 }
 
 /// Get the key and account for the SPL Token-2022 program.
-pub fn keyed_account() -> (Pubkey, AccountSharedData) {
+pub fn keyed_account() -> (Pubkey, Account) {
     (ID, account())
 }

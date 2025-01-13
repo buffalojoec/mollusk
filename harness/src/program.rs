@@ -8,12 +8,8 @@ use {
         loaded_programs::{LoadProgramMetrics, ProgramCacheEntry, ProgramCacheForTxBatch},
     },
     solana_sdk::{
-        account::{Account, AccountSharedData},
-        bpf_loader_upgradeable::UpgradeableLoaderState,
-        feature_set::FeatureSet,
-        native_loader,
-        pubkey::Pubkey,
-        rent::Rent,
+        account::Account, bpf_loader_upgradeable::UpgradeableLoaderState, feature_set::FeatureSet,
+        native_loader, pubkey::Pubkey, rent::Rent,
     },
     std::sync::{Arc, RwLock},
 };
@@ -155,62 +151,62 @@ static BUILTINS: &[Builtin] = &[
 pub fn create_keyed_account_for_builtin_program(
     program_id: &Pubkey,
     name: &str,
-) -> (Pubkey, AccountSharedData) {
+) -> (Pubkey, Account) {
     let data = name.as_bytes().to_vec();
     let lamports = Rent::default().minimum_balance(data.len());
-    let account = AccountSharedData::from(Account {
+    let account = Account {
         lamports,
         data,
         owner: native_loader::id(),
         executable: true,
-        rent_epoch: 0,
-    });
+        ..Default::default()
+    };
     (*program_id, account)
 }
 
 /// Get the key and account for the system program.
-pub fn keyed_account_for_system_program() -> (Pubkey, AccountSharedData) {
+pub fn keyed_account_for_system_program() -> (Pubkey, Account) {
     create_keyed_account_for_builtin_program(&BUILTINS[0].program_id, BUILTINS[0].name)
 }
 
 /// Get the key and account for the BPF Loader v2 program.
-pub fn keyed_account_for_bpf_loader_v2_program() -> (Pubkey, AccountSharedData) {
+pub fn keyed_account_for_bpf_loader_v2_program() -> (Pubkey, Account) {
     create_keyed_account_for_builtin_program(&BUILTINS[1].program_id, BUILTINS[1].name)
 }
 
 /// Get the key and account for the BPF Loader v3 (Upgradeable) program.
-pub fn keyed_account_for_bpf_loader_v3_program() -> (Pubkey, AccountSharedData) {
+pub fn keyed_account_for_bpf_loader_v3_program() -> (Pubkey, Account) {
     create_keyed_account_for_builtin_program(&BUILTINS[1].program_id, BUILTINS[1].name)
 }
 
 /* ... */
 
 /// Create a BPF Loader 1 (deprecated) program account.
-pub fn create_program_account_loader_v1(elf: &[u8]) -> AccountSharedData {
+pub fn create_program_account_loader_v1(elf: &[u8]) -> Account {
     let lamports = Rent::default().minimum_balance(elf.len());
-    AccountSharedData::from(Account {
+    Account {
         lamports,
         data: elf.to_vec(),
         owner: loader_keys::LOADER_V1,
         executable: true,
-        rent_epoch: 0,
-    })
+        ..Default::default()
+    }
 }
 
 /// Create a BPF Loader 2 program account.
-pub fn create_program_account_loader_v2(elf: &[u8]) -> AccountSharedData {
+pub fn create_program_account_loader_v2(elf: &[u8]) -> Account {
     let lamports = Rent::default().minimum_balance(elf.len());
-    AccountSharedData::from(Account {
+    Account {
         lamports,
         data: elf.to_vec(),
         owner: loader_keys::LOADER_V2,
         executable: true,
-        rent_epoch: 0,
-    })
+        ..Default::default()
+    }
 }
 
 /// Create a BPF Loader v3 (Upgradeable) program account.
-pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedData {
+pub fn create_program_account_loader_v3(program_id: &Pubkey) -> Account {
     let programdata_address =
         Pubkey::find_program_address(&[program_id.as_ref()], &loader_keys::LOADER_V3).0;
     let data = bincode::serialize(&UpgradeableLoaderState::Program {
@@ -218,17 +214,17 @@ pub fn create_program_account_loader_v3(program_id: &Pubkey) -> AccountSharedDat
     })
     .unwrap();
     let lamports = Rent::default().minimum_balance(data.len());
-    AccountSharedData::from(Account {
+    Account {
         lamports,
         data,
         owner: loader_keys::LOADER_V3,
         executable: true,
-        rent_epoch: 0,
-    })
+        ..Default::default()
+    }
 }
 
 /// Create a BPF Loader v3 (Upgradeable) program data account.
-pub fn create_program_data_account_loader_v3(elf: &[u8]) -> AccountSharedData {
+pub fn create_program_data_account_loader_v3(elf: &[u8]) -> Account {
     let data = {
         let elf_offset = UpgradeableLoaderState::size_of_programdata_metadata();
         let data_len = elf_offset + elf.len();
@@ -245,13 +241,13 @@ pub fn create_program_data_account_loader_v3(elf: &[u8]) -> AccountSharedData {
         data
     };
     let lamports = Rent::default().minimum_balance(data.len());
-    AccountSharedData::from(Account {
+    Account {
         lamports,
         data,
         owner: loader_keys::LOADER_V3,
         executable: false,
-        rent_epoch: 0,
-    })
+        ..Default::default()
+    }
 }
 
 /// Create a BPF Loader v3 (Upgradeable) program and program data account.
@@ -261,7 +257,7 @@ pub fn create_program_data_account_loader_v3(elf: &[u8]) -> AccountSharedData {
 pub fn create_program_account_pair_loader_v3(
     program_id: &Pubkey,
     elf: &[u8],
-) -> (AccountSharedData, AccountSharedData) {
+) -> (Account, Account) {
     (
         create_program_account_loader_v3(program_id),
         create_program_data_account_loader_v3(elf),

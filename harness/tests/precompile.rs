@@ -2,7 +2,7 @@ use {
     mollusk_svm::{result::Check, Mollusk},
     rand0_7::thread_rng,
     solana_sdk::{
-        account::{AccountSharedData, WritableAccount},
+        account::{Account, WritableAccount},
         ed25519_instruction::new_ed25519_instruction,
         ed25519_program, native_loader,
         pubkey::Pubkey,
@@ -11,8 +11,8 @@ use {
     },
 };
 
-fn precompile_account() -> AccountSharedData {
-    let mut account = AccountSharedData::new(1, 0, &native_loader::id());
+fn precompile_account() -> Account {
+    let mut account = Account::new(1, 0, &native_loader::id());
     account.set_executable(true);
     account
 }
@@ -25,7 +25,7 @@ fn test_secp256k1() {
     mollusk.process_and_validate_instruction(
         &new_secp256k1_instruction(&secret_key, b"hello"),
         &[
-            (Pubkey::new_unique(), AccountSharedData::default()),
+            (Pubkey::new_unique(), Account::default()),
             (secp256k1_program::id(), precompile_account()),
         ],
         &[Check::success()],
@@ -40,7 +40,7 @@ fn test_ed25519() {
     mollusk.process_and_validate_instruction(
         &new_ed25519_instruction(&secret_key, b"hello"),
         &[
-            (Pubkey::new_unique(), AccountSharedData::default()),
+            (Pubkey::new_unique(), Account::default()),
             (ed25519_program::id(), precompile_account()),
         ],
         &[Check::success()],

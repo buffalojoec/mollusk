@@ -5,12 +5,12 @@ mod result;
 use {
     mollusk_svm::{result::ProgramResult, Mollusk},
     result::{write_results, MolluskComputeUnitBenchResult},
-    solana_sdk::{account::AccountSharedData, instruction::Instruction, pubkey::Pubkey},
+    solana_sdk::{account::Account, instruction::Instruction, pubkey::Pubkey},
     std::path::PathBuf,
 };
 
 /// A bench is a tuple of a name, an instruction, and a list of accounts.
-pub type Bench<'a> = (&'a str, &'a Instruction, &'a [(Pubkey, AccountSharedData)]);
+pub type Bench<'a> = (&'a str, &'a Instruction, &'a [(Pubkey, Account)]);
 
 /// Mollusk's compute unit bencher.
 ///

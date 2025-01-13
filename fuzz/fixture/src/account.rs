@@ -1,15 +1,11 @@
-//! An account with an address: `(Pubkey, AccountSharedData)`.
+//! An account with an address: `(Pubkey, Account)`.
 
 use {
     super::proto::AcctState as ProtoAccount,
-    solana_sdk::{
-        account::{Account, AccountSharedData},
-        keccak::Hasher,
-        pubkey::Pubkey,
-    },
+    solana_sdk::{account::Account, keccak::Hasher, pubkey::Pubkey},
 };
 
-impl From<ProtoAccount> for (Pubkey, AccountSharedData) {
+impl From<ProtoAccount> for (Pubkey, Account) {
     fn from(value: ProtoAccount) -> Self {
         let ProtoAccount {
             address,
@@ -28,26 +24,26 @@ impl From<ProtoAccount> for (Pubkey, AccountSharedData) {
 
         (
             pubkey,
-            AccountSharedData::from(Account {
+            Account {
                 data,
                 executable,
                 lamports,
                 owner,
                 rent_epoch,
-            }),
+            },
         )
     }
 }
 
-impl From<(Pubkey, AccountSharedData)> for ProtoAccount {
-    fn from(value: (Pubkey, AccountSharedData)) -> Self {
+impl From<(Pubkey, Account)> for ProtoAccount {
+    fn from(value: (Pubkey, Account)) -> Self {
         let Account {
             lamports,
             data,
             owner,
             executable,
             rent_epoch,
-        } = value.1.into();
+        } = value.1;
 
         ProtoAccount {
             address: value.0.to_bytes().to_vec(),

@@ -1,12 +1,8 @@
-//! An account with an address: `(Pubkey, AccountSharedData)`.
+//! An account with an address: `(Pubkey, Account)`.
 
 use {
     super::proto::{AcctState as ProtoAccount, SeedAddress as ProtoSeedAddress},
-    solana_sdk::{
-        account::{Account, AccountSharedData},
-        keccak::Hasher,
-        pubkey::Pubkey,
-    },
+    solana_sdk::{account::Account, keccak::Hasher, pubkey::Pubkey},
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -33,7 +29,7 @@ impl From<SeedAddress> for ProtoSeedAddress {
     }
 }
 
-impl From<ProtoAccount> for (Pubkey, AccountSharedData, Option<SeedAddress>) {
+impl From<ProtoAccount> for (Pubkey, Account, Option<SeedAddress>) {
     fn from(value: ProtoAccount) -> Self {
         let ProtoAccount {
             address,
@@ -53,27 +49,27 @@ impl From<ProtoAccount> for (Pubkey, AccountSharedData, Option<SeedAddress>) {
 
         (
             pubkey,
-            AccountSharedData::from(Account {
+            Account {
                 data,
                 executable,
                 lamports,
                 owner,
                 rent_epoch,
-            }),
+            },
             seed_addr.map(Into::into),
         )
     }
 }
 
-impl From<(Pubkey, AccountSharedData, Option<SeedAddress>)> for ProtoAccount {
-    fn from(value: (Pubkey, AccountSharedData, Option<SeedAddress>)) -> Self {
+impl From<(Pubkey, Account, Option<SeedAddress>)> for ProtoAccount {
+    fn from(value: (Pubkey, Account, Option<SeedAddress>)) -> Self {
         let Account {
             lamports,
             data,
             owner,
             executable,
             rent_epoch,
-        } = value.1.into();
+        } = value.1;
 
         ProtoAccount {
             address: value.0.to_bytes().to_vec(),
@@ -87,15 +83,15 @@ impl From<(Pubkey, AccountSharedData, Option<SeedAddress>)> for ProtoAccount {
     }
 }
 
-impl From<(Pubkey, AccountSharedData)> for ProtoAccount {
-    fn from(value: (Pubkey, AccountSharedData)) -> Self {
+impl From<(Pubkey, Account)> for ProtoAccount {
+    fn from(value: (Pubkey, Account)) -> Self {
         let Account {
             lamports,
             data,
             owner,
             executable,
             rent_epoch,
-        } = value.1.into();
+        } = value.1;
 
         ProtoAccount {
             address: value.0.to_bytes().to_vec(),

@@ -9,13 +9,13 @@ use {
         Mollusk,
     },
     mollusk_svm_fuzz_fs::FsHandler,
-    solana_sdk::{account::AccountSharedData, instruction::Instruction, pubkey::Pubkey},
+    solana_sdk::{account::Account, instruction::Instruction, pubkey::Pubkey},
 };
 
 pub fn generate_fixtures_from_mollusk_test(
     mollusk: &Mollusk,
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
     checks: &[Check],
 ) {

@@ -21,7 +21,7 @@ use {
     },
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
-        account::AccountSharedData,
+        account::Account,
         instruction::{AccountMeta, Instruction, InstructionError},
         pubkey::Pubkey,
     },
@@ -68,7 +68,7 @@ fn num_to_instr_err(num: i32, custom_code: u32) -> InstructionError {
 fn build_fixture_context(
     mollusk: &Mollusk,
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
 ) -> FuzzContext {
     let Mollusk {
         compute_budget,
@@ -91,7 +91,7 @@ fn build_fixture_context(
 
     let accounts = transaction_accounts
         .into_iter()
-        .map(|(key, account)| (key, account, None))
+        .map(|(key, account)| (key, account.into(), None))
         .collect::<Vec<_>>();
 
     FuzzContext {
@@ -107,9 +107,7 @@ fn build_fixture_context(
     }
 }
 
-fn parse_fixture_context(
-    context: &FuzzContext,
-) -> (Mollusk, Instruction, Vec<(Pubkey, AccountSharedData)>) {
+fn parse_fixture_context(context: &FuzzContext) -> (Mollusk, Instruction, Vec<(Pubkey, Account)>) {
     let FuzzContext {
         program_id,
         accounts,
@@ -199,7 +197,7 @@ fn build_fixture_effects(context: &FuzzContext, result: &InstructionResult) -> F
 
 fn parse_fixture_effects(
     mollusk: &Mollusk,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
     effects: &FuzzEffects,
 ) -> InstructionResult {
     let raw_result = if effects.program_result == 0 {
@@ -250,7 +248,7 @@ fn instruction_metadata() -> FuzzMetadata {
 pub fn build_fixture_from_mollusk_test(
     mollusk: &Mollusk,
     instruction: &Instruction,
-    accounts: &[(Pubkey, AccountSharedData)],
+    accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
     _checks: &[Check],
 ) -> FuzzFixture {
@@ -270,7 +268,7 @@ pub fn load_firedancer_fixture(
 ) -> (
     Mollusk,
     Instruction,
-    Vec<(Pubkey, AccountSharedData)>,
+    Vec<(Pubkey, Account)>,
     InstructionResult,
 ) {
     let (mollusk, instruction, accounts) = parse_fixture_context(&fixture.input);

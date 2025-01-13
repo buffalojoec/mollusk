@@ -1,8 +1,8 @@
 use {
     mollusk_svm::{result::Check, Mollusk},
     solana_sdk::{
-        account::AccountSharedData, instruction::InstructionError, pubkey::Pubkey,
-        system_instruction, system_program,
+        account::Account, instruction::InstructionError, pubkey::Pubkey, system_instruction,
+        system_program,
     },
     solana_system_program::system_processor::DEFAULT_COMPUTE_UNITS,
 };
@@ -19,11 +19,11 @@ fn test_transfer() {
     let accounts = [
         (
             sender,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
         (
             recipient,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
     ];
     let checks = vec![
@@ -54,11 +54,11 @@ fn test_transfer_account_ordering() {
     let accounts = [
         (
             recipient,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
         (
             sender,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
     ];
     let checks = vec![
@@ -87,11 +87,11 @@ fn test_transfer_bad_owner() {
     let accounts = [
         (
             sender,
-            AccountSharedData::new(base_lamports, 0, &Pubkey::new_unique()), // <-- Bad owner.
+            Account::new(base_lamports, 0, &Pubkey::new_unique()), // <-- Bad owner.
         ),
         (
             recipient,
-            AccountSharedData::new(base_lamports, 0, &system_program::id()),
+            Account::new(base_lamports, 0, &system_program::id()),
         ),
     ];
     let checks = vec![
