@@ -208,7 +208,8 @@ impl Mollusk {
                             let resulting_account = transaction_context
                                 .get_account_at_index(index)
                                 .unwrap()
-                                .take()
+                                .borrow()
+                                .clone()
                                 .into();
                             (*pubkey, resulting_account)
                         })
