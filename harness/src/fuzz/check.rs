@@ -71,6 +71,51 @@ pub enum FixtureCheck {
     },
 }
 
+impl FixtureCheck {
+    /// Validate all possible checks for all resulting accounts.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `FixtureCheck::AllResultingAccounts { data: false, .. }`.
+    pub fn all_resulting_accounts() -> Self {
+        Self::AllResultingAccounts {
+            data: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+
+    /// Validate all possible checks for only the resulting accounts at certain
+    /// addresses.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `FixtureCheck::OnlyResultingAccounts { data: false, .. }`.
+    pub fn only_resulting_accounts(addresses: &[Pubkey]) -> Self {
+        Self::OnlyResultingAccounts {
+            addresses: addresses.to_vec(),
+            data: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+
+    /// Validate all possible checks for all of the resulting accounts _except_
+    /// the provided addresses.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `FixtureCheck::AllResultingAccountsExcept { data: false, .. }`.
+    pub fn all_resulting_accounts_except(ignore_addresses: &[Pubkey]) -> Self {
+        Self::AllResultingAccountsExcept {
+            ignore_addresses: ignore_addresses.to_vec(),
+            data: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+}
+
 fn add_account_checks<'a>(
     checks: &mut Vec<Check<'a>>,
     accounts: impl Iterator<Item = &'a (Pubkey, Account)>,
