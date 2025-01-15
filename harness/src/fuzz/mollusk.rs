@@ -6,7 +6,7 @@
 
 use {
     crate::{
-        result::{Check, InstructionResult, ProgramResult},
+        result::{InstructionResult, ProgramResult},
         sysvar::Sysvars,
         Mollusk,
     },
@@ -14,8 +14,10 @@ use {
         context::Context as FuzzContext, effects::Effects as FuzzEffects,
         sysvars::Sysvars as FuzzSysvars, Fixture as FuzzFixture,
     },
+    solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
         account::Account,
+        feature_set::FeatureSet,
         instruction::{Instruction, InstructionError},
         pubkey::Pubkey,
         slot_hashes::SlotHashes,
@@ -103,18 +105,21 @@ impl From<&FuzzEffects> for InstructionResult {
     }
 }
 
-fn build_fixture_context(
-    mollusk: &Mollusk,
-    instruction: &Instruction,
-    accounts: &[(Pubkey, Account)],
-) -> FuzzContext {
-    let Mollusk {
-        compute_budget,
-        feature_set,
-        sysvars,
-        ..
-    } = mollusk;
+pub struct ParsedFixtureContext {
+    pub accounts: Vec<(Pubkey, Account)>,
+    pub compute_budget: ComputeBudget,
+    pub feature_set: FeatureSet,
+    pub instruction: Instruction,
+    pub sysvars: Sysvars,
+}
 
+fn build_fixture_context(
+    accounts: &[(Pubkey, Account)],
+    compute_budget: &ComputeBudget,
+    feature_set: &FeatureSet,
+    instruction: &Instruction,
+    sysvars: &Sysvars,
+) -> FuzzContext {
     let instruction_accounts = instruction.accounts.clone();
     let instruction_data = instruction.data.clone();
     let accounts = accounts.to_vec();
@@ -130,7 +135,7 @@ fn build_fixture_context(
     }
 }
 
-fn parse_fixture_context(context: &FuzzContext) -> (Mollusk, Instruction, Vec<(Pubkey, Account)>) {
+pub(crate) fn parse_fixture_context(context: &FuzzContext) -> ParsedFixtureContext {
     let FuzzContext {
         compute_budget,
         feature_set,
@@ -141,19 +146,16 @@ fn parse_fixture_context(context: &FuzzContext) -> (Mollusk, Instruction, Vec<(P
         accounts,
     } = context;
 
-    let mollusk = Mollusk {
-        compute_budget: *compute_budget,
-        feature_set: feature_set.clone(),
-        sysvars: sysvars.into(),
-        ..Default::default()
-    };
-
     let instruction =
         Instruction::new_with_bytes(*program_id, instruction_data, instruction_accounts.clone());
 
-    let accounts = accounts.clone();
-
-    (mollusk, instruction, accounts)
+    ParsedFixtureContext {
+        accounts: accounts.clone(),
+        compute_budget: *compute_budget,
+        feature_set: feature_set.clone(),
+        instruction,
+        sysvars: sysvars.into(),
+    }
 }
 
 pub fn build_fixture_from_mollusk_test(
@@ -161,9 +163,14 @@ pub fn build_fixture_from_mollusk_test(
     instruction: &Instruction,
     accounts: &[(Pubkey, Account)],
     result: &InstructionResult,
-    _checks: &[Check],
 ) -> FuzzFixture {
-    let input = build_fixture_context(mollusk, instruction, accounts);
+    let input = build_fixture_context(
+        accounts,
+        &mollusk.compute_budget,
+        &mollusk.feature_set,
+        instruction,
+        &mollusk.sysvars,
+    );
     // This should probably be built from the checks, but there's currently no
     // mechanism to enforce full check coverage on a result.
     let output = FuzzEffects::from(result);
@@ -172,13 +179,9 @@ pub fn build_fixture_from_mollusk_test(
 
 pub fn load_fixture(
     fixture: &mollusk_svm_fuzz_fixture::Fixture,
-) -> (
-    Mollusk,
-    Instruction,
-    Vec<(Pubkey, Account)>,
-    InstructionResult,
-) {
-    let (mollusk, instruction, accounts) = parse_fixture_context(&fixture.input);
-    let result = InstructionResult::from(&fixture.output);
-    (mollusk, instruction, accounts, result)
+) -> (ParsedFixtureContext, InstructionResult) {
+    (
+        parse_fixture_context(&fixture.input),
+        InstructionResult::from(&fixture.output),
+    )
 }
