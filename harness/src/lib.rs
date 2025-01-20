@@ -45,11 +45,18 @@ use {
         program::ProgramCache,
         result::{Check, InstructionResult},
         sysvar::Sysvars,
-    }, accounts::CompiledAccounts, mollusk_svm_error::error::{MolluskError, MolluskPanic}, solana_compute_budget::compute_budget::ComputeBudget, solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext}, solana_sdk::{
+    },
+    accounts::CompiledAccounts,
+    mollusk_svm_error::error::{MolluskError, MolluskPanic},
+    solana_compute_budget::compute_budget::ComputeBudget,
+    solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
+    solana_sdk::{
         account::Account, bpf_loader_upgradeable, feature_set::FeatureSet, fee::FeeStructure,
         hash::Hash, instruction::Instruction, precompiles::get_precompile, pubkey::Pubkey,
         transaction_context::TransactionContext,
-    }, solana_timings::ExecuteTimings, std::{cell::RefCell, rc::Rc, sync::Arc}
+    },
+    solana_timings::ExecuteTimings,
+    std::{cell::RefCell, rc::Rc, sync::Arc},
 };
 
 pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
@@ -95,7 +102,7 @@ impl Default for Mollusk {
             fee_structure: FeeStructure::default(),
             program_cache: ProgramCache::default(),
             sysvars: Sysvars::default(),
-            logger: None,    
+            logger: None,
             #[cfg(feature = "fuzz-fd")]
             slot: 0,
         }
@@ -151,7 +158,7 @@ impl Mollusk {
     pub fn process_instruction(
         &self,
         instruction: &Instruction,
-        accounts: &[(Pubkey, Account)]
+        accounts: &[(Pubkey, Account)],
     ) -> InstructionResult {
         let mut compute_units_consumed = 0;
         let mut timings = ExecuteTimings::default();
