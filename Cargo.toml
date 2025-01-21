@@ -34,25 +34,32 @@ mollusk-svm-keys = { path = "keys", version = "0.0.13" }
 mollusk-svm-programs-memo = { path = "programs/memo", version = "0.0.13" }
 mollusk-svm-programs-token = { path = "programs/token", version = "0.0.13" }
 num-format = "0.4.4"
-prost = "0.10"
-prost-build = "0.10"
-prost-types = "0.10"
+# From Agave monorepo:
+prost = "0.11.9"
+prost-build = "0.11.9"
+prost-types = "0.11.9"
 rand0-7 = { package = "rand", version = "0.7" }
 rayon = "1.10.0"
 serde = "1.0.203"
 serde_json = "1.0.117"
 serial_test = "2.0"
-solana-bpf-loader-program = "2.1.0"
-solana-compute-budget = "2.1.0"
-solana-log-collector = "2.1.0"
-solana-logger = "2.1.0"
-solana-program = "2.1.0"
-solana-program-runtime = "2.1.0"
-solana-stake-program = "2.1.0"
-solana-system-program = "2.1.0"
-solana-sdk = "2.1.0"
-solana-timings = "2.1.0"
+solana-bpf-loader-program = { path = "../agave/programs/bpf_loader" }
+solana-compute-budget = { path = "../agave/compute-budget" }
+solana-log-collector = { path = "../agave/log-collector" }
+solana-logger = { path = "../agave/logger" }
+solana-program = { path = "../agave/sdk/program" }
+solana-program-runtime = { path = "../agave/program-runtime" }
+solana-stake-program = { path = "../agave/programs/stake" }
+solana-system-program = { path = "../agave/programs/system" }
+solana-sdk = { path = "../agave/sdk" }
+solana-timings = { path = "../agave/timings" }
 thiserror = "1.0.64"
+
+[patch.crates-io]
+solana-instruction = { path = "../agave/sdk/instruction" }
+solana-program = { path = "../agave/sdk/program" }
+solana-pubkey = { path = "../agave/sdk/pubkey" }
+solana-sdk = { path = "../agave/sdk" }
 
 [workspace.lints.rust.unexpected_cfgs]
 level = "warn"
