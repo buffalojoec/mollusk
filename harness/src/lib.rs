@@ -56,7 +56,7 @@ use {
         transaction_context::TransactionContext,
     },
     solana_timings::ExecuteTimings,
-    std::sync::Arc,
+    std::{cell::RefCell, rc::Rc, sync::Arc},
 };
 
 pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
@@ -71,6 +71,7 @@ pub struct Mollusk {
     pub fee_structure: FeeStructure,
     pub program_cache: ProgramCache,
     pub sysvars: Sysvars,
+    pub logger: Option<Rc<RefCell<solana_log_collector::LogCollector>>>,
     #[cfg(feature = "fuzz-fd")]
     pub slot: u64,
 }
@@ -101,6 +102,7 @@ impl Default for Mollusk {
             fee_structure: FeeStructure::default(),
             program_cache: ProgramCache::default(),
             sysvars: Sysvars::default(),
+            logger: None,
             #[cfg(feature = "fuzz-fd")]
             slot: 0,
         }
@@ -198,7 +200,7 @@ impl Mollusk {
                     self.fee_structure.lamports_per_signature,
                     &sysvar_cache,
                 ),
-                None,
+                self.logger.clone(),
                 self.compute_budget,
             );
             if let Some(precompile) = get_precompile(&instruction.program_id, |feature_id| {

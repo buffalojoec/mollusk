@@ -32,6 +32,7 @@ mollusk-svm-fuzz-fs = { workspace = true, optional = true }
 mollusk-svm-keys = { workspace = true }
 solana-bpf-loader-program = { workspace = true }
 solana-compute-budget = { workspace = true }
+solana-log-collector = { workspace = true }
 solana-logger = { workspace = true }
 solana-program-runtime = { workspace = true }
 solana-stake-program = { workspace = true, optional = true }
