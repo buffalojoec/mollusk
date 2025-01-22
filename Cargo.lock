@@ -594,15 +594,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 
 [[package]]
-name = "cmake"
-version = "0.1.51"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb1e43aa7fd152b1f968787f7dbcdeb306d1867ff373c69955211876c053f91a"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "combine"
 version = "3.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1267,9 +1258,12 @@ checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 
 [[package]]
 name = "heck"
-version = "0.4.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
+checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
+dependencies = [
+ "unicode-segmentation",
+]
 
 [[package]]
 name = "hermit-abi"
@@ -1320,15 +1314,6 @@ dependencies = [
  "digest 0.9.0",
  "generic-array",
  "hmac 0.8.1",
-]
-
-[[package]]
-name = "home"
-version = "0.5.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3d1354bf6b7235cb4a0576c2619fd4ed18183f689b12b006a0ee7329eeff9a5"
-dependencies = [
- "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1664,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "bincode",
  "criterion",
@@ -1691,7 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "chrono",
  "mollusk-svm",
@@ -1703,7 +1688,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-error"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "solana-sdk",
  "thiserror",
@@ -1711,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "mollusk-svm-fuzz-fs",
  "prost",
@@ -1719,11 +1704,12 @@ dependencies = [
  "serde",
  "solana-compute-budget",
  "solana-sdk",
+ "which",
 ]
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture-firedancer"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "mollusk-svm-fuzz-fs",
  "prost",
@@ -1732,11 +1718,12 @@ dependencies = [
  "serde_json",
  "solana-compute-budget",
  "solana-sdk",
+ "which",
 ]
 
 [[package]]
 name = "mollusk-svm-fuzz-fs"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "bs58",
  "prost",
@@ -1747,7 +1734,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-keys"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "mollusk-svm-error",
  "solana-sdk",
@@ -1755,7 +1742,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-memo"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
@@ -1763,7 +1750,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-token"
-version = "0.0.13"
+version = "0.0.15"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
@@ -2138,9 +2125,9 @@ dependencies = [
 
 [[package]]
 name = "prost"
-version = "0.10.4"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71adf41db68aa0daaefc69bb30bcd68ded9b9abaad5d1fbb6304c4fb390e083e"
+checksum = "444879275cb4fd84958b1a1d5420d15e6fcf7c235fe47f053c9c2a80aceb6001"
 dependencies = [
  "bytes",
  "prost-derive",
@@ -2148,13 +2135,11 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.10.4"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae5a4388762d5815a9fc0dea33c56b021cdc8dde0c55e0c9ca57197254b0cab"
+checksum = "62941722fb675d463659e49c4f3fe1fe792ff24fe5bbaa9c08cd3b98a1c354f5"
 dependencies = [
  "bytes",
- "cfg-if",
- "cmake",
  "heck",
  "itertools 0.10.5",
  "lazy_static",
@@ -2170,9 +2155,9 @@ dependencies = [
 
 [[package]]
 name = "prost-derive"
-version = "0.10.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b670f45da57fb8542ebdbb6105a925fe571b67f9e7ed9f47a06a84e72b4e7cc"
+checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
 dependencies = [
  "anyhow",
  "itertools 0.10.5",
@@ -2183,9 +2168,9 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.10.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d0a014229361011dc8e69c8a1ec6c2e8d0f2af7c91e3ea3f5b2170298461e68"
+checksum = "534b7a0e836e3c482d2693070f982e39e7611da9695d4d1f5a4b186b51faef0a"
 dependencies = [
  "bytes",
  "prost",
@@ -3854,6 +3839,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-segmentation"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
+
+[[package]]
 name = "unreachable"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4023,14 +4014,13 @@ checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
 
 [[package]]
 name = "which"
-version = "4.4.2"
+version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87ba24419a2078cd2b0f2ede2691b6c66d8e47836da3b6db8265ebad47afbfc7"
+checksum = "2441c784c52b289a054b7201fc93253e288f094e2f4be9058343127c4226a269"
 dependencies = [
  "either",
- "home",
+ "libc",
  "once_cell",
- "rustix",
 ]
 
 [[package]]
