@@ -1,3 +1,5 @@
+//! # Mollusk
+//!
 //! Mollusk is a lightweight test harness for Solana programs. It provides a
 //! simple interface for testing Solana program executions in a minified
 //! Solana Virtual Machine (SVM) environment.
@@ -21,7 +23,7 @@
 //! on the test harness (the `Mollusk` struct), but can be manipulated through
 //! a handful of helpers.
 //!
-//! Two main API methods are offered:
+//! Four main API methods are offered:
 //!
 //! * `process_instruction`: Process an instruction and return the result.
 //! * `process_and_validate_instruction`: Process an instruction and perform a
@@ -31,6 +33,341 @@
 //! * `process_and_validate_instruction_chain`: Process a chain of instructions
 //!   and perform a series of checks on each result, panicking if any checks
 //!   fail.
+//!
+//! ## Single Instructions
+//!
+//! Both `process_instruction` and `process_and_validate_instruction` deal with
+//! single instructions. The former simply processes the instruction and
+//! returns the result, while the latter processes the instruction and then
+//! performs a series of checks on the result. In both cases, the result is
+//! also returned.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm::Mollusk,
+//!     solana_sdk::{account::Account, instruction::{AccountMeta, Instruction}, pubkey::Pubkey},
+//! };
+//!
+//! let program_id = Pubkey::new_unique();
+//! let key1 = Pubkey::new_unique();
+//! let key2 = Pubkey::new_unique();
+//!
+//! let instruction = Instruction::new_with_bytes(
+//!     program_id,
+//!     &[],
+//!     vec![
+//!         AccountMeta::new(key1, false),
+//!         AccountMeta::new_readonly(key2, false),
+//!     ],
+//! );
+//!
+//! let accounts = vec![
+//!     (key1, Account::default()),
+//!     (key2, Account::default()),
+//! ];
+//!
+//! let mollusk = Mollusk::new(&program_id, "my_program");
+//!
+//! // Execute the instruction and get the result.
+//! let result = mollusk.process_instruction(&instruction, &accounts);
+//! ```
+//!
+//! To apply checks via `process_and_validate_instruction`, developers can use
+//! the `Check` enum, which provides a set of common checks.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm::{Mollusk, result::Check},
+//!     solana_sdk::{
+//!         account::Account,
+//!         instruction::{AccountMeta, Instruction},
+//!         pubkey::Pubkey
+//!         system_instruction,
+//!         system_program,
+//!     },
+//! };
+//!
+//! let sender = Pubkey::new_unique();
+//! let recipient = Pubkey::new_unique();
+//!
+//! let base_lamports = 100_000_000u64;
+//! let transfer_amount = 42_000u64;
+//!
+//! let instruction = system_instruction::transfer(&sender, &recipient, transfer_amount);
+//! let accounts = [
+//!     (
+//!         sender,
+//!         Account::new(base_lamports, 0, &system_program::id()),
+//!     ),
+//!     (
+//!         recipient,
+//!         Account::new(base_lamports, 0, &system_program::id()),
+//!     ),
+//! ];
+//! let checks = vec![
+//!     Check::success(),
+//!     Check::compute_units(system_processor::DEFAULT_COMPUTE_UNITS),
+//!     Check::account(&sender)
+//!         .lamports(base_lamports - transfer_amount)
+//!         .build(),
+//!     Check::account(&recipient)
+//!         .lamports(base_lamports + transfer_amount)
+//!         .build(),
+//! ];
+//!
+//! Mollusk::default().process_and_validate_instruction(
+//!     &instruction,
+//!     &accounts,
+//!     &checks,
+//! );
+//! ```
+//!
+//! Note: `Mollusk::default()` will create a new `Mollusk` instance without
+//! adding any provided BPF programs. It will still contain a subset of the
+//! default builtin programs. For more builtin programs, you can add them
+//! yourself or use the `all-builtins` feature.
+//!
+//! ## Instruction Chains
+//!
+//! Both `process_instruction_chain` and
+//! `process_and_validate_instruction_chain` deal with chains of instructions.
+//! The former processes each instruction in the chain and returns the final
+//! result, while the latter processes each instruction in the chain and then
+//! performs a series of checks on each result. In both cases, the final result
+//! is also returned.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm::Mollusk,
+//!     solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+//! };
+//!
+//! let mollusk = Mollusk::default();
+//!
+//! let alice = Pubkey::new_unique();
+//! let bob = Pubkey::new_unique();
+//! let carol = Pubkey::new_unique();
+//! let dave = Pubkey::new_unique();
+//!
+//! let starting_lamports = 500_000_000;
+//!
+//! let alice_to_bob = 100_000_000;
+//! let bob_to_carol = 50_000_000;
+//! let bob_to_dave = 50_000_000;
+//!
+//! mollusk.process_instruction_chain(
+//!     &[
+//!         system_instruction::transfer(&alice, &bob, alice_to_bob),
+//!         system_instruction::transfer(&bob, &carol, bob_to_carol),
+//!         system_instruction::transfer(&bob, &dave, bob_to_dave),
+//!     ],
+//!     &[
+//!         (alice, system_account_with_lamports(starting_lamports)),
+//!         (bob, system_account_with_lamports(starting_lamports)),
+//!         (carol, system_account_with_lamports(starting_lamports)),
+//!         (dave, system_account_with_lamports(starting_lamports)),
+//!     ],
+//! );
+//! ```
+//!
+//! Just like with `process_and_validate_instruction`, developers can use the
+//! `Check` enum to apply checks via `process_and_validate_instruction_chain`.
+//! Notice that `process_and_validate_instruction_chain` takes a slice of
+//! tuples, where each tuple contains an instruction and a slice of checks.
+//! This allows the developer to apply specific checks to each instruction in
+//! the chain. The result returned by the method is the final result of the
+//! last instruction in the chain.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm::{Mollusk, result::Check},
+//!     solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+//! };
+//!
+//! let mollusk = Mollusk::default();
+//!
+//! let alice = Pubkey::new_unique();
+//! let bob = Pubkey::new_unique();
+//! let carol = Pubkey::new_unique();
+//! let dave = Pubkey::new_unique();
+//!
+//! let starting_lamports = 500_000_000;
+//!
+//! let alice_to_bob = 100_000_000;
+//! let bob_to_carol = 50_000_000;
+//! let bob_to_dave = 50_000_000;
+//!
+//! mollusk.process_and_validate_instruction_chain(
+//!     &[
+//!         (
+//!             // 0: Alice to Bob
+//!             &system_instruction::transfer(&alice, &bob, alice_to_bob),
+//!             &[
+//!                 Check::success(),
+//!                 Check::account(&alice)
+//!                     .lamports(starting_lamports - alice_to_bob) // Alice pays
+//!                     .build(),
+//!                 Check::account(&bob)
+//!                     .lamports(starting_lamports + alice_to_bob) // Bob receives
+//!                     .build(),
+//!                 Check::account(&carol)
+//!                     .lamports(starting_lamports) // Unchanged
+//!                     .build(),
+//!                 Check::account(&dave)
+//!                     .lamports(starting_lamports) // Unchanged
+//!                     .build(),
+//!             ],
+//!         ),
+//!         (
+//!             // 1: Bob to Carol
+//!             &system_instruction::transfer(&bob, &carol, bob_to_carol),
+//!             &[
+//!                 Check::success(),
+//!                 Check::account(&alice)
+//!                     .lamports(starting_lamports - alice_to_bob) // Unchanged
+//!                     .build(),
+//!                 Check::account(&bob)
+//!                     .lamports(starting_lamports + alice_to_bob - bob_to_carol) // Bob pays
+//!                     .build(),
+//!                 Check::account(&carol)
+//!                     .lamports(starting_lamports + bob_to_carol) // Carol receives
+//!                     .build(),
+//!                 Check::account(&dave)
+//!                     .lamports(starting_lamports) // Unchanged
+//!                     .build(),
+//!             ],
+//!         ),
+//!         (
+//!             // 2: Bob to Dave
+//!             &system_instruction::transfer(&bob, &dave, bob_to_dave),
+//!             &[
+//!                 Check::success(),
+//!                 Check::account(&alice)
+//!                     .lamports(starting_lamports - alice_to_bob) // Unchanged
+//!                     .build(),
+//!                 Check::account(&bob)
+//!                     .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave) // Bob pays
+//!                     .build(),
+//!                 Check::account(&carol)
+//!                     .lamports(starting_lamports + bob_to_carol) // Unchanged
+//!                     .build(),
+//!                 Check::account(&dave)
+//!                     .lamports(starting_lamports + bob_to_dave) // Dave receives
+//!                     .build(),
+//!             ],
+//!         ),
+//!     ],
+//!     &[
+//!         (alice, system_account_with_lamports(starting_lamports)),
+//!         (bob, system_account_with_lamports(starting_lamports)),
+//!         (carol, system_account_with_lamports(starting_lamports)),
+//!         (dave, system_account_with_lamports(starting_lamports)),
+//!     ],
+//! );
+//! ```
+//!
+//! It's important to understand that instruction chains _should not_ be
+//! considered equivalent to Solana transactions. Mollusk does not impose
+//! constraints on instruction chains, such as loaded account keys or size.
+//! Developers should recognize that instruction chains are primarily used for
+//! testing program execution.
+//!
+//! ## Fixtures
+//!
+//! Mollusk also supports working with multiple kinds of fixtures, which can
+//! help expand testing capabilities. Note this is all gated behind either the
+//! `fuzz` or `fuzz-fd` feature flags.
+//!
+//! A fixture is a structured representation of a test case, containing the
+//! input data, the expected output data, and any additional context required
+//! to run the test. One fixture maps to one instruction.
+//!
+//! A classic use case for such fixtures is the act of testing two versions of
+//! a program against each other, to ensure the new version behaves as
+//! expected. The original version's test suite can be used to generate a set
+//! of fixtures, which can then be used as inputs to test the new version.
+//! Although you could also simply replace the program ELF file in the test
+//! suite to achieve a similar result, fixtures provide exhaustive coverage.
+//!
+//! ### Generating Fixtures from Mollusk Tests
+//!
+//! Mollusk is capable of generating fixtures from any defined test case. If
+//! the `EJECT_FUZZ_FIXTURES` environment variable is set during a test run,
+//! Mollusk will serialize every invocation of `process_instruction` into a
+//! fixture, using the provided inputs, current Mollusk configurations, and
+//! result returned. `EJECT_FUZZ_FIXTURES_JSON` can also be set to write the
+//! fixtures in JSON format.
+//!
+//! ```ignore
+//! EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
+//! ```
+//!
+//! Note that Mollusk currently supports two types of fixtures: Mollusk's own
+//! fixture layout and the fixture layout used by the Firedancer team. Both of
+//! these layouts stem from Protobuf definitions.
+//!
+//! These layouts live in separate crates, but a snippet of the Mollusk input
+//! data for a fixture can be found below:
+//!
+//! ```rust,ignore
+//! /// Instruction context fixture.
+//! pub struct Context {
+//!     /// The compute budget to use for the simulation.
+//!     pub compute_budget: ComputeBudget,
+//!     /// The feature set to use for the simulation.
+//!     pub feature_set: FeatureSet,
+//!     /// The runtime sysvars to use for the simulation.
+//!     pub sysvars: Sysvars,
+//!     /// The program ID of the program being invoked.
+//!     pub program_id: Pubkey,
+//!     /// Accounts to pass to the instruction.
+//!     pub instruction_accounts: Vec<AccountMeta>,
+//!     /// The instruction data.
+//!     pub instruction_data: Vec<u8>,
+//!     /// Input accounts with state.
+//!     pub accounts: Vec<(Pubkey, Account)>,
+//! }
+//! ```
+//!
+//! ### Loading and Executing Fixtures
+//!
+//! Mollusk can also execute fixtures, just like it can with instructions. The
+//! `process_fixture` method will process a fixture and return the result, while
+//! `process_and_validate_fixture` will process a fixture and compare the result
+//! against the fixture's effects.
+//!
+//! An additional method, `process_and_partially_validate_fixture`, allows
+//! developers to compare the result against the fixture's effects using a
+//! specific subset of checks, rather than the entire set of effects. This
+//! may be useful if you wish to ignore certain effects, such as compute units
+//! consumed.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm::{Mollusk, fuzz::check::FixtureCheck},
+//!     solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+//!     std::{fs, path::Path},
+//! };
+//!
+//! let mollusk = Mollusk::default();
+//!
+//! for file in fs::read_dir(Path::new("fixtures-dir"))? {
+//!     let fixture = Fixture::load_from_blob_file(&entry?.file_name());
+//!
+//!     // Execute the fixture and apply partial checks.
+//!     mollusk.process_and_partially_validate_fixture(
+//!        &fixture,
+//!        &[
+//!            FixtureCheck::ProgramResult,
+//!            FixtureCheck::ReturnData,
+//!            FixtureCheck::all_resulting_accounts(),
+//!         ],
+//!     );
+//! }
+//! ```
+//!
+//! Fixtures can be loaded from files or decoded from raw blobs. These
+//! capabilities are provided by the respective fixture crates.
 
 mod accounts;
 pub mod file;

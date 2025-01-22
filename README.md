@@ -1,14 +1,53 @@
 # Mollusk
 
-SVM program test harness.
+Mollusk is a lightweight test harness for Solana programs. It provides a
+simple interface for testing Solana program executions in a minified
+Solana Virtual Machine (SVM) environment.
 
-## Harness
+It does not create any semblance of a validator runtime, but instead
+provisions a program execution pipeline directly from lower-level SVM
+components.
 
-The harness is designed to directly invoke the loaded executable program using
-the rBPF VM, bypassing any transaction sanitization and runtime checks, and
-instead directly processing the instruction with the VM.
+In summary, the main processor - `process_instruction` - creates minified
+instances of Agave's program cache, transaction context, and invoke
+context. It uses these components to directly execute the provided
+program's ELF using the BPF Loader.
+
+Because it does not use AccountsDB, Bank, or any other large Agave
+components, the harness is exceptionally fast. However, it does require
+the user to provide an explicit list of accounts to use, since it has
+nowhere to load them from.
+
+The test environment can be further configured by adjusting the compute
+budget, feature set, or sysvars. These configurations are stored directly
+on the test harness (the `Mollusk` struct), but can be manipulated through
+a handful of helpers.
+
+Four main API methods are offered:
+
+* `process_instruction`: Process an instruction and return the result.
+* `process_and_validate_instruction`: Process an instruction and perform a
+  series of checks on the result, panicking if any checks fail.
+* `process_instruction_chain`: Process a chain of instructions and return
+  the result.
+* `process_and_validate_instruction_chain`: Process a chain of instructions
+  and perform a series of checks on each result, panicking if any checks
+  fail.
+
+## Single Instructions
+
+Both `process_instruction` and `process_and_validate_instruction` deal with
+single instructions. The former simply processes the instruction and
+returns the result, while the latter processes the instruction and then
+performs a series of checks on the result. In both cases, the result is
+also returned.
 
 ```rust
+use {
+    mollusk_svm::Mollusk,
+    solana_sdk::{account::Account, instruction::{AccountMeta, Instruction}, pubkey::Pubkey},
+};
+
 let program_id = Pubkey::new_unique();
 let key1 = Pubkey::new_unique();
 let key2 = Pubkey::new_unique();
@@ -27,17 +66,27 @@ let accounts = vec![
     (key2, Account::default()),
 ];
 
-let mollusk = Mollusk::new(program_id, "my_program");
+let mollusk = Mollusk::new(&program_id, "my_program");
 
+// Execute the instruction and get the result.
 let result = mollusk.process_instruction(&instruction, &accounts);
 ```
 
-You can also use the `Check` API provided by Mollusk for easy post-execution
-checks, rather than writing them manually. The API method
-`process_and_validate_instruction` will still return the result, allowing you
-to perform further checks if you desire.
+To apply checks via `process_and_validate_instruction`, developers can use
+the `Check` enum, which provides a set of common checks.
 
 ```rust
+use {
+    mollusk_svm::{Mollusk, result::Check},
+    solana_sdk::{
+        account::Account,
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey
+        system_instruction,
+        system_program,
+    },
+};
+
 let sender = Pubkey::new_unique();
 let recipient = Pubkey::new_unique();
 
@@ -73,16 +122,173 @@ Mollusk::default().process_and_validate_instruction(
 );
 ```
 
-## Compute Unit Bencher
+Note: `Mollusk::default()` will create a new `Mollusk` instance without
+adding any provided BPF programs. It will still contain a subset of the
+default builtin programs. For more builtin programs, you can add them
+yourself or use the `all-builtins` feature.
 
-Mollusk also offers a compute unit usage bencher for profiling a program's
-compute unit usage.
+## Instruction Chains
 
-Example:
+Both `process_instruction_chain` and
+`process_and_validate_instruction_chain` deal with chains of instructions.
+The former processes each instruction in the chain and returns the final
+result, while the latter processes each instruction in the chain and then
+performs a series of checks on each result. In both cases, the final result
+is also returned.
 
 ```rust
-// If using with `cargo bench`, tell Mollusk where to find the program.
-std::env::set_var("SBF_OUT_DIR", "../target/deploy");
+use {
+    mollusk_svm::Mollusk,
+    solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+};
+
+let mollusk = Mollusk::default();
+
+let alice = Pubkey::new_unique();
+let bob = Pubkey::new_unique();
+let carol = Pubkey::new_unique();
+let dave = Pubkey::new_unique();
+
+let starting_lamports = 500_000_000;
+
+let alice_to_bob = 100_000_000;
+let bob_to_carol = 50_000_000;
+let bob_to_dave = 50_000_000;
+
+mollusk.process_instruction_chain(
+    &[
+        system_instruction::transfer(&alice, &bob, alice_to_bob),
+        system_instruction::transfer(&bob, &carol, bob_to_carol),
+        system_instruction::transfer(&bob, &dave, bob_to_dave),
+    ],
+    &[
+        (alice, system_account_with_lamports(starting_lamports)),
+        (bob, system_account_with_lamports(starting_lamports)),
+        (carol, system_account_with_lamports(starting_lamports)),
+        (dave, system_account_with_lamports(starting_lamports)),
+    ],
+);
+```
+
+Just like with `process_and_validate_instruction`, developers can use the
+`Check` enum to apply checks via `process_and_validate_instruction_chain`.
+Notice that `process_and_validate_instruction_chain` takes a slice of
+tuples, where each tuple contains an instruction and a slice of checks.
+This allows the developer to apply specific checks to each instruction in
+the chain. The result returned by the method is the final result of the
+last instruction in the chain.
+
+```rust
+use {
+    mollusk_svm::{Mollusk, result::Check},
+    solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+};
+
+let mollusk = Mollusk::default();
+
+let alice = Pubkey::new_unique();
+let bob = Pubkey::new_unique();
+let carol = Pubkey::new_unique();
+let dave = Pubkey::new_unique();
+
+let starting_lamports = 500_000_000;
+
+let alice_to_bob = 100_000_000;
+let bob_to_carol = 50_000_000;
+let bob_to_dave = 50_000_000;
+
+mollusk.process_and_validate_instruction_chain(
+    &[
+        (
+            // 0: Alice to Bob
+            &system_instruction::transfer(&alice, &bob, alice_to_bob),
+            &[
+                Check::success(),
+                Check::account(&alice)
+                    .lamports(starting_lamports - alice_to_bob) // Alice pays
+                    .build(),
+                Check::account(&bob)
+                    .lamports(starting_lamports + alice_to_bob) // Bob receives
+                    .build(),
+                Check::account(&carol)
+                    .lamports(starting_lamports) // Unchanged
+                    .build(),
+                Check::account(&dave)
+                    .lamports(starting_lamports) // Unchanged
+                    .build(),
+            ],
+        ),
+        (
+            // 1: Bob to Carol
+            &system_instruction::transfer(&bob, &carol, bob_to_carol),
+            &[
+                Check::success(),
+                Check::account(&alice)
+                    .lamports(starting_lamports - alice_to_bob) // Unchanged
+                    .build(),
+                Check::account(&bob)
+                    .lamports(starting_lamports + alice_to_bob - bob_to_carol) // Bob pays
+                    .build(),
+                Check::account(&carol)
+                    .lamports(starting_lamports + bob_to_carol) // Carol receives
+                    .build(),
+                Check::account(&dave)
+                    .lamports(starting_lamports) // Unchanged
+                    .build(),
+            ],
+        ),
+        (
+            // 2: Bob to Dave
+            &system_instruction::transfer(&bob, &dave, bob_to_dave),
+            &[
+                Check::success(),
+                Check::account(&alice)
+                    .lamports(starting_lamports - alice_to_bob) // Unchanged
+                    .build(),
+                Check::account(&bob)
+                    .lamports(starting_lamports + alice_to_bob - bob_to_carol - bob_to_dave) // Bob pays
+                    .build(),
+                Check::account(&carol)
+                    .lamports(starting_lamports + bob_to_carol) // Unchanged
+                    .build(),
+                Check::account(&dave)
+                    .lamports(starting_lamports + bob_to_dave) // Dave receives
+                    .build(),
+            ],
+        ),
+    ],
+    &[
+        (alice, system_account_with_lamports(starting_lamports)),
+        (bob, system_account_with_lamports(starting_lamports)),
+        (carol, system_account_with_lamports(starting_lamports)),
+        (dave, system_account_with_lamports(starting_lamports)),
+    ],
+);
+```
+
+It's important to understand that instruction chains _should not_ be
+considered equivalent to Solana transactions. Mollusk does not impose
+constraints on instruction chains, such as loaded account keys or size.
+Developers should recognize that instruction chains are primarily used for
+testing program execution.
+
+## Benchmarking Compute Units
+The Mollusk Compute Unit Bencher can be used to benchmark the compute unit
+usage of Solana programs. It provides a simple API for developers to write
+benchmarks for their programs, which can be checked while making changes to
+the program.
+
+A markdown file is generated, which captures all of the compute unit
+benchmarks. If a benchmark has a previous value, the delta is also
+recorded. This can be useful for developers to check the implications of
+changes to the program on compute unit usage.
+
+```rust
+use {
+    mollusk_svm_bencher::MolluskComputeUnitBencher,
+    mollusk_svm::Mollusk,
+    /* ... */
+};
 
 // Optionally disable logging.
 solana_logger::setup_with("");
@@ -99,10 +305,15 @@ MolluskComputeUnitBencher::new(mollusk)
     .must_pass(true)
     .out_dir("../target/benches")
     .execute();
+
 ```
 
-You can invoke this benchmark test with `cargo bench`. Don't forget to add a
-bench to your project's `Cargo.toml`.
+The `must_pass` argument can be provided to trigger a panic if any defined
+benchmark tests do not pass. `out_dir` specifies the directory where the
+markdown file will be written.
+
+Developers can invoke this benchmark test with `cargo bench`. They may need
+to add a bench to the project's `Cargo.toml`.
 
 ```toml
 [[bench]]
@@ -110,51 +321,110 @@ name = "compute_units"
 harness = false
 ```
 
-Mollusk will output bench details to the output directory in Markdown.
+The markdown file will contain entries according to the defined benchmarks.
 
-> Note: `Delta` is the change since the last time the bench was run.
-
-| Name | CUs | Delta |
-|------|--------|------------|
-| bench0 | 450 | -- |
-| bench1 | 579 | -129 |
-| bench2 | 1,204 | +754 |
+```markdown
+| Name   | CUs   | Delta  |
+|--------|-------|--------|
+| bench0 | 450   | --     |
+| bench1 | 579   | -129   |
+| bench2 | 1,204 | +754   |
 | bench3 | 2,811 | +2,361 |
-
-## Fuzz Fixture Support
-
-Mollusk also has first-class support for generating fixtures from tests, which
-can be used for things like fuzzing.
-
-There are two protobuf layouts supported by Mollusk:
-* [`org.mollusk.svm`](./fuzz/fixture/proto): The protobuf layouts defined by
-  the Mollusk library, which map directly to the structure of a Mollusk unit
-  test.
-* [`org.solana.sealevel.v1`](./fuzz/fixture-fd/proto): The protobuf layouts
-  defined by Firedancer and used to test program instructions between targets
-  on Firedancer and Agave.
-
-Each protobuf layout has its own corresponding crate for all of the binding
-support: `mollusk-svm-fuzz-fixture` and `mollusk-svm-fuzz-fixture-firedancer` 
-respectively.
-
-The base library itself (`mollusk-svm`) provides support for working with
-fixtures directly from a Mollusk instance, via the `fuzz` and `fuzz-fd` feature
-flags, which can be used standalone or together.
-
-When either fuzz-fixture feature flag is enabled, Mollusk can do the following:
-* Generate a fixture from a unit test.
-* Process a given fixture as a unit test.
-* Convert to and from fixtures to Mollusk tests and results.
-
-To generate a fuzz fixture from a Mollusk unit test, provide the necessary
-environment variables alongside your call to `cargo test-sbf`, like so:
-
-```
-EJECT_FUZZ_FIXTURES="my/fixtures/dir" cargo test-sbf ...
 ```
 
-JSON versions of fixtures are also supported.
+## Fixtures
 
-See the documentation in [`harness/src/lib.rs`](./harness/src/lib.rs) for more
-information.
+Mollusk also supports working with multiple kinds of fixtures, which can
+help expand testing capabilities. Note this is all gated behind either the
+`fuzz` or `fuzz-fd` feature flags.
+
+A fixture is a structured representation of a test case, containing the
+input data, the expected output data, and any additional context required
+to run the test. One fixture maps to one instruction.
+
+A classic use case for such fixtures is the act of testing two versions of
+a program against each other, to ensure the new version behaves as
+expected. The original version's test suite can be used to generate a set
+of fixtures, which can then be used as inputs to test the new version.
+Although you could also simply replace the program ELF file in the test
+suite to achieve a similar result, fixtures provide exhaustive coverage.
+
+### Generating Fixtures from Mollusk Tests
+
+Mollusk is capable of generating fixtures from any defined test case. If
+the `EJECT_FUZZ_FIXTURES` environment variable is set during a test run,
+Mollusk will serialize every invocation of `process_instruction` into a
+fixture, using the provided inputs, current Mollusk configurations, and
+result returned. `EJECT_FUZZ_FIXTURES_JSON` can also be set to write the
+fixtures in JSON format.
+
+```
+EJECT_FUZZ_FIXTURES="./fuzz-fixtures" cargo test-sbf ...
+```
+
+Note that Mollusk currently supports two types of fixtures: Mollusk's own
+fixture layout and the fixture layout used by the Firedancer team. Both of
+these layouts stem from Protobuf definitions.
+
+These layouts live in separate crates, but a snippet of the Mollusk input
+data for a fixture can be found below:
+
+```rust
+/// Instruction context fixture.
+pub struct Context {
+    /// The compute budget to use for the simulation.
+    pub compute_budget: ComputeBudget,
+    /// The feature set to use for the simulation.
+    pub feature_set: FeatureSet,
+    /// The runtime sysvars to use for the simulation.
+    pub sysvars: Sysvars,
+    /// The program ID of the program being invoked.
+    pub program_id: Pubkey,
+    /// Accounts to pass to the instruction.
+    pub instruction_accounts: Vec<AccountMeta>,
+    /// The instruction data.
+    pub instruction_data: Vec<u8>,
+    /// Input accounts with state.
+    pub accounts: Vec<(Pubkey, Account)>,
+}
+```
+
+### Loading and Executing Fixtures
+
+Mollusk can also execute fixtures, just like it can with instructions. The
+`process_fixture` method will process a fixture and return the result, while
+`process_and_validate_fixture` will process a fixture and compare the result
+against the fixture's effects.
+
+An additional method, `process_and_partially_validate_fixture`, allows
+developers to compare the result against the fixture's effects using a
+specific subset of checks, rather than the entire set of effects. This
+may be useful if you wish to ignore certain effects, such as compute units
+consumed.
+
+```rust
+use {
+    mollusk_svm::{Mollusk, fuzz::check::FixtureCheck},
+    solana_sdk::{account::Account, pubkey::Pubkey, system_instruction},
+    std::{fs, path::Path},
+};
+
+let mollusk = Mollusk::default();
+
+for file in fs::read_dir(Path::new("fixtures-dir"))? {
+    let fixture = Fixture::load_from_blob_file(&entry?.file_name());
+
+    // Execute the fixture and apply partial checks.
+    mollusk.process_and_partially_validate_fixture(
+       &fixture,
+       &[
+           FixtureCheck::ProgramResult,
+           FixtureCheck::ReturnData,
+           FixtureCheck::all_resulting_accounts(),
+        ],
+    );
+}
+```
+
+Fixtures can be loaded from files or decoded from raw blobs. These
+capabilities are provided by the respective fixture crates.

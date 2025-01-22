@@ -1,4 +1,60 @@
-//! Compute unit benchmarking for Solana programs.
+//! The Mollusk Compute Unit Bencher can be used to benchmark the compute unit
+//! usage of Solana programs. It provides a simple API for developers to write
+//! benchmarks for their programs, which can be checked while making changes to
+//! the program.
+//!
+//! A markdown file is generated, which captures all of the compute unit
+//! benchmarks. If a benchmark has a previous value, the delta is also
+//! recorded. This can be useful for developers to check the implications of
+//! changes to the program on compute unit usage.
+//!
+//! ```rust,ignore
+//! use {
+//!     mollusk_svm_bencher::MolluskComputeUnitBencher,
+//!     mollusk_svm::Mollusk,
+//!     /* ... */
+//! };
+//!
+//! // Optionally disable logging.
+//! solana_logger::setup_with("");
+//!
+//! /* Instruction & accounts setup ... */
+//!
+//! let mollusk = Mollusk::new(&program_id, "my_program");
+//!
+//! MolluskComputeUnitBencher::new(mollusk)
+//!     .bench(("bench0", &instruction0, &accounts0))
+//!     .bench(("bench1", &instruction1, &accounts1))
+//!     .bench(("bench2", &instruction2, &accounts2))
+//!     .bench(("bench3", &instruction3, &accounts3))
+//!     .must_pass(true)
+//!     .out_dir("../target/benches")
+//!     .execute();
+//! ```
+//!
+//! The `must_pass` argument can be provided to trigger a panic if any defined
+//! benchmark tests do not pass. `out_dir` specifies the directory where the
+//! markdown file will be written.
+//!
+//! Developers can invoke this benchmark test with `cargo bench`. They may need
+//! to add a bench to the project's `Cargo.toml`.
+//!
+//! ```toml
+//! [[bench]]
+//! name = "compute_units"
+//! harness = false
+//! ```
+//!
+//! The markdown file will contain entries according to the defined benchmarks.
+//!
+//! ```markdown
+//! | Name   | CUs   | Delta  |
+//! |--------|-------|--------|
+//! | bench0 | 450   | --     |
+//! | bench1 | 579   | -129   |
+//! | bench2 | 1,204 | +754   |
+//! | bench3 | 2,811 | +2,361 |
+//! ```
 
 mod result;
 
