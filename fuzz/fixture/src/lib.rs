@@ -17,8 +17,8 @@ pub mod sysvars;
 
 use {
     crate::{context::Context, effects::Effects, proto::InstrFixture as ProtoFixture},
-    mollusk_svm_fuzz_fs::{FsHandler, IntoSerializableFixture, SerializableFixture},
     solana_sdk::keccak::{Hash, Hasher},
+    solana_svm_fuzz_harness_fixture_fs::{FsHandler, IntoSerializableFixture, SerializableFixture},
 };
 
 /// A fixture for invoking a single instruction against a simulated SVM
@@ -33,17 +33,17 @@ pub struct Fixture {
 
 impl Fixture {
     pub fn decode(blob: &[u8]) -> Self {
-        let proto_fixture = <ProtoFixture as SerializableFixture>::decode(blob);
+        let proto_fixture = <ProtoFixture as SerializableFixture>::decode(blob).unwrap();
         proto_fixture.into()
     }
 
     pub fn load_from_blob_file(file_path: &str) -> Self {
-        let proto_fixture: ProtoFixture = FsHandler::load_from_blob_file(file_path);
+        let proto_fixture: ProtoFixture = FsHandler::load_from_blob_file(file_path).unwrap();
         proto_fixture.into()
     }
 
     pub fn load_from_json_file(file_path: &str) -> Self {
-        let proto_fixture: ProtoFixture = FsHandler::load_from_json_file(file_path);
+        let proto_fixture: ProtoFixture = FsHandler::load_from_json_file(file_path).unwrap();
         proto_fixture.into()
     }
 }
@@ -94,12 +94,12 @@ mod tests {
     use {
         super::{proto::InstrFixture, Fixture},
         crate::{context::Context, effects::Effects, sysvars::Sysvars},
-        mollusk_svm_fuzz_fs::SerializableFixture,
         solana_compute_budget::compute_budget::ComputeBudget,
         solana_sdk::{
             account::Account, feature_set::FeatureSet, instruction::AccountMeta, keccak::Hash,
             pubkey::Pubkey,
         },
+        solana_svm_fuzz_harness_fixture_fs::SerializableFixture,
     };
 
     fn produce_hash(fixture: &Fixture) -> Hash {

@@ -13,14 +13,13 @@ use {
         account::{Account, WritableAccount},
         instruction::Instruction,
         pubkey::Pubkey,
-        transaction_context::{InstructionAccount, TransactionAccount},
+        transaction_context::InstructionAccount,
     },
 };
 
 pub struct CompiledAccounts {
-    pub program_id_index: u16,
     pub instruction_accounts: Vec<InstructionAccount>,
-    pub transaction_accounts: Vec<TransactionAccount>,
+    pub transaction_accounts: Vec<(Pubkey, Account)>,
 }
 
 pub fn compile_accounts(
@@ -46,7 +45,6 @@ pub fn compile_accounts(
     );
 
     CompiledAccounts {
-        program_id_index: compiled_instruction.program_id_index as u16,
         instruction_accounts,
         transaction_accounts,
     }

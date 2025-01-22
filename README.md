@@ -130,13 +130,12 @@ There are two protobuf layouts supported by Mollusk:
 * [`org.mollusk.svm`](./fuzz/fixture/proto): The protobuf layouts defined by
   the Mollusk library, which map directly to the structure of a Mollusk unit
   test.
-* [`org.solana.sealevel.v1`](./fuzz/fixture-fd/proto): The protobuf layouts
-  defined by Firedancer and used to test program instructions between targets
-  on Firedancer and Agave.
+* `org.solana.sealevel.v1`: The protobuf layouts defined by Firedancer and used
+  to test program instructions between targets on Firedancer and Agave.
 
-Each protobuf layout has its own corresponding crate for all of the binding
-support: `mollusk-svm-fuzz-fixture` and `mollusk-svm-fuzz-fixture-firedancer` 
-respectively.
+The first (`mollusk-svm-fuzz-fixture`) is a crate defined alongside the Mollusk
+library, and the other (`solana-svm-fuzz-harness-fixture`) comes from Agave's
+SVM stack.
 
 The base library itself (`mollusk-svm`) provides support for working with
 fixtures directly from a Mollusk instance, via the `fuzz` and `fuzz-fd` feature

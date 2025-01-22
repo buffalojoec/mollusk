@@ -10,21 +10,24 @@ use {
         result::InstructionResult,
         Mollusk, DEFAULT_LOADER_KEY,
     },
-    mollusk_svm_fuzz_fixture_firedancer::{
-        context::{
-            Context as FuzzContext, EpochContext as FuzzEpochContext,
-            SlotContext as FuzzSlotContext,
-        },
-        effects::Effects as FuzzEffects,
-        metadata::Metadata as FuzzMetadata,
-        Fixture as FuzzFixture,
-    },
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_sdk::{
         account::Account,
         feature_set::FeatureSet,
         instruction::{AccountMeta, Instruction, InstructionError},
         pubkey::Pubkey,
+        transaction_context::InstructionAccount,
+    },
+    solana_svm_fuzz_harness_fixture::{
+        context::{
+            epoch_context::EpochContext as FuzzEpochContext,
+            slot_context::SlotContext as FuzzSlotContext,
+        },
+        invoke::{
+            context::InstrContext as FuzzContext, effects::InstrEffects as FuzzEffects,
+            instr_account::InstrAccount as FuzzInstrAccount,
+            metadata::FixtureMetadata as FuzzMetadata, InstrFixture as FuzzFixture,
+        },
     },
 };
 
@@ -51,21 +54,6 @@ static BUILTIN_PROGRAM_IDS: &[Pubkey] = &[
     zk_elgamal_proof_program::id(),
 ];
 
-fn instr_err_to_num(error: &InstructionError) -> i32 {
-    let serialized_err = bincode::serialize(error).unwrap();
-    i32::from_le_bytes((&serialized_err[0..4]).try_into().unwrap()) + 1
-}
-
-fn num_to_instr_err(num: i32, custom_code: u32) -> InstructionError {
-    let val = (num - 1) as u64;
-    let le = val.to_le_bytes();
-    let mut deser = bincode::deserialize(&le).unwrap();
-    if custom_code != 0 && matches!(deser, InstructionError::Custom(_)) {
-        deser = InstructionError::Custom(custom_code);
-    }
-    deser
-}
-
 fn build_fixture_context(
     accounts: &[(Pubkey, Account)],
     compute_budget: &ComputeBudget,
@@ -85,14 +73,25 @@ fn build_fixture_context(
         ..
     } = compile_accounts(instruction, accounts, loader_key);
 
-    let accounts = transaction_accounts
+    let instruction_accounts = instruction_accounts
         .into_iter()
-        .map(|(key, account)| (key, account.into(), None))
-        .collect::<Vec<_>>();
+        .map(
+            |InstructionAccount {
+                 index_in_transaction,
+                 is_signer,
+                 is_writable,
+                 ..
+             }| FuzzInstrAccount {
+                index: index_in_transaction as u32,
+                is_signer,
+                is_writable,
+            },
+        )
+        .collect();
 
     FuzzContext {
         program_id: instruction.program_id,
-        accounts,
+        accounts: transaction_accounts,
         instruction_accounts,
         instruction_data: instruction.data.clone(),
         compute_units_available: compute_budget.compute_unit_limit,
@@ -127,16 +126,11 @@ pub(crate) fn parse_fixture_context(context: &FuzzContext) -> ParsedFixtureConte
         ..Default::default()
     };
 
-    let accounts = accounts
-        .iter()
-        .map(|(key, acct, _)| (*key, acct.clone()))
-        .collect::<Vec<_>>();
-
     let metas = instruction_accounts
         .iter()
         .map(|ia| {
             let pubkey = accounts
-                .get(ia.index_in_caller as usize)
+                .get(ia.index as usize)
                 .expect("Index out of bounds")
                 .0;
             AccountMeta {
@@ -150,7 +144,7 @@ pub(crate) fn parse_fixture_context(context: &FuzzContext) -> ParsedFixtureConte
     let instruction = Instruction::new_with_bytes(*program_id, instruction_data, metas);
 
     ParsedFixtureContext {
-        accounts,
+        accounts: accounts.clone(),
         compute_budget,
         feature_set: epoch_context.feature_set.clone(),
         instruction,
@@ -159,28 +153,21 @@ pub(crate) fn parse_fixture_context(context: &FuzzContext) -> ParsedFixtureConte
 }
 
 fn build_fixture_effects(context: &FuzzContext, result: &InstructionResult) -> FuzzEffects {
-    let mut program_custom_code = 0;
-    let program_result = match &result.raw_result {
-        Ok(()) => 0,
-        Err(e) => {
-            if let InstructionError::Custom(code) = e {
-                program_custom_code = *code;
-            }
-            instr_err_to_num(e)
-        }
+    let program_custom_code = if let Err(InstructionError::Custom(code)) = &result.raw_result {
+        Some(*code)
+    } else {
+        None
     };
-
-    let return_data = result.return_data.clone();
 
     let modified_accounts = context
         .accounts
         .iter()
-        .filter_map(|(key, account, seed_addr)| {
+        .filter_map(|(key, account)| {
             if let Some((_, resulting_account)) =
                 result.resulting_accounts.iter().find(|(k, _)| k == key)
             {
                 if account != resulting_account {
-                    return Some((*key, resulting_account.clone(), seed_addr.clone()));
+                    return Some((*key, resulting_account.clone()));
                 }
             }
             None
@@ -188,13 +175,13 @@ fn build_fixture_effects(context: &FuzzContext, result: &InstructionResult) -> F
         .collect();
 
     FuzzEffects {
-        program_result,
+        program_result: result.raw_result.clone().err(),
         program_custom_code,
         modified_accounts,
         compute_units_available: context
             .compute_units_available
             .saturating_sub(result.compute_units_consumed),
-        return_data,
+        return_data: result.return_data.clone(),
     }
 }
 
@@ -203,14 +190,7 @@ pub(crate) fn parse_fixture_effects(
     compute_unit_limit: u64,
     effects: &FuzzEffects,
 ) -> InstructionResult {
-    let raw_result = if effects.program_result == 0 {
-        Ok(())
-    } else {
-        Err(num_to_instr_err(
-            effects.program_result,
-            effects.program_custom_code,
-        ))
-    };
+    let raw_result = effects.program_result.clone().map_or(Ok(()), Err);
 
     let program_result = raw_result.clone().into();
     let return_data = effects.return_data.clone();
@@ -221,8 +201,8 @@ pub(crate) fn parse_fixture_effects(
             let resulting_account = effects
                 .modified_accounts
                 .iter()
-                .find(|(k, _, _)| k == key)
-                .map(|(_, acct, _)| acct.clone())
+                .find(|(k, _)| k == key)
+                .map(|(_, acct)| acct.clone())
                 .unwrap_or_else(|| acct.clone());
             (*key, resulting_account)
         })
@@ -268,9 +248,7 @@ pub fn build_fixture_from_mollusk_test(
     }
 }
 
-pub fn load_firedancer_fixture(
-    fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
-) -> (ParsedFixtureContext, InstructionResult) {
+pub fn load_firedancer_fixture(fixture: &FuzzFixture) -> (ParsedFixtureContext, InstructionResult) {
     let parsed = parse_fixture_context(&fixture.input);
     let result = parse_fixture_effects(
         &parsed.accounts,
@@ -278,38 +256,4 @@ pub fn load_firedancer_fixture(
         &fixture.output,
     );
     (parsed, result)
-}
-
-#[test]
-fn test_num_to_instr_err() {
-    [
-        InstructionError::InvalidArgument,
-        InstructionError::InvalidInstructionData,
-        InstructionError::InvalidAccountData,
-        InstructionError::AccountDataTooSmall,
-        InstructionError::InsufficientFunds,
-        InstructionError::IncorrectProgramId,
-        InstructionError::MissingRequiredSignature,
-        InstructionError::AccountAlreadyInitialized,
-        InstructionError::UninitializedAccount,
-        InstructionError::UnbalancedInstruction,
-        InstructionError::ModifiedProgramId,
-        InstructionError::Custom(0),
-        InstructionError::Custom(1),
-        InstructionError::Custom(2),
-        InstructionError::Custom(5),
-        InstructionError::Custom(400),
-        InstructionError::Custom(600),
-        InstructionError::Custom(1_000),
-    ]
-    .into_iter()
-    .for_each(|ie| {
-        let mut custom_code = 0;
-        if let InstructionError::Custom(c) = &ie {
-            custom_code = *c;
-        }
-        let result = instr_err_to_num(&ie);
-        let err = num_to_instr_err(result, custom_code);
-        assert_eq!(ie, err);
-    })
 }

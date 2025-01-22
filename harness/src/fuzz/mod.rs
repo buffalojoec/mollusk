@@ -7,8 +7,8 @@ pub mod mollusk;
 
 use {
     crate::{result::InstructionResult, Mollusk},
-    mollusk_svm_fuzz_fs::FsHandler,
     solana_sdk::{account::Account, instruction::Instruction, pubkey::Pubkey},
+    solana_svm_fuzz_harness_fixture_fs::FsHandler,
 };
 
 pub fn generate_fixtures_from_mollusk_test(
@@ -26,11 +26,11 @@ pub fn generate_fixtures_from_mollusk_test(
                 mollusk::build_fixture_from_mollusk_test(mollusk, instruction, accounts, result);
             let handler = FsHandler::new(fixture);
             if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES") {
-                handler.dump_to_blob_file(&blob_dir);
+                handler.dump_to_blob_file(&blob_dir).unwrap();
             }
 
             if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON") {
-                handler.dump_to_json_file(&json_dir);
+                handler.dump_to_json_file(&json_dir).unwrap();
             }
         }
     }
@@ -43,11 +43,11 @@ pub fn generate_fixtures_from_mollusk_test(
                 firedancer::build_fixture_from_mollusk_test(mollusk, instruction, accounts, result);
             let handler = FsHandler::new(fixture);
             if let Ok(blob_dir) = std::env::var("EJECT_FUZZ_FIXTURES_FD") {
-                handler.dump_to_blob_file(&blob_dir);
+                handler.dump_to_blob_file(&blob_dir).unwrap();
             }
 
             if let Ok(json_dir) = std::env::var("EJECT_FUZZ_FIXTURES_JSON_FD") {
-                handler.dump_to_json_file(&json_dir);
+                handler.dump_to_json_file(&json_dir).unwrap();
             }
         }
     }
