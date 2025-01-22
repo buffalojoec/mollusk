@@ -455,7 +455,7 @@ impl Mollusk {
     /// `Mollusk` instance (and cache).
     pub fn process_firedancer_fixture(
         &mut self,
-        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+        fixture: &solana_svm_fuzz_harness_fixture::invoke::InstrFixture,
     ) -> InstructionResult {
         let fuzz::firedancer::ParsedFixtureContext {
             accounts,
@@ -492,7 +492,7 @@ impl Mollusk {
     /// `&[FixtureCheck::All]` for `checks`.
     pub fn process_and_validate_firedancer_fixture(
         &mut self,
-        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+        fixture: &solana_svm_fuzz_harness_fixture::invoke::InstrFixture,
     ) -> InstructionResult {
         let fuzz::firedancer::ParsedFixtureContext {
             accounts,
@@ -541,7 +541,7 @@ impl Mollusk {
     /// `&[FixtureCheck::All]` for `checks`.
     pub fn process_and_partially_validate_firedancer_fixture(
         &mut self,
-        fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
+        fixture: &solana_svm_fuzz_harness_fixture::invoke::InstrFixture,
         checks: &[fuzz::check::FixtureCheck],
     ) -> InstructionResult {
         let fuzz::firedancer::ParsedFixtureContext {

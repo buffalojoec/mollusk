@@ -19,7 +19,7 @@ fuzz = [
     "dep:solana-svm-fuzz-harness-fixture-fs",
 ]
 fuzz-fd = [
-    "dep:mollusk-svm-fuzz-fixture-firedancer",
+    "dep:solana-svm-fuzz-harness-fixture",
     "dep:solana-svm-fuzz-harness-fixture-fs",
 ]
 
@@ -27,7 +27,6 @@ fuzz-fd = [
 bincode = { workspace = true }
 mollusk-svm-error = { workspace = true }
 mollusk-svm-fuzz-fixture = { workspace = true, optional = true }
-mollusk-svm-fuzz-fixture-firedancer = { workspace = true, optional = true }
 mollusk-svm-keys = { workspace = true }
 solana-bpf-loader-program = { workspace = true }
 solana-compute-budget = { workspace = true }
@@ -37,6 +36,7 @@ solana-program-runtime = { workspace = true }
 solana-stake-program = { workspace = true, optional = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
+solana-svm-fuzz-harness-fixture = { workspace = true, features = ["serde"], optional = true }
 solana-svm-fuzz-harness-fixture-fs = { workspace = true, optional = true }
 solana-svm-fuzz-harness-instr-entrypoint = { workspace = true }
 

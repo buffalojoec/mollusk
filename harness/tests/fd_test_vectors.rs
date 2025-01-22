@@ -7,12 +7,9 @@ use {
         },
         Mollusk,
     },
-    mollusk_svm_fuzz_fixture_firedancer::{account::SeedAddress, Fixture},
     rayon::prelude::*,
-    solana_sdk::{
-        account::Account, feature_set::FeatureSet, pubkey::Pubkey,
-        transaction_context::InstructionAccount,
-    },
+    solana_sdk::{account::Account, feature_set::FeatureSet, pubkey::Pubkey},
+    solana_svm_fuzz_harness_fixture::invoke::{instr_account::InstrAccount, InstrFixture},
     std::{assert_eq, fs, path::Path, process::Command},
 };
 
@@ -51,7 +48,8 @@ fn test_load_firedancer_fixtures() {
             .for_each(|entry| {
                 let path = entry.unwrap().path();
                 if path.is_file() && path.extension().is_some_and(|ext| ext == "fix") {
-                    let loaded_fixture = Fixture::load_from_blob_file(path.to_str().unwrap());
+                    let loaded_fixture =
+                        InstrFixture::load_from_blob_file(path.to_str().unwrap()).unwrap();
                     let (
                         ParsedFixtureContext {
                             accounts,
@@ -125,10 +123,7 @@ fn test_load_firedancer_fixtures() {
     });
 }
 
-fn compare_accounts(
-    a: &[(Pubkey, Account, Option<SeedAddress>)],
-    b: &[(Pubkey, Account, Option<SeedAddress>)],
-) -> bool {
+fn compare_accounts(a: &[(Pubkey, Account)], b: &[(Pubkey, Account)]) -> bool {
     if a.len() != b.len() {
         return false;
     }
@@ -137,14 +132,14 @@ fn compare_accounts(
     let mut b_sorted = b.to_vec();
 
     // Sort by Pubkey
-    a_sorted.sort_by(|(pubkey_a, _, _), (pubkey_b, _, _)| pubkey_a.cmp(pubkey_b));
-    b_sorted.sort_by(|(pubkey_a, _, _), (pubkey_b, _, _)| pubkey_a.cmp(pubkey_b));
+    a_sorted.sort_by(|(pubkey_a, _), (pubkey_b, _)| pubkey_a.cmp(pubkey_b));
+    b_sorted.sort_by(|(pubkey_a, _), (pubkey_b, _)| pubkey_a.cmp(pubkey_b));
 
     // Compare sorted lists
     a_sorted == b_sorted
 }
 
-fn compare_instruction_accounts(a: &[InstructionAccount], b: &[InstructionAccount]) -> bool {
+fn compare_instruction_accounts(a: &[InstrAccount], b: &[InstrAccount]) -> bool {
     if a.len() != b.len() {
         return false;
     }
@@ -152,9 +147,9 @@ fn compare_instruction_accounts(a: &[InstructionAccount], b: &[InstructionAccoun
     let mut a_sorted = a.to_vec();
     let mut b_sorted = b.to_vec();
 
-    // Sort by Pubkey
-    a_sorted.sort_by(|ia_a, ia_b| ia_a.index_in_transaction.cmp(&ia_b.index_in_transaction));
-    b_sorted.sort_by(|ia_a, ia_b| ia_a.index_in_transaction.cmp(&ia_b.index_in_transaction));
+    // Sort by index
+    a_sorted.sort_by(|ia_a, ia_b| ia_a.index.cmp(&ia_b.index));
+    b_sorted.sort_by(|ia_a, ia_b| ia_a.index.cmp(&ia_b.index));
 
     // Compare sorted lists
     a_sorted == b_sorted

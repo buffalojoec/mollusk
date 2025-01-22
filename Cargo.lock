@@ -1808,7 +1808,6 @@ dependencies = [
  "libsecp256k1",
  "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
- "mollusk-svm-fuzz-fixture-firedancer",
  "mollusk-svm-keys",
  "rand 0.7.3",
  "rayon",
@@ -1820,6 +1819,7 @@ dependencies = [
  "solana-program-runtime",
  "solana-sdk",
  "solana-stake-program",
+ "solana-svm-fuzz-harness-fixture",
  "solana-svm-fuzz-harness-fixture-fs",
  "solana-svm-fuzz-harness-instr-entrypoint",
  "solana-system-program",
@@ -1852,19 +1852,6 @@ dependencies = [
  "prost",
  "prost-build",
  "serde",
- "solana-compute-budget",
- "solana-sdk",
- "solana-svm-fuzz-harness-fixture-fs",
-]
-
-[[package]]
-name = "mollusk-svm-fuzz-fixture-firedancer"
-version = "0.0.13"
-dependencies = [
- "prost",
- "prost-build",
- "serde",
- "serde_json",
  "solana-compute-budget",
  "solana-sdk",
  "solana-svm-fuzz-harness-fixture-fs",
@@ -3468,6 +3455,26 @@ dependencies = [
  "solana-sdk",
  "solana-type-overrides",
  "solana-vote-program",
+]
+
+[[package]]
+name = "solana-svm-fuzz-harness-fixture"
+version = "2.1.6"
+dependencies = [
+ "bincode",
+ "lazy_static",
+ "prost",
+ "prost-build",
+ "serde",
+ "solana-account",
+ "solana-feature-set",
+ "solana-hash",
+ "solana-instruction",
+ "solana-pubkey",
+ "solana-sdk",
+ "solana-signature",
+ "solana-svm-fuzz-harness-fixture-fs",
+ "thiserror",
 ]
 
 [[package]]
