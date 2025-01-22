@@ -38,7 +38,7 @@ solana-program-runtime = { workspace = true }
 solana-stake-program = { workspace = true, optional = true }
 solana-system-program = { workspace = true }
 solana-sdk = { workspace = true }
-solana-timings = { workspace = true }
+solana-svm-fuzz-harness-instr-entrypoint = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

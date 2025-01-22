@@ -1812,8 +1812,8 @@ dependencies = [
  "solana-program-runtime",
  "solana-sdk",
  "solana-stake-program",
+ "solana-svm-fuzz-harness-instr-entrypoint",
  "solana-system-program",
- "solana-timings",
 ]
 
 [[package]]
@@ -3470,6 +3470,22 @@ dependencies = [
  "solana-sdk",
  "solana-type-overrides",
  "solana-vote-program",
+]
+
+[[package]]
+name = "solana-svm-fuzz-harness-instr-entrypoint"
+version = "2.1.6"
+dependencies = [
+ "solana-account",
+ "solana-compute-budget",
+ "solana-feature-set",
+ "solana-hash",
+ "solana-instruction",
+ "solana-program-runtime",
+ "solana-pubkey",
+ "solana-rent",
+ "solana-sdk",
+ "solana-timings",
 ]
 
 [[package]]

@@ -49,14 +49,11 @@ use {
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
     solana_compute_budget::compute_budget::ComputeBudget,
-    solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
         account::Account, bpf_loader_upgradeable, feature_set::FeatureSet, fee::FeeStructure,
-        hash::Hash, instruction::Instruction, precompiles::get_precompile, pubkey::Pubkey,
-        transaction_context::TransactionContext,
+        hash::Hash, instruction::Instruction, pubkey::Pubkey,
     },
-    solana_timings::ExecuteTimings,
-    std::{cell::RefCell, rc::Rc, sync::Arc},
+    std::{cell::RefCell, rc::Rc},
 };
 
 pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
@@ -160,9 +157,6 @@ impl Mollusk {
         instruction: &Instruction,
         accounts: &[(Pubkey, Account)],
     ) -> InstructionResult {
-        let mut compute_units_consumed = 0;
-        let mut timings = ExecuteTimings::default();
-
         let loader_key = if crate::program::precompile_keys::is_precompile(&instruction.program_id)
         {
             crate::program::loader_keys::NATIVE_LOADER
@@ -174,85 +168,52 @@ impl Mollusk {
         };
 
         let CompiledAccounts {
-            program_id_index,
             instruction_accounts,
             transaction_accounts,
         } = crate::accounts::compile_accounts(instruction, accounts, loader_key);
 
-        let mut transaction_context = TransactionContext::new(
-            transaction_accounts,
-            self.sysvars.rent.clone(),
-            self.compute_budget.max_instruction_stack_depth,
-            self.compute_budget.max_instruction_trace_length,
-        );
-
-        let invoke_result = {
+        let solana_svm_fuzz_harness_instr_entrypoint::InstructionResult {
+            compute_units_consumed,
+            execution_time,
+            program_result: raw_result,
+            resulting_accounts,
+            return_data,
+        } = {
             let mut program_cache = self.program_cache.cache().write().unwrap();
             let sysvar_cache = self.sysvars.setup_sysvar_cache(accounts);
-            let mut invoke_context = InvokeContext::new(
-                &mut transaction_context,
+            solana_svm_fuzz_harness_instr_entrypoint::process_instruction(
+                &instruction.program_id,
+                &instruction_accounts,
+                &instruction.data,
+                &transaction_accounts,
                 &mut program_cache,
-                EnvironmentConfig::new(
-                    Hash::default(),
-                    None,
-                    None,
-                    Arc::new(self.feature_set.clone()),
+                solana_svm_fuzz_harness_instr_entrypoint::EnvironmentContext::new(
+                    /* blockhash */ &Hash::default(),
+                    &self.compute_budget,
+                    &self.feature_set,
                     self.fee_structure.lamports_per_signature,
+                    &self.sysvars.rent,
                     &sysvar_cache,
                 ),
-                self.logger.clone(),
-                self.compute_budget,
-            );
-            if let Some(precompile) = get_precompile(&instruction.program_id, |feature_id| {
-                invoke_context.get_feature_set().is_active(feature_id)
-            }) {
-                invoke_context.process_precompile(
-                    precompile,
-                    &instruction.data,
-                    &instruction_accounts,
-                    &[program_id_index],
-                    std::iter::once(instruction.data.as_ref()),
-                )
-            } else {
-                invoke_context.process_instruction(
-                    &instruction.data,
-                    &instruction_accounts,
-                    &[program_id_index],
-                    &mut compute_units_consumed,
-                    &mut timings,
-                )
-            }
+            )
         };
 
-        let return_data = transaction_context.get_return_data().1.to_vec();
-
-        let resulting_accounts: Vec<(Pubkey, Account)> = if invoke_result.is_ok() {
-            accounts
-                .iter()
-                .map(|(pubkey, account)| {
-                    transaction_context
-                        .find_index_of_account(pubkey)
-                        .map(|index| {
-                            let resulting_account = transaction_context
-                                .get_account_at_index(index)
-                                .unwrap()
-                                .borrow()
-                                .clone()
-                                .into();
-                            (*pubkey, resulting_account)
-                        })
-                        .unwrap_or((*pubkey, account.clone()))
-                })
-                .collect()
-        } else {
-            accounts.to_vec()
-        };
+        let resulting_accounts = accounts
+            .iter()
+            .map(|(pubkey, account)| {
+                resulting_accounts
+                    .iter()
+                    .find(|(k, _)| k == pubkey)
+                    .cloned()
+                    .unwrap_or((*pubkey, account.clone()))
+            })
+            .collect();
 
         InstructionResult {
             compute_units_consumed,
-            execution_time: timings.details.execute_us,
-            program_result: invoke_result.clone().into(),
-            raw_result: invoke_result,
+            execution_time,
+            program_result: raw_result.clone().into(),
+            raw_result,
             return_data,
             resulting_accounts,
         }

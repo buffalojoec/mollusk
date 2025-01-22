@@ -87,7 +87,7 @@ fn build_fixture_context(
 
     let accounts = transaction_accounts
         .into_iter()
-        .map(|(key, account)| (key, account.into(), None))
+        .map(|(key, account)| (key, account, None))
         .collect::<Vec<_>>();
 
     FuzzContext {
