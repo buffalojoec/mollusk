@@ -17,3 +17,4 @@ solana-sdk = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }
+which = { workspace = true }
