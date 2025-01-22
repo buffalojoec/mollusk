@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm"
-version = "0.0.8-solana-1.18"
+version = "0.0.9-solana-1.18"
 dependencies = [
  "bincode",
  "criterion",
@@ -1829,7 +1829,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-bencher"
-version = "0.0.8-solana-1.18"
+version = "0.0.9-solana-1.18"
 dependencies = [
  "chrono",
  "mollusk-svm",
@@ -1841,7 +1841,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-memo"
-version = "0.0.8-solana-1.18"
+version = "0.0.9-solana-1.18"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
@@ -1849,7 +1849,7 @@ dependencies = [
 
 [[package]]
 name = "mollusk-svm-programs-token"
-version = "0.0.8-solana-1.18"
+version = "0.0.9-solana-1.18"
 dependencies = [
  "mollusk-svm",
  "solana-sdk",
