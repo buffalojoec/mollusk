@@ -29,7 +29,6 @@ mollusk-svm-bencher = { path = "bencher", version = "0.0.13" }
 mollusk-svm-error = { path = "error", version = "0.0.13" }
 mollusk-svm-fuzz-fixture = { path = "fuzz/fixture", version = "0.0.13" }
 mollusk-svm-fuzz-fixture-firedancer = { path = "fuzz/fixture-fd", version = "0.0.13" }
-mollusk-svm-fuzz-fs = { path = "fuzz/fs", version = "0.0.13" }
 mollusk-svm-keys = { path = "keys", version = "0.0.13" }
 mollusk-svm-programs-memo = { path = "programs/memo", version = "0.0.13" }
 mollusk-svm-programs-token = { path = "programs/token", version = "0.0.13" }
@@ -52,6 +51,7 @@ solana-program-runtime = { path = "../agave/program-runtime" }
 solana-stake-program = { path = "../agave/programs/stake" }
 solana-system-program = { path = "../agave/programs/system" }
 solana-sdk = { path = "../agave/sdk" }
+solana-svm-fuzz-harness-fixture-fs = { path = "../agave/svm-fuzz-harness/fixture-fs" }
 solana-svm-fuzz-harness-instr-entrypoint = { path = "../agave/svm-fuzz-harness/instr/entrypoint" }
 solana-timings = { path = "../agave/timings" }
 thiserror = "1.0.64"

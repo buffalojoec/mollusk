@@ -1324,6 +1324,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "home"
+version = "0.5.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
+dependencies = [
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "http"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1587,13 +1596,13 @@ checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
 
 [[package]]
 name = "is-terminal"
-version = "0.4.13"
+version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "261f68e344040fbd0edea105bef17c66edf46f984ddb1115b775ce31be948f4b"
+checksum = "3f187290c0ed3dfe3f7c85bedddd320949b68fc86ca0ceb71adfb05b3dc3af2a"
 dependencies = [
  "hermit-abi 0.4.0",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1800,7 +1809,6 @@ dependencies = [
  "mollusk-svm-error",
  "mollusk-svm-fuzz-fixture",
  "mollusk-svm-fuzz-fixture-firedancer",
- "mollusk-svm-fuzz-fs",
  "mollusk-svm-keys",
  "rand 0.7.3",
  "rayon",
@@ -1812,6 +1820,7 @@ dependencies = [
  "solana-program-runtime",
  "solana-sdk",
  "solana-stake-program",
+ "solana-svm-fuzz-harness-fixture-fs",
  "solana-svm-fuzz-harness-instr-entrypoint",
  "solana-system-program",
 ]
@@ -1840,36 +1849,25 @@ dependencies = [
 name = "mollusk-svm-fuzz-fixture"
 version = "0.0.13"
 dependencies = [
- "mollusk-svm-fuzz-fs",
  "prost",
  "prost-build",
  "serde",
  "solana-compute-budget",
  "solana-sdk",
+ "solana-svm-fuzz-harness-fixture-fs",
 ]
 
 [[package]]
 name = "mollusk-svm-fuzz-fixture-firedancer"
 version = "0.0.13"
 dependencies = [
- "mollusk-svm-fuzz-fs",
  "prost",
  "prost-build",
  "serde",
  "serde_json",
  "solana-compute-budget",
  "solana-sdk",
-]
-
-[[package]]
-name = "mollusk-svm-fuzz-fs"
-version = "0.0.13"
-dependencies = [
- "bs58",
- "prost",
- "serde",
- "serde_json",
- "solana-sdk",
+ "solana-svm-fuzz-harness-fixture-fs",
 ]
 
 [[package]]
@@ -2526,9 +2524,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.43"
+version = "0.38.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a78891ee6bf2340288408954ac787aa063d8e8817e9f53abb37c695c6d834ef6"
+checksum = "fdb5bc1ae2baa591800df16c9ca78619bf65c0488b41b96ccec5d11220d8c154"
 dependencies = [
  "bitflags 2.8.0",
  "errno",
@@ -3473,6 +3471,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-svm-fuzz-harness-fixture-fs"
+version = "2.1.6"
+dependencies = [
+ "bs58",
+ "prost",
+ "serde",
+ "serde_json",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "solana-svm-fuzz-harness-instr-entrypoint"
 version = "2.1.6"
 dependencies = [
@@ -4052,13 +4062,14 @@ checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
 
 [[package]]
 name = "which"
-version = "4.4.0"
+version = "4.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2441c784c52b289a054b7201fc93253e288f094e2f4be9058343127c4226a269"
+checksum = "87ba24419a2078cd2b0f2ede2691b6c66d8e47836da3b6db8265ebad47afbfc7"
 dependencies = [
  "either",
- "libc",
+ "home",
  "once_cell",
+ "rustix",
 ]
 
 [[package]]

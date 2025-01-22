@@ -9,12 +9,12 @@ edition = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
-mollusk-svm-fuzz-fs = { workspace = true }
 prost = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 solana-compute-budget = { workspace = true }
 solana-sdk = { workspace = true }
+solana-svm-fuzz-harness-fixture-fs = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }

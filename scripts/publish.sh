@@ -7,7 +7,6 @@ set -o pipefail
 CRATES=(
   "mollusk-svm-error"
   "mollusk-svm-keys"
-  "mollusk-svm-fuzz-fs"
   "mollusk-svm-fuzz-fixture"
   "mollusk-svm-fuzz-fixture-firedancer"
   "mollusk-svm"
