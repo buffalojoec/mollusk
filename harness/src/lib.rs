@@ -389,6 +389,7 @@ use {
     },
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
+    result::Config,
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
@@ -407,12 +408,13 @@ pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
 /// All fields can be manipulated through a handful of helper methods, but
 /// users can also directly access and modify them if they desire more control.
 pub struct Mollusk {
+    pub config: Config,
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub fee_structure: FeeStructure,
+    pub logger: Option<Rc<RefCell<solana_log_collector::LogCollector>>>,
     pub program_cache: ProgramCache,
     pub sysvars: Sysvars,
-    pub logger: Option<Rc<RefCell<solana_log_collector::LogCollector>>>,
     #[cfg(feature = "fuzz-fd")]
     pub slot: u64,
 }
@@ -438,6 +440,7 @@ impl Default for Mollusk {
         #[cfg(not(feature = "fuzz"))]
         let feature_set = FeatureSet::all_enabled();
         Self {
+            config: Config::default(),
             compute_budget: ComputeBudget::default(),
             feature_set,
             fee_structure: FeeStructure::default(),
@@ -665,7 +668,7 @@ impl Mollusk {
         #[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
         fuzz::generate_fixtures_from_mollusk_test(self, instruction, accounts, &result);
 
-        result.run_checks(checks);
+        result.run_checks_with_config(checks, &self.config);
         result
     }
 
@@ -776,7 +779,7 @@ impl Mollusk {
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
-        InstructionResult::from(&fixture.output).compare(&result);
+        InstructionResult::from(&fixture.output).compare_with_config(&result, &self.config);
         result
     }
 
@@ -892,7 +895,7 @@ impl Mollusk {
             &fixture.output,
         );
 
-        expected_result.compare(&result);
+        expected_result.compare_with_config(&result, &self.config);
         result
     }
 
