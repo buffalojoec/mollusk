@@ -381,6 +381,8 @@ pub mod program;
 pub mod result;
 pub mod sysvar;
 
+#[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
+use result::Compare;
 use {
     crate::{
         program::ProgramCache,
@@ -779,7 +781,11 @@ impl Mollusk {
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
-        InstructionResult::from(&fixture.output).compare_with_config(&result, &self.config);
+        InstructionResult::from(&fixture.output).compare_with_config(
+            &result,
+            &Compare::everything(),
+            &self.config,
+        );
         result
     }
 
@@ -813,11 +819,11 @@ impl Mollusk {
     pub fn process_and_partially_validate_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
-        checks: &[fuzz::check::FixtureCheck],
+        checks: &[Compare],
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
         let expected = InstructionResult::from(&fixture.output);
-        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
+        result.compare_with_config(&expected, checks, &self.config);
         result
     }
 
@@ -895,7 +901,7 @@ impl Mollusk {
             &fixture.output,
         );
 
-        expected_result.compare_with_config(&result, &self.config);
+        expected_result.compare_with_config(&result, &Compare::everything(), &self.config);
         result
     }
 
@@ -925,7 +931,7 @@ impl Mollusk {
     pub fn process_and_partially_validate_firedancer_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
-        checks: &[fuzz::check::FixtureCheck],
+        checks: &[Compare],
     ) -> InstructionResult {
         let fuzz::firedancer::ParsedFixtureContext {
             accounts,
@@ -945,7 +951,7 @@ impl Mollusk {
             &fixture.output,
         );
 
-        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
+        result.compare_with_config(&expected, checks, &self.config);
         result
     }
 }
