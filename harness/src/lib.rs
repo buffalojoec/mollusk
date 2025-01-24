@@ -45,7 +45,11 @@
 //! ```rust,ignore
 //! use {
 //!     mollusk_svm::Mollusk,
-//!     solana_sdk::{account::Account, instruction::{AccountMeta, Instruction}, pubkey::Pubkey},
+//!     solana_sdk::{
+//!         account::Account,
+//!         instruction::{AccountMeta, Instruction},
+//!         pubkey::Pubkey,
+//!     },
 //! };
 //!
 //! let program_id = Pubkey::new_unique();
