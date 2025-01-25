@@ -381,6 +381,8 @@ pub mod program;
 pub mod result;
 pub mod sysvar;
 
+#[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
+use result::Compare;
 use {
     crate::{
         program::ProgramCache,
@@ -389,6 +391,7 @@ use {
     },
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
+    result::Config,
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
     solana_sdk::{
@@ -407,12 +410,13 @@ pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
 /// All fields can be manipulated through a handful of helper methods, but
 /// users can also directly access and modify them if they desire more control.
 pub struct Mollusk {
+    pub config: Config,
     pub compute_budget: ComputeBudget,
     pub feature_set: FeatureSet,
     pub fee_structure: FeeStructure,
+    pub logger: Option<Rc<RefCell<solana_log_collector::LogCollector>>>,
     pub program_cache: ProgramCache,
     pub sysvars: Sysvars,
-    pub logger: Option<Rc<RefCell<solana_log_collector::LogCollector>>>,
     #[cfg(feature = "fuzz-fd")]
     pub slot: u64,
 }
@@ -438,6 +442,7 @@ impl Default for Mollusk {
         #[cfg(not(feature = "fuzz"))]
         let feature_set = FeatureSet::all_enabled();
         Self {
+            config: Config::default(),
             compute_budget: ComputeBudget::default(),
             feature_set,
             fee_structure: FeeStructure::default(),
@@ -665,7 +670,7 @@ impl Mollusk {
         #[cfg(any(feature = "fuzz", feature = "fuzz-fd"))]
         fuzz::generate_fixtures_from_mollusk_test(self, instruction, accounts, &result);
 
-        result.run_checks(checks);
+        result.run_checks_with_config(checks, &self.config);
         result
     }
 
@@ -776,7 +781,11 @@ impl Mollusk {
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
-        InstructionResult::from(&fixture.output).compare(&result);
+        InstructionResult::from(&fixture.output).compare_with_config(
+            &result,
+            &Compare::everything(),
+            &self.config,
+        );
         result
     }
 
@@ -810,11 +819,11 @@ impl Mollusk {
     pub fn process_and_partially_validate_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture::Fixture,
-        checks: &[fuzz::check::FixtureCheck],
+        checks: &[Compare],
     ) -> InstructionResult {
         let result = self.process_fixture(fixture);
         let expected = InstructionResult::from(&fixture.output);
-        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
+        result.compare_with_config(&expected, checks, &self.config);
         result
     }
 
@@ -892,7 +901,7 @@ impl Mollusk {
             &fixture.output,
         );
 
-        expected_result.compare(&result);
+        expected_result.compare_with_config(&result, &Compare::everything(), &self.config);
         result
     }
 
@@ -922,7 +931,7 @@ impl Mollusk {
     pub fn process_and_partially_validate_firedancer_fixture(
         &mut self,
         fixture: &mollusk_svm_fuzz_fixture_firedancer::Fixture,
-        checks: &[fuzz::check::FixtureCheck],
+        checks: &[Compare],
     ) -> InstructionResult {
         let fuzz::firedancer::ParsedFixtureContext {
             accounts,
@@ -942,7 +951,7 @@ impl Mollusk {
             &fixture.output,
         );
 
-        fuzz::check::evaluate_results_with_fixture_checks(&expected, &result, checks);
+        result.compare_with_config(&expected, checks, &self.config);
         result
     }
 }

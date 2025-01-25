@@ -7,6 +7,40 @@ use solana_sdk::{
     pubkey::Pubkey,
 };
 
+macro_rules! compare {
+    ($c:expr, $check:expr, $left:expr, $right:expr $(,)?) => {{
+        if $left != $right {
+            let msg = format!(
+                "CHECK FAILED: {}\n  Expected: `{:?}`,\n Got: `{:?}`",
+                $check, $left, $right
+            );
+            if $c.panic {
+                panic!("{}", msg);
+            } else {
+                if $c.verbose {
+                    eprintln!("{}", msg);
+                }
+                return false;
+            }
+        }
+        true
+    }};
+}
+
+macro_rules! throw {
+    ($c:expr, $($arg:tt)+) => {{
+        let msg = format!($($arg)+);
+        if $c.panic {
+            panic!("{}", msg);
+        } else {
+            if $c.verbose {
+                eprintln!("{}", msg);
+            }
+        }
+        false
+    }};
+}
+
 /// The result code of the program's execution.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProgramResult {
@@ -74,6 +108,12 @@ impl Default for InstructionResult {
     }
 }
 
+#[derive(Default)]
+pub struct Config {
+    pub panic: bool,
+    pub verbose: bool,
+}
+
 impl InstructionResult {
     /// Get an account from the resulting accounts by its pubkey.
     pub fn get_account(&self, pubkey: &Pubkey) -> Option<&Account> {
@@ -83,128 +123,109 @@ impl InstructionResult {
             .map(|(_, a)| a)
     }
 
-    /// Perform checks on the instruction result, panicking if any checks fail.
-    pub fn run_checks(&self, checks: &[Check]) {
+    /// Perform checks on the instruction result.
+    pub fn run_checks_with_config(&self, checks: &[Check], config: &Config) -> bool {
+        let c = config;
+        let mut pass = true;
         for check in checks {
             match &check.check {
                 CheckType::ComputeUnitsConsumed(units) => {
                     let check_units = *units;
                     let actual_units = self.compute_units_consumed;
-                    assert_eq!(
-                        actual_units, check_units,
-                        "CHECK: compute units: got: {}, expected {}",
-                        actual_units, check_units,
-                    );
+                    pass &= compare!(c, "compute_units", check_units, actual_units);
                 }
                 CheckType::ExecutionTime(time) => {
                     let check_time = *time;
                     let actual_time = self.execution_time;
-                    assert_eq!(
-                        actual_time, check_time,
-                        "CHECK: execution time: got: {}, expected {}",
-                        actual_time, check_time,
-                    );
+                    pass &= compare!(c, "execution_time", check_time, actual_time);
                 }
                 CheckType::ProgramResult(result) => {
                     let check_result = result;
                     let actual_result = &self.program_result;
-                    assert_eq!(
-                        actual_result, check_result,
-                        "CHECK: program result: got {:?}, expected {:?}",
-                        actual_result, check_result,
-                    );
+                    pass &= compare!(c, "program_result", check_result, actual_result);
                 }
                 CheckType::ReturnData(return_data) => {
                     let check_return_data = return_data;
                     let actual_return_data = &self.return_data;
-                    assert_eq!(
-                        actual_return_data, check_return_data,
-                        "CHECK: return_data: got {:?}, expected {:?}",
-                        actual_return_data, check_return_data,
-                    );
+                    pass &= compare!(c, "return_data", check_return_data, actual_return_data);
                 }
                 CheckType::ResultingAccount(account) => {
                     let pubkey = account.pubkey;
-                    let resulting_account = self
+                    let Some(resulting_account) = self
                         .resulting_accounts
                         .iter()
                         .find(|(k, _)| k == &pubkey)
                         .map(|(_, a)| a)
-                        .unwrap_or_else(|| {
-                            panic!("Account not found in resulting accounts: {}", pubkey)
-                        });
+                    else {
+                        pass &= throw!(c, "Account not found in resulting accounts: {}", pubkey);
+                        continue;
+                    };
                     if let Some(check_data) = account.check_data {
                         let actual_data = resulting_account.data();
-                        assert_eq!(
-                            actual_data, check_data,
-                            "CHECK: account data: got {:?}, expected {:?}",
-                            actual_data, check_data,
-                        );
+                        pass &= compare!(c, "account_data", check_data, actual_data);
                     }
                     if let Some(check_executable) = account.check_executable {
                         let actual_executable = resulting_account.executable();
-                        assert_eq!(
-                            actual_executable, check_executable,
-                            "CHECK: account executable: got {}, expected {}",
-                            actual_executable, check_executable,
-                        );
+                        pass &=
+                            compare!(c, "account_executable", check_executable, actual_executable);
                     }
                     if let Some(check_lamports) = account.check_lamports {
                         let actual_lamports = resulting_account.lamports();
-                        assert_eq!(
-                            actual_lamports, check_lamports,
-                            "CHECK: account lamports: got {}, expected {}",
-                            actual_lamports, check_lamports,
-                        );
+                        pass &= compare!(c, "account_lamports", check_lamports, actual_lamports);
                     }
                     if let Some(check_owner) = account.check_owner {
                         let actual_owner = resulting_account.owner();
-                        assert_eq!(
-                            actual_owner, check_owner,
-                            "CHECK: account owner: got {}, expected {}",
-                            actual_owner, check_owner,
-                        );
+                        pass &= compare!(c, "account_owner", check_owner, actual_owner);
                     }
                     if let Some(check_space) = account.check_space {
                         let actual_space = resulting_account.data().len();
-                        assert_eq!(
-                            actual_space, check_space,
-                            "CHECK: account space: got {}, expected {}",
-                            actual_space, check_space,
-                        );
+                        pass &= compare!(c, "account_space", check_space, actual_space);
                     }
                     if let Some(check_state) = &account.check_state {
                         match check_state {
                             AccountStateCheck::Closed => {
-                                assert_eq!(
-                                    &Account::default(),
-                                    resulting_account,
-                                    "CHECK: account closed: got false, expected true"
+                                pass &= compare!(
+                                    c,
+                                    "account_closed",
+                                    true,
+                                    resulting_account == &Account::default(),
                                 );
                             }
                         }
                     }
                     if let Some((offset, check_data_slice)) = account.check_data_slice {
                         let actual_data = resulting_account.data();
-                        assert!(
-                            offset + check_data_slice.len() <= actual_data.len(),
-                            "CHECK: account data slice: offset {} + slice length {} exceeds \
-                             account data length {}",
-                            offset,
-                            check_data_slice.len(),
-                            actual_data.len(),
-                        );
+                        if offset + check_data_slice.len() > actual_data.len() {
+                            pass &= throw!(
+                                c,
+                                "Account data slice: offset {} + slice length {} exceeds account \
+                                 data length {}",
+                                offset,
+                                check_data_slice.len(),
+                                actual_data.len(),
+                            );
+                            continue;
+                        }
                         let actual_data_slice =
                             &actual_data[offset..offset + check_data_slice.len()];
-                        assert_eq!(
-                            actual_data_slice, check_data_slice,
-                            "CHECK: account data slice: got {:?}, expected {:?}",
-                            actual_data_slice, check_data_slice,
-                        );
+                        pass &=
+                            compare!(c, "account_data_slice", check_data_slice, actual_data_slice,);
                     }
                 }
             }
         }
+        pass
+    }
+
+    /// Perform checks on the instruction result, panicking on any mismatches.
+    pub fn run_checks(&self, checks: &[Check]) {
+        self.run_checks_with_config(
+            checks,
+            &Config {
+                panic: true,
+                verbose: true,
+            },
+        );
     }
 
     pub(crate) fn absorb(&mut self, other: Self) {
@@ -216,37 +237,177 @@ impl InstructionResult {
         self.resulting_accounts = other.resulting_accounts;
     }
 
-    /// Compare an `InstructionResult` against another `InstructionResult`,
-    /// panicking on any mismatches.
-    pub fn compare(&self, b: &Self) {
-        assert_eq!(
-            self.compute_units_consumed, b.compute_units_consumed,
-            "compute units consumed mismatch"
-        );
-        // TODO: Omitted for now.
-        // assert_eq!(
-        //     self.execution_time, b.execution_time,
-        //     "execution time mismatch"
-        // );
-        assert_eq!(
-            self.program_result, b.program_result,
-            "program result mismatch"
-        );
-        assert_eq!(self.raw_result, b.raw_result, "raw result mismatch");
-        assert_eq!(
-            self.resulting_accounts.len(),
-            b.resulting_accounts.len(),
-            "resulting accounts length mismatch"
-        );
-        assert_eq!(self.return_data, b.return_data, "return data mismatch");
+    fn compare_resulting_accounts(
+        &self,
+        b: &Self,
+        addresses: &[Pubkey],
+        ignore_addresses: &[Pubkey],
+        fields: CompareAccountFields,
+        config: &Config,
+    ) -> bool {
+        let c = config;
+        let mut pass = true;
         for (a, b) in self
             .resulting_accounts
             .iter()
             .zip(b.resulting_accounts.iter())
         {
-            assert_eq!(a.0, b.0, "resulting account pubkey mismatch");
-            assert_eq!(a.1, b.1, "resulting account data mismatch");
+            if addresses.contains(&a.0) && !ignore_addresses.contains(&a.0) {
+                if fields.data {
+                    pass &= compare!(c, "resulting_account_data", a.1.data(), b.1.data());
+                }
+                if fields.executable {
+                    pass &= compare!(
+                        c,
+                        "resulting_account_executable",
+                        a.1.executable(),
+                        b.1.executable()
+                    );
+                }
+                if fields.lamports {
+                    pass &= compare!(
+                        c,
+                        "resulting_account_lamports",
+                        a.1.lamports(),
+                        b.1.lamports()
+                    );
+                }
+                if fields.owner {
+                    pass &= compare!(c, "resulting_account_owner", a.1.owner(), b.1.owner());
+                }
+                if fields.space {
+                    pass &= compare!(
+                        c,
+                        "resulting_account_space",
+                        a.1.data().len(),
+                        b.1.data().len()
+                    );
+                }
+            }
         }
+        pass
+    }
+
+    /// Compare an `InstructionResult` against another `InstructionResult`.
+    pub fn compare_with_config(&self, b: &Self, checks: &[Compare], config: &Config) -> bool {
+        let c = config;
+        let mut pass = true;
+        for check in checks {
+            match check {
+                Compare::ComputeUnits => {
+                    pass &= compare!(
+                        c,
+                        "compute_units_consumed",
+                        self.compute_units_consumed,
+                        b.compute_units_consumed
+                    );
+                }
+                Compare::ExecutionTime => {
+                    pass &= compare!(c, "execution_time", self.execution_time, b.execution_time);
+                }
+                Compare::ProgramResult => {
+                    pass &= compare!(c, "program_result", self.program_result, b.program_result);
+                }
+                Compare::ReturnData => {
+                    pass &= compare!(c, "return_data", self.return_data, b.return_data);
+                }
+                Compare::AllResultingAccounts {
+                    data,
+                    executable,
+                    lamports,
+                    owner,
+                    space,
+                } => {
+                    pass &= compare!(
+                        c,
+                        "resulting_accounts_length",
+                        self.resulting_accounts.len(),
+                        b.resulting_accounts.len()
+                    );
+                    let addresses = self
+                        .resulting_accounts
+                        .iter()
+                        .map(|(k, _)| *k)
+                        .collect::<Vec<_>>();
+                    pass &= self.compare_resulting_accounts(
+                        b,
+                        &addresses,
+                        &[],
+                        CompareAccountFields {
+                            data: *data,
+                            executable: *executable,
+                            lamports: *lamports,
+                            owner: *owner,
+                            space: *space,
+                        },
+                        c,
+                    );
+                }
+                Compare::OnlyResultingAccounts {
+                    addresses,
+                    data,
+                    executable,
+                    lamports,
+                    owner,
+                    space,
+                } => {
+                    pass &= self.compare_resulting_accounts(
+                        b,
+                        addresses,
+                        &[],
+                        CompareAccountFields {
+                            data: *data,
+                            executable: *executable,
+                            lamports: *lamports,
+                            owner: *owner,
+                            space: *space,
+                        },
+                        c,
+                    );
+                }
+                Compare::AllResultingAccountsExcept {
+                    ignore_addresses,
+                    data,
+                    executable,
+                    lamports,
+                    owner,
+                    space,
+                } => {
+                    let addresses = self
+                        .resulting_accounts
+                        .iter()
+                        .map(|(k, _)| *k)
+                        .collect::<Vec<_>>();
+                    pass &= self.compare_resulting_accounts(
+                        b,
+                        &addresses,
+                        ignore_addresses,
+                        CompareAccountFields {
+                            data: *data,
+                            executable: *executable,
+                            lamports: *lamports,
+                            owner: *owner,
+                            space: *space,
+                        },
+                        c,
+                    );
+                }
+            }
+        }
+        pass
+    }
+
+    /// Compare an `InstructionResult` against another `InstructionResult`,
+    /// panicking on any mismatches.
+    pub fn compare(&self, b: &Self) {
+        self.compare_with_config(
+            b,
+            &Compare::everything(),
+            &Config {
+                panic: true,
+                verbose: true,
+            },
+        );
     }
 }
 
@@ -391,5 +552,137 @@ impl<'a> AccountCheckBuilder<'a> {
 
     pub fn build(self) -> Check<'a> {
         Check::new(CheckType::ResultingAccount(self.check))
+    }
+}
+
+struct CompareAccountFields {
+    data: bool,
+    executable: bool,
+    lamports: bool,
+    owner: bool,
+    space: bool,
+}
+
+/// Checks to run between two `InstructionResult` instances.
+///
+/// Similar to `Check`, this allows a developer to dictate the type of checks
+/// to run on two results. This is useful for comparing the results of two
+/// instructions, or for comparing the result of an instruction against a
+/// fixture.
+pub enum Compare {
+    /// Validate compute units consumed.
+    ComputeUnits,
+    /// Validate execution time.
+    ExecutionTime,
+    /// Validate the program result.
+    ProgramResult,
+    /// Validate the return data.
+    ReturnData,
+    /// Validate all resulting accounts.
+    AllResultingAccounts {
+        /// Whether or not to validate each account's data.
+        data: bool,
+        /// Whether or not to validate each account's executable.
+        executable: bool,
+        /// Whether or not to validate each account's lamports.
+        lamports: bool,
+        /// Whether or not to validate each account's owner.
+        owner: bool,
+        /// Whether or not to validate each account's space.
+        space: bool,
+    },
+    /// Validate the resulting accounts at certain addresses.
+    OnlyResultingAccounts {
+        /// The addresses on which to apply the validation.
+        addresses: Vec<Pubkey>,
+        /// Whether or not to validate each account's data.
+        data: bool,
+        /// Whether or not to validate each account's executable.
+        executable: bool,
+        /// Whether or not to validate each account's lamports.
+        lamports: bool,
+        /// Whether or not to validate each account's owner.
+        owner: bool,
+        /// Whether or not to validate each account's space.
+        space: bool,
+    },
+    /// Validate all of the resulting accounts _except_ the provided addresses.
+    AllResultingAccountsExcept {
+        /// The addresses on which to _not_ apply the validation.
+        ignore_addresses: Vec<Pubkey>,
+        /// On non-ignored accounts, whether or not to validate each account's
+        /// data.
+        data: bool,
+        /// On non-ignored accounts, whether or not to validate each account's
+        /// executable.
+        executable: bool,
+        /// On non-ignored accounts, whether or not to validate each account's
+        /// lamports.
+        lamports: bool,
+        /// On non-ignored accounts, whether or not to validate each account's
+        /// owner.
+        owner: bool,
+        /// On non-ignored accounts, whether or not to validate each account's
+        /// space.
+        space: bool,
+    },
+}
+
+impl Compare {
+    /// Validate all possible checks for all resulting accounts.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `Compare::AllResultingAccounts { data: false, .. }`.
+    pub fn all_resulting_accounts() -> Self {
+        Self::AllResultingAccounts {
+            data: true,
+            executable: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+
+    /// Validate all possible checks for only the resulting accounts at certain
+    /// addresses.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `Compare::OnlyResultingAccounts { data: false, .. }`.
+    pub fn only_resulting_accounts(addresses: &[Pubkey]) -> Self {
+        Self::OnlyResultingAccounts {
+            addresses: addresses.to_vec(),
+            data: true,
+            executable: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+
+    /// Validate all possible checks for all of the resulting accounts _except_
+    /// the provided addresses.
+    ///
+    /// Note: To omit certain checks, use the variant directly, ie.
+    /// `Compare::AllResultingAccountsExcept { data: false, .. }`.
+    pub fn all_resulting_accounts_except(ignore_addresses: &[Pubkey]) -> Self {
+        Self::AllResultingAccountsExcept {
+            ignore_addresses: ignore_addresses.to_vec(),
+            data: true,
+            executable: true,
+            lamports: true,
+            owner: true,
+            space: true,
+        }
+    }
+
+    /// Validate everything.
+    pub fn everything() -> Vec<Self> {
+        vec![
+            Self::ComputeUnits,
+            // Self::ExecutionTime, // TODO: Intentionally omitted for now...
+            Self::ProgramResult,
+            Self::ReturnData,
+            Self::all_resulting_accounts(),
+        ]
     }
 }
