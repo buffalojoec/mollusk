@@ -1,0 +1,22 @@
+[package]
+name = "mollusk-svm-cli"
+description = "Mollusk CLI."
+documentation = "https://docs.rs/mollusk-svm-cli"
+authors = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+mollusk-svm-fuzz-fixture = { workspace = true }
+mollusk-svm-fuzz-fixture-firedancer = { workspace = true }
+mollusk-svm = { workspace = true, features = ["fuzz", "fuzz-fd"] }
+solana-logger = { workspace = true }
+solana-sdk = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+
+[[bin]]
+name = "mollusk"
+path = "src/main.rs"
