@@ -22,9 +22,11 @@ fuzz-fd = [
     "dep:mollusk-svm-fuzz-fixture-firedancer",
     "dep:mollusk-svm-fuzz-fs",
 ]
+serde = ["dep:serde"]
 
 [dependencies]
 bincode = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 mollusk-svm-error = { workspace = true }
 mollusk-svm-fuzz-fixture = { workspace = true, optional = true }
 mollusk-svm-fuzz-fixture-firedancer = { workspace = true, optional = true }
