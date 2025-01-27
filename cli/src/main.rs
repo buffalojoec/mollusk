@@ -1,10 +1,12 @@
 //! Mollusk CLI.
 
+mod config;
 mod runner;
 
 use {
     crate::runner::{ProtoLayout, Runner},
     clap::{Parser, Subcommand},
+    config::ConfigFile,
     mollusk_svm::{result::Compare, Mollusk},
     solana_sdk::{bpf_loader_upgradeable, pubkey::Pubkey},
     std::{fs, path::Path, str::FromStr},
@@ -25,6 +27,9 @@ enum SubCommand {
         #[arg(value_parser = Pubkey::from_str)]
         program_id: Pubkey,
 
+        /// Path to the config file for validation checks.
+        #[arg(short, long)]
+        config: Option<String>,
         /// Just execute the fixture without any validation.
         #[arg(short, long)]
         inputs_only: bool,
@@ -57,6 +62,9 @@ enum SubCommand {
         #[arg(value_parser = Pubkey::from_str)]
         program_id: Pubkey,
 
+        /// Path to the config file for validation checks.
+        #[arg(short, long)]
+        config: Option<String>,
         /// Enable emission of program logs to stdout. Disabled by default.
         #[arg(long)]
         program_logs: bool,
@@ -109,6 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             elf_path,
             fixture,
             program_id,
+            config,
             inputs_only,
             program_logs,
             proto,
@@ -117,13 +126,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut mollusk = Mollusk::default();
             add_elf_to_mollusk(&mut mollusk, &elf_path, &program_id);
 
-            let runner = Runner::new(
-                Compare::everything(),
-                inputs_only,
-                program_logs,
-                proto,
-                verbose,
-            );
+            let checks = if let Some(config_path) = config {
+                ConfigFile::try_load(&config_path)?.checks
+            } else {
+                // Defaults to all checks.
+                Compare::everything()
+            };
+
+            let runner = Runner::new(checks, inputs_only, program_logs, proto, verbose);
 
             for fixture_path in search_paths(&fixture, "fix")? {
                 runner.run(&mut mollusk, None, &fixture_path)?;
@@ -134,6 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             elf_path_target,
             fixture,
             program_id,
+            config,
             program_logs,
             proto,
             verbose,
@@ -146,8 +157,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut mollusk_test = Mollusk::default();
             add_elf_to_mollusk(&mut mollusk_test, &elf_path_target, &program_id);
 
+            let checks = if let Some(config_path) = config {
+                ConfigFile::try_load(&config_path)?.checks
+            } else {
+                // Defaults to all checks.
+                Compare::everything()
+            };
+
             let runner = Runner::new(
-                Compare::everything(),
+                checks,
                 /* inputs_only */ true,
                 program_logs,
                 proto,

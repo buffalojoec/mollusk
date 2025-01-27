@@ -569,6 +569,12 @@ struct CompareAccountFields {
 /// to run on two results. This is useful for comparing the results of two
 /// instructions, or for comparing the result of an instruction against a
 /// fixture.
+
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub enum Compare {
     /// Validate compute units consumed.
     ComputeUnits,
