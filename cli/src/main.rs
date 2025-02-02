@@ -94,7 +94,7 @@ fn search_paths(path: &str, extension: &str) -> Result<Vec<String>, Box<dyn std:
             for entry in fs::read_dir(path)? {
                 search_path_recursive(&entry?.path(), extension, result)?;
             }
-        } else if path.extension().map_or(false, |ext| ext == extension) {
+        } else if path.extension().is_some_and(|ext| ext == extension) {
             result.push(path.to_str().unwrap().to_string());
         }
         Ok(())
