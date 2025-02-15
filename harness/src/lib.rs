@@ -429,17 +429,6 @@ impl Default for Mollusk {
              solana_runtime::message_processor=debug,\
              solana_runtime::system_instruction_processor=trace",
         );
-        #[cfg(feature = "fuzz")]
-        let feature_set = {
-            // Omit "test features" (they have the same u64 ID).
-            let mut fs = FeatureSet::all_enabled();
-            fs.active
-                .remove(&solana_sdk::feature_set::disable_sbpf_v1_execution::id());
-            fs.active
-                .remove(&solana_sdk::feature_set::reenable_sbpf_v1_execution::id());
-            fs
-        };
-        #[cfg(not(feature = "fuzz"))]
         let feature_set = FeatureSet::all_enabled();
         Self {
             config: Config::default(),
@@ -540,10 +529,10 @@ impl Mollusk {
                 &mut program_cache,
                 EnvironmentConfig::new(
                     Hash::default(),
-                    None,
-                    None,
-                    Arc::new(self.feature_set.clone()),
                     self.fee_structure.lamports_per_signature,
+                    0,
+                    &|_| 0,
+                    Arc::new(self.feature_set.clone()),
                     &sysvar_cache,
                 ),
                 self.logger.clone(),
@@ -596,7 +585,7 @@ impl Mollusk {
 
         InstructionResult {
             compute_units_consumed,
-            execution_time: timings.details.execute_us,
+            execution_time: timings.details.execute_us.0,
             program_result: invoke_result.clone().into(),
             raw_result: invoke_result,
             return_data,
