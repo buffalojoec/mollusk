@@ -1,8 +1,8 @@
 //! Runtime feature set.
 
 use {
-    super::proto::FeatureSet as ProtoFeatureSet,
-    solana_sdk::{feature_set::FeatureSet, keccak::Hasher, pubkey::Pubkey},
+    super::proto::FeatureSet as ProtoFeatureSet, solana_feature_set::FeatureSet,
+    solana_keccak_hasher::Hasher, solana_pubkey::Pubkey,
 };
 
 // Omit "test features" (they have the same u64 ID).
