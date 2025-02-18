@@ -1,7 +1,7 @@
 use {
     solana_account_info::{next_account_info, AccountInfo},
-    solana_instruction::{AccountMeta, Instruction},
     solana_cpi::invoke,
+    solana_instruction::{AccountMeta, Instruction},
     solana_program_error::{ProgramError, ProgramResult},
     solana_pubkey::{Pubkey, PUBKEY_BYTES},
 };
@@ -48,7 +48,11 @@ fn process_instruction(
             let lamports = u64::from_le_bytes(rest.try_into().unwrap());
 
             invoke(
-                &solana_system_interface::instruction::transfer(payer_info.key, recipient_info.key, lamports),
+                &solana_system_interface::instruction::transfer(
+                    payer_info.key,
+                    recipient_info.key,
+                    lamports,
+                ),
                 &[payer_info.clone(), recipient_info.clone()],
             )?;
         }
@@ -68,7 +72,11 @@ fn process_instruction(
             let lamports = account_info.lamports();
 
             invoke(
-                &solana_system_interface::instruction::transfer(account_info.key, &solana_sdk_ids::incinerator::id(), lamports),
+                &solana_system_interface::instruction::transfer(
+                    account_info.key,
+                    &solana_sdk_ids::incinerator::id(),
+                    lamports,
+                ),
                 &[account_info.clone(), incinerator_info.clone()],
             )?;
         }
