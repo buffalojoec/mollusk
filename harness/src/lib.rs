@@ -392,18 +392,21 @@ use {
     accounts::CompiledAccounts,
     mollusk_svm_error::error::{MolluskError, MolluskPanic},
     result::Config,
+    solana_account::Account,
     solana_compute_budget::compute_budget::ComputeBudget,
+    solana_feature_set::FeatureSet,
+    solana_fee_structure::FeeStructure,
+    solana_hash::Hash,
+    solana_instruction::Instruction,
+    solana_precompiles::get_precompile,
     solana_program_runtime::invoke_context::{EnvironmentConfig, InvokeContext},
-    solana_sdk::{
-        account::Account, bpf_loader_upgradeable, feature_set::FeatureSet, fee::FeeStructure,
-        hash::Hash, instruction::Instruction, precompiles::get_precompile, pubkey::Pubkey,
-        transaction_context::TransactionContext,
-    },
+    solana_pubkey::Pubkey,
     solana_timings::ExecuteTimings,
+    solana_transaction_context::TransactionContext,
     std::{cell::RefCell, rc::Rc, sync::Arc},
 };
 
-pub(crate) const DEFAULT_LOADER_KEY: Pubkey = bpf_loader_upgradeable::id();
+pub(crate) const DEFAULT_LOADER_KEY: Pubkey = solana_sdk_ids::bpf_loader_upgradeable::id();
 
 /// The Mollusk API, providing a simple interface for testing Solana programs.
 ///
