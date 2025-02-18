@@ -6,7 +6,10 @@ use {
 };
 
 // Omit "test features" (they have the same u64 ID).
-pub static OMITTED_FEATURES: &[Pubkey] = &[];
+pub static OMITTED_FEATURES: &[Pubkey] = &[
+    solana_sdk::feature_set::disable_sbpf_v0_execution::id(),
+    solana_sdk::feature_set::reenable_sbpf_v0_execution::id(),
+];
 
 impl From<ProtoFeatureSet> for FeatureSet {
     fn from(value: ProtoFeatureSet) -> Self {
